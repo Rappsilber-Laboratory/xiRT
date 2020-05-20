@@ -1,0 +1,84 @@
+LSTM:
+  activation: tanh
+  activity_regularization: l2
+  activityregularizer_value: 0.001
+  bidirectional: true
+  kernel_regularization: l2
+  kernelregularizer_value: 0.001
+  lstm_bn: true
+  nlayers: 1
+  type: GRU
+  units: 75
+conv:
+  activation: -1
+  conv_bn: -1
+  kernel_size: -1
+  nfilter: -1
+  nlayers: 0
+  pool_size: -1
+  pooling: -1
+dense:
+  activation:
+  - relu
+  - relu
+  - relu
+  dense_bn:
+  - true
+  - true
+  - true
+  dropout:
+  - 0.1
+  - 0.1
+  - 0.1
+  kernel_regularizer:
+  - l2
+  - l2
+  - l2
+  neurons:
+  - 300
+  - 150
+  - 75
+  nlayers: 3
+  regularization:
+  - true
+  - true
+  - true
+  regularizer_value:
+  - 0.001
+  - 0.001
+  - 0.001
+embedding:
+  length: 50
+learning:
+  batch_size: 128
+  epochs: 75
+  learningrate: 0.001
+  patience: 15
+  vebose: 1
+output:
+  activation: linear
+  callback-path: data/results/callbacks/
+  class-weight: 200
+  dimension: 1
+  hsax-activation: sigmoid
+  hsax-column: hSAX_ordinal
+  hsax-dimension: 10
+  hsax-loss: binary_crossentropy
+  hsax-metrics: mse
+  hsax-weight: 50
+  loss: mse
+  metric: mse
+  rp-activation: linear
+  rp-column: Actual_RT
+  rp-dimension: 1
+  rp-loss: mse
+  rp-metrics: mse
+  rp-weight: 1
+  scx-activation: sigmoid
+  scx-column: SCX_ordinal
+  scx-dimension: 9
+  scx-loss: binary_crossentropy
+  scx-metrics: mse
+  scx-weight: 50
+siamese:
+  merge_type: add

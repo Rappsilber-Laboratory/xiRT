@@ -13,7 +13,7 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = 'xiRT'
+NAME = 'xirt'
 DESCRIPTION = 'Multi-dimensional Retention Time Prediction for Linear and Cross-Linked Peptides.'
 URL = 'rappsilberlab.org'
 EMAIL = 'sven.giese@tu-berlin.de'

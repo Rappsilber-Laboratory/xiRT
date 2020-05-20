@@ -1,12 +1,10 @@
-import numpy as np
-from xiML import basic
+from xirt import basic
+
 
 def test_add_numbers():
     """
     Test addition of two numbers.
     :return:
     """
-    x = np.array([10])
-    y = np.array([30])
-    result = basic.add_numbers(x, y)
-    assert result == np.array([40])
+    result = basic.add_numbers(10, 30)
+    assert result == 40
