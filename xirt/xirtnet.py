@@ -23,6 +23,37 @@ from tensorflow.keras import backend as K
 from tensorflow.keras import losses
 
 
+class xiRTNET:
+    def __init__(self):
+        self.model = None
+
+    def build_model(self):
+        pass
+
+    def compile(self):
+        pass
+
+    def fit(self):
+        pass
+
+    def predict(self):
+        pass
+
+    def store(self):
+        pass
+
+    def print_layers(self):
+        print([i.name for i in self.model.layers])
+
+    def get_param_overview(self):
+        trainable_count = np.sum([K.count_params(w) for w in self.model.trainable_weights])
+        non_trainable_count = np.sum([K.count_params(w) for w in self.model.non_trainable_weights])
+
+        print('Total params: {:,}'.format(trainable_count + non_trainable_count))
+        print('Trainable params: {:,}'.format(trainable_count))
+        print('Non-trainable params: {:,}'.format(non_trainable_count))
+
+
 def loss_ordered(y_true, y_pred):
     weights = K.cast(K.abs(K.argmax(y_true, axis=1) - K.argmax(y_pred, axis=1))
                      / (K.int_shape(y_pred)[1] - 1), dtype='float32')
@@ -499,19 +530,6 @@ def dev_loading_models():
     # %%
 
 
-def print_layers(model):
-    print([i.name for i in model.layers])
-
-
-def get_param_overview(model):
-    trainable_count = np.sum([K.count_params(w) for w in model.trainable_weights])
-    non_trainable_count = np.sum([K.count_params(w) for w in model.non_trainable_weights])
-
-    print('Total params: {:,}'.format(trainable_count + non_trainable_count))
-    print('Trainable params: {:,}'.format(trainable_count))
-    print('Non-trainable params: {:,}'.format(non_trainable_count))
-
-
 def compile_model(model, config, loss=None, metric=None, loss_weights=None):
     comp_params = config["learning"]
     opt_params = config["output"]
@@ -687,225 +705,6 @@ def store_predictions(prediction_df, X_pred_cv, length, hsax, scx, rp, le, model
                 np.max(scx_indv, axis=1)
             prediction_df["RP_prediction_{}".format(name)].loc[X_pred_cv.index] = \
                 np.ravel(rp_indv)
-
-
-def cv_learning(xifdr_df, params, outpath, logging, ncv, le, data_path, date_prefix, augment,
-                pred_fold=True, verbose=0, global_pred=False, load_network="", meta=False,
-                freeze=False):
-    # load the crosslinks
-    xpred_glob, ytrain_glob = pickle.load(open(data_path + "Xy_prediction_global.p", "rb"))
-    if meta:
-        xpred_glob_meta = pd.read_pickle(data_path + "Xy_prediction_global_meta.p")
-
-    # init result structures
-    model_metrics = []
-    all_metrics = []
-    logging.info('{} parameters to search.'.format(len(params)))
-    history_dfs = []
-    # %% start ML
-    for paramid, parami in enumerate(params):
-        logging.info('------------------- Parameter Starts -----------------------------------')
-        logging.info('Searching param {0} ({0}/{1})'.format(paramid, len(params)))
-
-        param = misc.prepare_params_yaml(parami)
-        prediction_df = init_prediction_df(xifdr_df, paramid=paramid)
-        logging.info("Params:" + str(parami))
-
-        for cv_fold in np.arange(ncv):
-            logging.info('---------- CV {}  Iteration Started ----------'.format(cv_fold))
-            logging.info('Running CV {} for param id {}'.format(cv_fold, paramid))
-            a = time.time()
-            # init house keeping stuff and constants
-            loss_weights, metrics, multi_task_loss = create_params(param)
-            cvstr = str(cv_fold + 1).zfill(2)
-            id_str_cv = date_prefix + "_CV" + cvstr
-
-            xcv_train, ycv_train = pickle.load(open(data_path + "CV{}_train.p".format(cvstr),
-                                                    "rb"))
-            xcv_val, ycv_val = pickle.load(open(data_path + "CV{}_validation.p".format(cvstr),
-                                                "rb"))
-
-            if meta:
-                xcv_train_meta = pd.read_pickle(data_path + "CV{}_train_meta.p".format(cvstr))
-                xcv_val_meta = pd.read_pickle(data_path + "CV{}_validation_meta.p".format(cvstr))
-
-                if pred_fold:
-                    xcv_pred_meta = pd.read_pickle(
-                        data_path + "CV{}_prediction_meta.p".format(cvstr))
-                    if augment:
-                        xcv_pred_meta = pd.concat([xcv_pred_meta, xcv_pred_meta])
-
-                if augment:
-                    xcv_train_meta = pd.concat([xcv_train_meta, xcv_train_meta])
-            else:
-                xcv_train_meta = None
-                xcv_val_meta = None
-
-            # fit the neural network for the current cv iteration
-            loss_weights, metrics, multi_task_loss = create_params(param)
-            if load_network == "":
-                # train from scratch
-                network_str = ""
-                # use the network given in the parameters instead of fitting a new one as
-                # base instance
-                if meta:
-                    meta_shape = xcv_train_meta.shape[1]
-                    xirtnet = build_xirtnet(param, xcv_train.shape[1], input_meta=meta_shape,
-                                            fig_path=outpath + date_prefix)
-                else:
-                    # max words, vocabulary size
-                    # also max peptide length, length of one-hot vectors
-                    # shape = (xcv_train.shape[1], xcv_train.iloc[0].iloc[0].shape[0])
-                    xirtnet = build_xirtnet(param, xcv_train.shape[1], input_meta=None,
-                                            fig_path=outpath + date_prefix)
-            else:
-                # load a pretrained model
-                xirtnet = load_model(load_network)
-                network_str = "pretrained"
-
-                # freeze the RNN layers?
-                if freeze:
-                    for layer in xirtnet.layers[:4]:
-                        layer.trainable = False
-            network_id = id_str_cv + "_param{}".format(str(paramid).zfill(4))
-
-            # CV fitting of data
-            history, model = fit_model(xirtnet, param, xcv_train, ycv_train, xcv_val, ycv_val,
-                                       loss=multi_task_loss, metric=metrics,
-                                       loss_weights=loss_weights, v=verbose,
-                                       outname=network_id,
-                                       X_train_meta=xcv_train_meta, X_val_meta=xcv_val_meta)
-
-            metrics = [i for i in model.metrics_names]
-            metrics.append("Data Split")
-            model_path = param["output"]["callback-path"] + "/{}_model.h5".format(network_id)
-            weight_path = param["output"]["callback-path"] + "/{}_weights.h5".format(network_id)
-
-            if pred_fold:
-                # only load the best model if we have a prediction fold
-                # create a new session, only necessary if best model (callback) is used
-                K.clear_session()
-                # load the best performing model based on the validation performance
-                model = load_model_time(logging, model_path)
-
-            # evaluate the model on the different splits and store the results
-            if meta:
-                train_metrics = model.evaluate((xcv_train, xcv_train_meta), ycv_train,
-                                               batch_size=1024, verbose=0)
-                val_metrics = model.evaluate((xcv_val, xcv_val_meta), ycv_val, batch_size=1024,
-                                             verbose=0)
-            else:
-                train_metrics = model.evaluate(xcv_train, ycv_train, batch_size=1024, verbose=0)
-                val_metrics = model.evaluate(xcv_val, ycv_val, batch_size=1024, verbose=0)
-
-            train_metrics.append("Train")
-            val_metrics.append("Validation")
-
-            # code the results as a string
-            train_str = format_metrics(metrics, train_metrics)
-            val_str = format_metrics(metrics, val_metrics)
-            logging.info('Training Metrics Param={} CV={}: {}'.format(paramid, cv_fold, train_str))
-            logging.info(
-                'Validation Metrics:  Param={} CV={}: {}'.format(paramid, cv_fold, val_str))
-
-            # make the predictions
-            if pred_fold:
-                logging.info('Got a prediction fold. Loading the data fold again')
-                xcv_pred, ycv_pred = pickle.load(open(data_path
-                                                      + "CV{}_prediction.p".format(cvstr), "rb"))
-            else:
-                # this is only for convenience, results are not used.
-                # this is necessary for 5x CV without validation
-                logging.info('No prediction fold. Loading the validation fold again')
-                xcv_pred, ycv_pred = pickle.load(open(data_path
-                                                      + "CV{}_validation.p".format(cvstr), "rb"))
-
-            # use meta data
-            if meta:
-                if pred_fold:
-                    xcv_pred_meta = pd.read_pickle(
-                        data_path + "CV{}_prediction_meta.p".format(cvstr))
-                else:
-                    xcv_pred_meta = pd.read_pickle(
-                        data_path + "CV{}_validation_meta.p".format(cvstr))
-
-                hsax, scx, rp = model.predict((xcv_pred, xcv_pred_meta))
-                pred_metrics = model.evaluate((xcv_pred, xcv_pred_meta), ycv_pred,
-                                              batch_size=1024)
-            else:
-                hsax, scx, rp = model.predict(xcv_pred)
-                pred_metrics = model.evaluate(xcv_pred, ycv_pred, batch_size=1024)
-
-            pred_metrics.append("Prediction")
-            pred_str = format_metrics(metrics, pred_metrics)
-            logging.info('Prediction Metrics Param={} CV={}: {}'.format(paramid, cv_fold,
-                                                                        pred_str))
-            # store the results from the current CV iteration
-            df_metrics = pd.DataFrame([train_metrics, val_metrics, pred_metrics], columns=metrics)
-            df_metrics["CV"] = cv_fold + 1
-            df_metrics["model"] = model_path
-            df_metrics["weights"] = weight_path
-            df_metrics["augmented"] = augment
-            df_metrics["paramid"] = paramid
-            df_metrics["meta"] = meta
-            df_metrics["network"] = network_str
-
-            model_metrics.append(df_metrics)
-            all_metrics.append(df_metrics)
-            if meta:
-                store_predictions(prediction_df, xcv_pred, xcv_train.shape[1], hsax, scx, rp, le,
-                                  model, cv_fold, single_seq_pred=True, xcv_pred_meta=xcv_pred_meta)
-            else:
-                store_predictions(prediction_df, xcv_pred, xcv_train.shape[1], hsax, scx, rp, le,
-                                  model, cv_fold, single_seq_pred=True)
-            b = time.time()
-
-            logging.info('Ended CV-fold {} with parameter {} (took: {:.2f} min)'.format(
-                cv_fold, paramid, misc.return_duration(a, b)))
-
-            pseudo_csv_logger(cv_fold, date_prefix, df_metrics, outpath, paramid)
-
-            # clear learner after session
-            K.clear_session()
-
-            tmp_history = pd.DataFrame(history.history)
-            tmp_history["CV"] = cv_fold
-            history_dfs.append(tmp_history)
-            logging.info('CV Train Split: {}'.format(xcv_train.shape))
-            logging.info('CV Test Split: {}'.format(xcv_val.shape))
-
-        logging.info('cross-validation done.')
-        # todo retrain on complete model?
-        res_metrics = pd.concat(model_metrics)
-        validation_metrics = res_metrics[res_metrics["Data Split"] == "Validation"]
-        best_idx = np.argmin(validation_metrics.loss.values)
-
-        all_histories = pd.concat(history_dfs)
-        all_histories.to_csv(outpath + "history_param_{}.csv".format(paramid))
-
-        # load best model across CV
-        load_model_time(logging, validation_metrics.iloc[best_idx]["model"])
-
-        if global_pred:
-            if meta:
-                hsax_glob, scx_glob, rp_glob = model.predict((xpred_glob, xpred_glob_meta))
-            else:
-                hsax_glob, scx_glob, rp_glob = model.predict(xpred_glob)
-
-            # store the predictions in the precomputed prediction_df
-            # encode 100 as CV for the prediction fold
-            store_predictions(prediction_df, xpred_glob, xpred_glob.shape[1], hsax_glob, scx_glob,
-                              rp_glob, le, model, 100, single_seq_pred=True)
-
-        # write outputs
-        prediction_df.to_pickle(outpath + "prediction_df_paramid{}.p".format(paramid))
-        res_metrics.to_pickle(outpath + "metrics_paramid{}.p".format(paramid))
-        logging.info('------------------- Parameter Done ------------------------')
-
-    all_metrics_df = pd.DataFrame(all_metrics)
-    all_metrics_df.to_pickle(outpath + "all_metrics.p")
-    logging.info('------------------- Storing all metrics ------------------------')
-    logging.info('------------------- Done!  ------------------------')
 
 
 def format_metrics(metrics, train_metrics):

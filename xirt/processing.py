@@ -1,8 +1,7 @@
-"""
-Module with higher level processing functions.
+"""Module with higher level processing functions.
 
-Combines several sequence processing steps for convenience.
-
+Combines several sequence processing steps for convenience and sequence-
+unrelated processing functions.
 """
 
 import numpy as np
@@ -14,8 +13,7 @@ from xirt import sequences as xs
 
 
 def prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"]):
-    """
-    Convert Peptide sequences to unified format.
+    """Convert Peptide sequences to unified format.
 
     This conversion simplifies the alphabet of the amino acids, removes special characters,
     replaces digits to written numbers, removes n-terminal modifications, rewrites Xmod
@@ -59,8 +57,7 @@ def prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"]):
 
 
 def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], max_length=-1):
-    """
-    Generate a featureized version of sequences from a data frame.
+    """Generate a featureized version of sequences from a data frame.
 
     The featureization is done
     via by retrieving all modifications, the relevant alphabet of amino acids and then
@@ -102,8 +99,7 @@ def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], 
 
 
 def generate_padded_df(encoded_ar, index):
-    """
-    Generate indexed dataframe from already label-encoded sequences.
+    """Generate indexed dataframe from already label-encoded sequences.
 
     Args:
         encoded_ar:
@@ -118,8 +114,7 @@ def generate_padded_df(encoded_ar, index):
 
 
 def fraction_encoding(psms_df, rt_methods=["SCX", "hSAX"]):
-    """
-    Add the necessary fraction columns.
+    """Add the necessary fraction columns.
 
     Following columns are added: prefix_0based, Actual_prefix and prefix_1hot, where
     prefix is taken from the rt_methods argument.
@@ -150,3 +145,18 @@ def fraction_encoding(psms_df, rt_methods=["SCX", "hSAX"]):
 
         psms_df[col + "_1hot"] = list(frac_categorical)
         psms_df[col + "_ordinal"] = psms_df[col + "_0based"].map(classes)
+
+
+def transform_RT(retention_times):
+    """Return RT in minutes.
+
+    Args:
+        retention_times:
+
+    Returns:
+        ar-like, transformed retention times in minutes
+    """
+
+    if (retention_times > 720).sum() > 0:
+        retention_times = retention_times / 60.
+    return retention_times

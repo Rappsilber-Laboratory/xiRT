@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pyteomics.parser import std_amino_acids
 
 from xirt import sequences as xs
 
@@ -127,4 +128,17 @@ def test_label_encoding():
 
     assert np.all(encoded_s1 == exp_rnn_seq1)
     assert np.all(encoded_s2 == exp_rnn_seq2)
+    assert le1 == le2
+
+
+def test_label_encoding():
+    psms_df = pd.DataFrame()
+    psms_df["Seqar_Peptide1"] = [sorted(std_amino_acids)]
+    psms_df["Seqar_Peptide2"] = [sorted(std_amino_acids)]
+
+    encoded_s1, le1 = xs.label_encoding(psms_df["Seqar_Peptide1"], 20)
+    encoded_s2, le2 = xs.label_encoding(psms_df["Seqar_Peptide2"], 6, le=le1)
+
+    assert np.all(encoded_s1 == np.arange(1, 21))
+    assert np.all(encoded_s1 == np.arange(1, 21))
     assert le1 == le2
