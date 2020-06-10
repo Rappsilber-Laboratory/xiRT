@@ -1,6 +1,6 @@
 """Module to process peptide sequences."""
 import re
-
+from collections import Counter
 import numpy as np
 from pyteomics import parser
 from sklearn.preprocessing import LabelEncoder
@@ -102,56 +102,81 @@ def to_unmodified_sequence(sequence):
     return (re.sub("[^[A-Z]", "", sequence))
 
 
-def reorder_sequences(psms_df):
+def reorder_sequences(matches_df):
     """Reorder peptide sequences by length.
 
     Defining the longer peptide as alpha peptide and the shorter petpide as
     beta peptide. Ties are resolved lexicographically.
 
     Args:
-        psms_df: df, dataframe with peptide identifications.
+        matches_df: df, dataframe with peptide identifications.
 
     Returns:
         ar, ar, ar: peptides1, peptides2, swapped
     """
-    order_lex = (psms_df["Peptide1"] > psms_df["Peptide2"]).values
-    order_lon = (psms_df["Peptide1"].apply(len) > psms_df["Peptide2"].apply(len)).values
-    order_sma = (psms_df["Peptide1"].apply(len) < psms_df["Peptide2"].apply(len)).values
-    seq1_ar = [""] * len(psms_df)
-    seq2_ar = [""] * len(psms_df)
-    swapped = [False] * len(psms_df)
-    for idx, (seq1, seq2) in enumerate(zip(psms_df.Peptide1, psms_df.Peptide2)):
-        if order_lon[idx]:
-            # easy, longer peptide goes first
-            seq1_ar[idx] = seq1
-            seq2_ar[idx] = seq2
-            swapped[idx] = False
+    # compile regex to match columsn with 1/2 in the end of the string
+    # check if all pairwise columns are there
+    r = re.compile(r"\w+(?:1$|2$)")
+    # get matching columns
+    match_columns = list(filter(r.match, matches_df.columns))
+    # remove number
+    pairs_noidx = [i[:-1] for i in match_columns]
+    unique_idx = np.unique(pairs_noidx)
+    # count occurrences and check if pairs are there
+    counts = [(i, j) for i, j in Counter(pairs_noidx).items() if j == 2]
+    if len(counts) * 2 != len(pairs_noidx):
+        raise ValueError("Error! Automatic column matching could not find pairwise crosslink "
+                         "columns. Please make sure that you have a peptide1, peptide2 "
+                         "column name pattern for crosslinks. Columns must appear in pairs if there "
+                         "is a number in the end of the name.")
 
-        elif order_sma[idx]:
+    # order logic, last comparison checks lexigographically
+    order_long = (matches_df["Peptide1"].apply(len) > matches_df["Peptide2"].apply(len)).values
+    order_short = (matches_df["Peptide1"].apply(len) < matches_df["Peptide2"].apply(len)).values
+    order_lex = (matches_df["Peptide1"] > matches_df["Peptide2"]).values
+
+    # create a copy of the dataframe
+    swapping_df = matches_df[match_columns].copy()
+    swapped = np.ones(len(matches_df), dtype=bool)
+
+    # z_idx for 0-based index
+    # df_idx for pandas
+    for z_idx, df_idx in enumerate(matches_df.index):
+        if order_long[z_idx]:
+            # easy, longer peptide goes first, no swapping required
+            swapped[z_idx] = False
+
+        elif order_short[z_idx]:
             # easy, shorter peptide goes last
-            seq1_ar[idx] = seq2
-            seq2_ar[idx] = seq1
-            swapped[idx] = True
+            swapped[z_idx] = True
+
         else:
             # equal length
-            if order_lex[idx]:
-                # higher first
-                seq1_ar[idx] = seq1
-                seq2_ar[idx] = seq2
-                swapped[idx] = False
+            if order_lex[z_idx]:
+                # for example: AC - AA
+                # higher first, no swapping required
+                swapped[z_idx] = False
             else:
-                seq1_ar[idx] = seq2
-                seq2_ar[idx] = seq1
-                swapped[idx] = True
+                # for example: AA > AC
+                # other case, swap
+                swapped[z_idx] = True
 
-    return seq1_ar, seq2_ar, swapped
+        if swapped[z_idx]:
+            for col in pairs_noidx:
+                swapping_df.at[df_idx, col + str(2)] = matches_df.iloc[z_idx][col + str(1)]
+                swapping_df.at[df_idx, col + str(1)] = matches_df.iloc[z_idx][col + str(2)]
+    swapping_df["swapped"] = swapped
+    return swapping_df
 
 
-def modify_cl_residues(psms_df, seq_in=["Peptide1", "Peptide2"]):
-    """Change the cross-linked residues to modified residues.
+def modify_cl_residues(matches_df, seq_in=["Peptide1", "Peptide2"]):
+    """
+    Change the cross-linked residues to modified residues.
+
+    Function uses the Seqar_*suffix columns to compute the new peptides.
 
     Args:
-        psms_df: df, dataframe with peptide identifications. Required columns
+        matches_df: df, dataframe with peptide identifications. Required columns
         seq_in:
 
     Returns:
@@ -160,9 +185,9 @@ def modify_cl_residues(psms_df, seq_in=["Peptide1", "Peptide2"]):
     # increase the alphabet by distinguishing between crosslinked K and non-crosslinked K
     # introduce a new prefix cl for each crosslinked residue
     for seq_id, seq_i in enumerate(seq_in):
-        for idx, row in psms_df.iterrows():
+        for idx, row in matches_df.iterrows():
             residue = row["Seqar_" + seq_i][row["LinkPos" + str(seq_id + 1)]]
-            psms_df.at[idx, "Seqar_" + seq_i][row["LinkPos" + str(seq_id + 1)]] = "cl" + residue
+            matches_df.at[idx, "Seqar_" + seq_i][row["LinkPos" + str(seq_id + 1)]] = "cl" + residue
 
 
 def get_mods(sequences):
