@@ -17,7 +17,7 @@ if __name__ == "__main__":
     print("xiRT config {}".format(sys.argv[2]))
     print("Working Directory: {}".format(os.getcwd()))
 
-    parser = argparse.ArgumentParser(
-        description='xiRT - Retention Time Prediction for Linear and Cross-Linked Peptides '
-                    'in Mulitiple Dimensions.')
-    parser.add_argument('-c', action='store', dest='config', help='YAML configuration file.')
+    # parser = argparse.ArgumentParser(
+    #     description='xiRT - Retention Time Prediction for Linear and Cross-Linked Peptides '
+    #                 'in Mulitiple Dimensions.')
+    # parser.add_argument('-c', action='store', dest='config', help='YAML configuration file.')
