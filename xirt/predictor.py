@@ -1,3 +1,4 @@
+"""Module to organize predictions from CLMS data."""
 import sys
 
 import pandas as pd
@@ -10,8 +11,27 @@ from xirt import sequences as xs
 from xirt import xirtnet
 
 
+def train_xirt(csms_df, params_xirt):
+    csms_df = pd.read_csv("C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\50pCSMFDR_universal_final.csv")
+    params_xirt_loc = "C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\xirt_params.yaml"
+    params_xirt = yaml.load(open(params_xirt_loc), Loader=yaml.FullLoader)
+
+    training_data = preprocess(csms_df, sequence_type="crosslink", max_length=-1,
+                               cl_residue=True, fraction_cols=["xirt_SCX", "xiRT_hSAX"])
+
 class model_data:
-    def __init__(self, psms_df, features1, features2, le=None):
+    """Class to keep data together."""
+    def __init__(self, psms_df, features1, features2=pd.DataFrame(), le=None):
+        """
+        Class to keep the model data at a single place.
+
+        Args:
+            psms_df: df, dataframe with identifications
+            features1: df, features for the second peptide
+            features2: df, features for the second peptide
+            le:
+        """
+        # init by setting training column to false for all ids
         psms_df["xirt_training"] = False
 
         self.psms = psms_df
@@ -20,41 +40,60 @@ class model_data:
         self.le = le
 
 
-def generate_model(param, rnn_features_seq1, sequence_type):
+def generate_model(param, input_dim, sequence_type):
+    """
+    Function to build the network archtiecture.
+
+    If the input is linear or pseudolinear the resulting networks dont feature the Siamese
+    architecutre. Only for the crosslinks the Siamese architecture is used.
+
+    Args:
+        param: dict, parameters to init the architecture
+        input_dim: int, number of columns that are used as input for the network (rnn_features)
+        sequence_type: str, one of linear, pseudolinear, crosslink
+
+    Returns:
+
+    """
     if sequence_type in ("linear", "pseudolinear"):
-        xiRTNET = xirtnet.build_xirtnet(config=param, input_dim=rnn_features_seq1.shape[1])
+        xiRTNET = xirtnet.build_xirtnet(config=param, input_dim=input_dim,
+                                        input_meta = None, single_task = "None")
     else:
-        xiRTNET = xirtnet.build_siamese(config=param, input_dim=rnn_features_seq1.shape[1],
+        xiRTNET = xirtnet.build_siamese(config=param, input_dim=input_dim,
                                         input_meta=None, single_task="None")
     return xiRTNET
 
 
-def preprocess(psms_df, sequence_type="crosslinks", max_length=-1, cl_residue=False,
+def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=True,
                fraction_cols=["xirt_SCX", "xirt_hSAX"]):
-    """Prepare peptide identifications to be used with xiRT. High-level wrapper
-    performing multiple steps.
+    """Prepare peptide identifications to be used with xiRT.
+
+    High-level wrapper performing multiple steps. In processing order this function:
+    sets and index, sorts by score, reorders crosslinked peptides for length (alpha longer),
+    rewrites sequences to modX, marks duplicates, modifies cl residues, computes RNN features
+    and stores everything in the data model.
 
     Args:
-        psms_df: df, dataframe with peptide identifications
+        matches_df: df, dataframe with peptide identifications
         sequence_type: str, either linear or cross-linked indicating the input molecule type.
         max_length: int, maximal length of peptide sequences to consider. Longer sequences will
         be removed
         cl_residue: bool, if true handles cross-link sites as additional modifications
 
     Returns:
-        df, processed feature dataframe
+        model_data, processed feature dataframes and label encoder
     """
     # set index
-    psms_df.set_index("PSMID", drop=False, inplace=True)
+    matches_df.set_index("PSMID", drop=False, inplace=True)
 
     # sort to keep only highest scoring peptide from duplicated entries
-    psms_df = psms_df.sort_values(by="score", ascending=False)
+    matches_df = matches_df.sort_values(by="score", ascending=False)
 
     # generate columns to handle based on input data type
     if sequence_type == "crosslink":
         # change peptide order
-        psms_df["Peptide1"], psms_df["Peptide2"], psms_df["PeptidesSwapped"] = \
-            xs.reorder_sequences(psms_df)
+        matches_df["Peptide1"], matches_df["Peptide2"], matches_df["PeptidesSwapped"] = \
+            xs.reorder_sequences(matches_df)
         seq_in = ["Peptide1", "Peptide2"]
 
     elif sequence_type == "pseudolinear":
@@ -70,29 +109,28 @@ def preprocess(psms_df, sequence_type="crosslinks", max_length=-1, cl_residue=Fa
     seq_proc = ["Seqar_" + i for i in seq_in]
 
     # perform the sequence based processing
-    psms_df = xp.prepare_seqs(psms_df, seq_cols=seq_in)
+    matches_df = xp.prepare_seqs(matches_df, seq_cols=seq_in)
 
     # concat peptide sequences
-    psms_df["PepSeq1PepSeq2_str"] = psms_df["Peptide1"] + psms_df["Peptide2"]
+    matches_df["PepSeq1PepSeq2_str"] = matches_df["Peptide1"] + matches_df["Peptide2"]
 
     # mark all duplicates
-    psms_df["Duplicate"] = psms_df.duplicated(["PepSeq1PepSeq2_str"], keep="first")
+    matches_df["Duplicate"] = matches_df.duplicated(["PepSeq1PepSeq2_str"], keep="first")
 
     if cl_residue:
-        xs.modify_cl_residues(psms_df, seq_in=seq_in)
+        xs.modify_cl_residues(matches_df, seq_in=seq_in)
 
     features_rnn_seq1, features_rnn_seq2, le = \
-        xp.featurize_sequences(psms_df, seq_cols=seq_proc, max_length=max_length)
+        xp.featurize_sequences(matches_df, seq_cols=seq_proc, max_length=max_length)
 
-    xp.fraction_encoding(psms_df, rt_methods=fraction_cols)
+    if len(fraction_cols) > 0:
+        xp.fraction_encoding(matches_df, rt_methods=fraction_cols)
 
     # keep all data together in a data class
-    training_data = model_data(psms_df, features_rnn_seq1, features_rnn_seq2, le=le)
+    training_data = model_data(matches_df, features_rnn_seq1, features_rnn_seq2, le=le)
     return training_data
 
 # %%
-
-
 def develop():
     in_loc = r"C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\50pCSMFDR_universal_final.csv"
     xiRT_loc = r"C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\xirt_params.yaml"

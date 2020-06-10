@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pyteomics.parser import std_amino_acids
-
+import pytest
 from xirt import sequences as xs
 
 
@@ -55,20 +55,46 @@ def test_to_unmodified_sequence():
 
 
 def test_reorder_Sequences():
-    # test redorder sequence based on length
-    xidf = pd.DataFrame()
-    xidf["Peptide1"] = ["A", "B", "AB", "A", "AB", "AC", "AA"]
-    xidf["Peptide2"] = ["B", "A", "A", "AB", "AB", "AA", "AC"]
+    # test reorder sequence based on length
+    # A- B -> B-A
+    # A - BA -> BA - A
+    # AA  AC -> AC - AA
+    matches_df = pd.DataFrame()
+    matches_df["Peptide1"] = ["A", "B", "AB", "A", "AB", "AC", "AA"]
+    matches_df["Peptide2"] = ["B", "A", "A", "AB", "AB", "AA", "AC"]
+    matches_df["PeptidePos1"] = [1, 2, 3, 4, 5, 6, 7]
+    matches_df["PeptidePos2"] = [11, 12, 13, 14, 15, 16, 17]
+    matches_df.index = np.arange(100, 107, 1)
 
     seq1_exp = np.array(["B", "B", "AB", "AB", "AB", "AC", "AC"])
     seq2_exp = np.array(["A", "A", "A", "A", "AB", "AA", "AA"])
+
+    pos1_exp = np.array([11, 2, 3, 14, 15, 6, 17])
+    pos2_exp = np.array([1, 12, 13, 4, 5, 16, 7])
+
     swapped_exp = np.array([True, False, False, True, True, False, True])
 
-    seq1, seq2, swapped = xs.reorder_sequences(xidf)
-    assert np.all(seq1_exp == seq1)
-    assert np.all(seq2_exp == seq2)
-    assert np.all(swapped == swapped_exp)
+    swapped_df = xs.reorder_sequences(matches_df)
+    assert np.all(seq1_exp == swapped_df.Peptide1)
+    assert np.all(seq2_exp == swapped_df.Peptide2)
+    assert np.all(pos1_exp == swapped_df.PeptidePos1)
+    assert np.all(pos2_exp == swapped_df.PeptidePos2)
+    assert np.all(swapped_exp == swapped_df.swapped)
 
+
+def test_reorder_Sequences_test_raise():
+    # test reorder sequence based on length
+    # A- B -> B-A
+    # A - BA -> BA - A
+    # AA  AC -> AC - AA
+    matches_df = pd.DataFrame()
+    matches_df["Peptide1"] = ["A", "B", "AB", "A", "AB", "AC", "AA"]
+    matches_df["Peptide2"] = ["B", "A", "A", "AB", "AB", "AA", "AC"]
+    matches_df["PeptidePos1"] = [1, 2, 3, 4, 5, 6, 7]
+    matches_df.index = np.arange(100, 107, 1)
+    # this should raise an error since PeptidePos2 is missing
+    with pytest.raises(ValueError):
+        xs.reorder_sequences(matches_df)
 
 def test_modify_cl_residues():
     # modify cl residues by cl prefix, test by sequence and cross-link site information

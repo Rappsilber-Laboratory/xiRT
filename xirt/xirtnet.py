@@ -23,6 +23,23 @@ from tensorflow.keras import backend as K
 from tensorflow.keras import losses
 
 
+def loss_ordered(y_true, y_pred):
+    weights = K.cast(K.abs(K.argmax(y_true, axis=1) - K.argmax(y_pred, axis=1))
+                     / (K.int_shape(y_pred)[1] - 1), dtype='float32')
+    return (1.0 + weights) * losses.categorical_crossentropy(y_true, y_pred)
+
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+
+if gpus:
+    # Currently, memory growth needs to be the same across GPUs
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
+
+        
 class xiRTNET:
     def __init__(self):
         self.model = None
@@ -52,23 +69,6 @@ class xiRTNET:
         print('Total params: {:,}'.format(trainable_count + non_trainable_count))
         print('Trainable params: {:,}'.format(trainable_count))
         print('Non-trainable params: {:,}'.format(non_trainable_count))
-
-
-def loss_ordered(y_true, y_pred):
-    weights = K.cast(K.abs(K.argmax(y_true, axis=1) - K.argmax(y_pred, axis=1))
-                     / (K.int_shape(y_pred)[1] - 1), dtype='float32')
-    return (1.0 + weights) * losses.categorical_crossentropy(y_true, y_pred)
-
-
-gpus = tf.config.experimental.list_physical_devices('GPU')
-
-if gpus:
-    # Currently, memory growth needs to be the same across GPUs
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-    except RuntimeError as e:
-        print(e)
 
 
 def params_to_df(params, outpath):
