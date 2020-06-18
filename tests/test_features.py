@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 from xirt import features
+
 
 def test_create_simple_features():
     df = pd.DataFrame()
@@ -50,6 +50,7 @@ def test_create_all_features_mods():
 
     assert sorted(ff_df.columns.tolist()) == exp_columns
     assert ff_df.shape == exp_shape
+
 
 def test_get_hydrophobicity():
     from Bio.SeqUtils.ProtParamData import kd
@@ -145,6 +146,7 @@ def test_extract_nterm_mods():
     result = list(np.hstack(features.extract_nterm_mods(peptide)))
     assert result == expected
 
+
 def test_patches_counts():
     peptide = "PPPPPDEPPPPDEE"
     counts = 2
@@ -180,15 +182,17 @@ def test_get_structure_perc():
     assert np.isclose(turn, features.get_structure_perc(peptide, "turn"), 2)
     assert np.isclose(sheet, features.get_structure_perc(peptide, "sheet"), 2)
 
+
 def test_simply_alphabet():
     peptide = "PPPPUPPP"
     exp_peptide = "PPPPCPPP"
     assert exp_peptide == features.simply_alphabet(peptide)
 
+
 def test_turn_indicator_middle():
     sequence = "ASDPASDL"
     length = 8.
-    assert 3/length == features.get_turn_indicator(sequence)
+    assert 3 / length == features.get_turn_indicator(sequence)
 
 
 def test_turn_indicator_start():
@@ -245,7 +249,6 @@ def test_get_pi():
     peptide = "ELVIS"
     exp_pi = 4.00
     return exp_pi == np.round(features.get_pi(peptide))
-
 
 
 def test_get_mw():

@@ -8,7 +8,7 @@ LSTM:
   lstm_bn: true
   nlayers: 1
   type: GRU
-  units: 75
+  units: 50
 conv:
   activation: -1
   conv_bn: -1
@@ -35,9 +35,9 @@ dense:
   - l2
   - l2
   neurons:
-  - 300
-  - 150
-  - 75
+  - 50
+  - 25
+  - 10
   nlayers: 3
   regularization:
   - true

@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing import sequence as ts
 
 
 def simplify_alphabet(sequence):
-    """Replace amibguous amino acids.
+    """Replace ambiguous amino acids.
 
     Some sequences are encoded with 'U', arbitrarily choose C as residue to
     replace any U (Selenocystein).
@@ -18,7 +18,7 @@ def simplify_alphabet(sequence):
     sequence: string,
               peptide sequences
     """
-    return (sequence.replace("U", "C"))
+    return sequence.replace("U", "C")
 
 
 def remove_brackets_underscores(sequence):
@@ -31,7 +31,7 @@ def remove_brackets_underscores(sequence):
     sequence: string,
               peptide sequences
     """
-    return (re.sub("[\(\)\[\]_\-]", "", sequence))
+    return re.sub("[\(\)\[\]_\-]", "", sequence)
 
 
 def replace_numbers(sequence):
@@ -51,7 +51,7 @@ def replace_numbers(sequence):
            "9": "nine",
            "0": "zero"}
     pattern = re.compile("|".join(rep.keys()))
-    return (pattern.sub(lambda m: rep[re.escape(m.group(0))], sequence))
+    return pattern.sub(lambda m: rep[re.escape(m.group(0))], sequence)
 
 
 def remove_nterm_mod(sequence):
@@ -63,7 +63,7 @@ def remove_nterm_mod(sequence):
     :param sequence: str, peptide sequence
     :return:
     """
-    return (re.sub(r'^([a-z]+)([A-Z])', r'\2', sequence, flags=re.MULTILINE))
+    return re.sub(r'^([a-z]+)([A-Z])', r'\2', sequence, flags=re.MULTILINE)
 
 
 def rewrite_modsequences(sequence):
@@ -81,7 +81,7 @@ def rewrite_modsequences(sequence):
     :param sequence: str, peptide sequence
     :return:
     """
-    return (re.sub("([A-Z])([^A-Z]+)", r'\2\1', sequence))
+    return re.sub("([A-Z])([^A-Z]+)", r'\2\1', sequence)
 
 
 def remove_lower_letters(sequence):
@@ -90,7 +90,7 @@ def remove_lower_letters(sequence):
     :param sequence: str, peptide sequence
     :return:
     """
-    return (re.sub("[a-z]", "", sequence))
+    return re.sub("[a-z]", "", sequence)
 
 
 def to_unmodified_sequence(sequence):
@@ -112,7 +112,7 @@ def reorder_sequences(matches_df):
         matches_df: df, dataframe with peptide identifications.
 
     Returns:
-        ar, ar, ar: peptides1, peptides2, swapped
+        df, dataframe with the swapped cells and additional indicator column ('swapped')
     """
     # compile regex to match columsn with 1/2 in the end of the string
     # check if all pairwise columns are there
@@ -136,7 +136,7 @@ def reorder_sequences(matches_df):
     order_lex = (matches_df["Peptide1"] > matches_df["Peptide2"]).values
 
     # create a copy of the dataframe
-    swapping_df = matches_df[match_columns].copy()
+    swapping_df = matches_df.copy()
     swapped = np.ones(len(matches_df), dtype=bool)
 
     # z_idx for 0-based index

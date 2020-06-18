@@ -86,7 +86,7 @@ def create_all_features(df, alphabet=parser.std_amino_acids, pos_specific=False,
 
     # add gl/ac features
     for mod in nterm_mods:
-        ff_df[mod] = orig_sequences.apply(get_nterm_mod, args=[mod])
+        ff_df[mod] = orig_sequences.apply(get_nterm_mod, mod=mod)
     orig_sequences = orig_sequences.apply(sequences.replace_numbers)
     orig_sequences = orig_sequences.apply(sequences.rewrite_modsequences)
 
@@ -120,9 +120,9 @@ def get_nterm_mod(seq, mod):
     If the sequences contains the mod a 1 is returned, else 0.
     """
     if seq.startswith(mod):
-        return (1)
+        return 1
     else:
-        return (0)
+        return 0
 
 
 def get_loglength(seq):

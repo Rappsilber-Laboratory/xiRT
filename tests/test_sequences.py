@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
-from pyteomics.parser import std_amino_acids
 import pytest
+from pyteomics.parser import std_amino_acids
+
 from xirt import sequences as xs
 
 
@@ -95,6 +96,7 @@ def test_reorder_Sequences_test_raise():
     # this should raise an error since PeptidePos2 is missing
     with pytest.raises(ValueError):
         xs.reorder_sequences(matches_df)
+
 
 def test_modify_cl_residues():
     # modify cl residues by cl prefix, test by sequence and cross-link site information
