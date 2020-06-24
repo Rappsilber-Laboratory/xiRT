@@ -1,22 +1,12 @@
-name: Tests
-
-on: [push, pull_request]
-
+on: push
+name: pyest_minimal
 jobs:
-  build:
-
+  gitHubActionForPytest:
+    name: GitHub Action for pytest
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.7]
-
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+    - uses: actions/checkout@master
+    - name: GitHub Action for pytest
+      uses: cclauss/GitHub-Action-for-pytest@master
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Test with pytest
-      run: |
-        pytest --flake8 --pydocstyle --cov=xirt --cov-fail-under=90 --cov-report html
+        args: pytest -h
