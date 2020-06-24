@@ -121,14 +121,13 @@ def reorder_sequences(matches_df):
     match_columns = list(filter(r.match, matches_df.columns))
     # remove number
     pairs_noidx = [i[:-1] for i in match_columns]
-    unique_idx = np.unique(pairs_noidx)
     # count occurrences and check if pairs are there
     counts = [(i, j) for i, j in Counter(pairs_noidx).items() if j == 2]
     if len(counts) * 2 != len(pairs_noidx):
         raise ValueError("Error! Automatic column matching could not find pairwise crosslink "
                          "columns. Please make sure that you have a peptide1, peptide2 "
-                         "column name pattern for crosslinks. Columns must appear in pairs if there "
-                         "is a number in the end of the name.")
+                         "column name pattern for crosslinks. Columns must appear in pairs if there"
+                         " is a number in the end of the name.")
 
     # order logic, last comparison checks lexigographically
     order_long = (matches_df["Peptide1"].apply(len) > matches_df["Peptide2"].apply(len)).values

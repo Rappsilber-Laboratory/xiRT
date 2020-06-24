@@ -1,18 +1,13 @@
 """This module contains the script to run xiML."""
-import argparse
 import os
+# import argparse
 import sys
-import os
 
 import pandas as pd
 import yaml
 
-from xirt import predictor as xr
-from xirt import xirtnet
-import pandas as pd
-
 from xirt import basic
-
+from xirt import predictor as xr
 
 if __name__ == "__main__":
     print("Hello there")

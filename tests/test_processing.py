@@ -135,8 +135,9 @@ def test_fraction_encoding():
 
 def test_transform_RT():
     expected_RTs = np.array([10000, 2000])
-    assert expected_RTs / 60 == xp.transform_RT((expected_RTs))
+    assert np.all(expected_RTs / 60 == xp.transform_RT((expected_RTs)))
+
 
 def test_transform_RT_no():
     expected_RTs = np.array([65, 90])
-    assert expected_RTs == xp.transform_RT(expected_RTs)
+    assert np.all(expected_RTs == xp.transform_RT(expected_RTs))

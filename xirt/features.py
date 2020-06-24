@@ -8,7 +8,6 @@ import pandas as pd
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from Bio.SeqUtils.ProtParamData import kd
 from pyteomics import parser
-from tensorflow.keras.preprocessing import sequence
 
 from xirt import sequences
 
@@ -98,14 +97,14 @@ def create_all_features(df, alphabet=parser.std_amino_acids, pos_specific=False,
 
 
 def get_hydrophobicity(sequence):
-    """Computes the overall hydrophobicity of a peptide sequence as simple sum
-    of the indices according to kyte/doolittle. Modifications are non-standard
-    amino acids are ignored.
+    """Computes the overall hydrophobicity of a peptide sequence.
+
+    Simple summation is used of the indices according to kyte/doolittle.
+    Modifications are non-standard amino acids are ignored.
 
     Parameters
     ----------
-    sequence, str
-              A peptide sequence
+    sequence: str. peptide sequence
 
     Returns
     -------
@@ -169,8 +168,8 @@ def get_estimated_charge(seq):
     """
     return (seq.count("D") + seq.count("E") + (0.3 * seq.count("F")
                                                + 0.8 * seq.count("W")
-                                               + 0.6 * seq.count("Y")) -
-            seq.count("K") - seq.count("R"))
+                                               + 0.6 * seq.count("Y")) - seq.count("K") - seq.count(
+        "R"))
 
 
 def get_residue_charge(seq):
@@ -229,10 +228,9 @@ def add_shortest_distance(orig_sequence, opt="cterm", verbose=False):
     # if there is a amino acid found...
     if match:
         pos = match.start() + 1
-        aa = sequence[pos - 1:match.end()]
     else:
         pos = 0
-    return (pos)
+    return pos
 
 
 def extract_nterm_mods(sequences):

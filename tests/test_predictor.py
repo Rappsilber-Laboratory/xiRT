@@ -5,12 +5,13 @@ import numpy as np
 
 from xirt import predictor as xr
 
+fixtures_loc = os.path.join(os.path.dirname(__file__), 'fixtures')
+
 
 def test_preprocessing_crosslinks():
-    current_dir = os.path.dirname(__file__)
-    psms_df = pd.read_csv(r"\tests\fixtures\50pCSMFDR_universal_final.csv")
-#        r"C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\50pCSMFDR_universal_final.csv")
+    psms_df = pd.read_csv(fixtures_loc + r"\50pCSMFDR_universal_final.csv")
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False)
+    # TODO test something
     assert True
 
 
@@ -19,6 +20,7 @@ def test_preprocessing_linear():
         r"fixtures\\50pCSMFDR_universal_final.csv")
 #        r"C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\50pCSMFDR_universal_final.csv")
     training_data = xr.preprocess(psms_df, "linear", max_length=-1, cl_residue=False)
+    # TODO test something
     assert True
 
 
@@ -28,6 +30,7 @@ def test_data():
     assert data.features1 == [1]
     assert data.features2 == [2]
     assert data.le == pd.DataFrame()
+
 
 def test_model_data_trainable():
     # simple test to check fdr and TT filter
@@ -48,6 +51,7 @@ def test_model_data_trainable():
 
     exp_trainable = np.array([True, True, True, False, False])
     assert np.all(data.psms["fdr_mask"].values == exp_trainable)
+
 
 def test_model_data_shuffle():
     peptide1 = ["Peptide" + str(i) for i in np.arange(1, 6)]
@@ -85,6 +89,7 @@ def test_model_data_set_cv3():
 
     assert data.cv_folds_ar == np.arange(1, ncv+1)
     assert len(data.train_idx) != len(np.unique(np.concatenate(data.cv_indices_ar)))
+
 
 def test_model_data_set_cv1():
     ncv = 1

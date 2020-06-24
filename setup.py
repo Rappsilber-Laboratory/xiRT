@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+"""setup file for the project."""
 # code gratefully take from https://github.com/navdeep-G/setup.py
 
 # Note: To use the 'upload' functionality of this file, you must:
@@ -7,10 +6,11 @@
 
 import io
 import os
-import sys
-from shutil import rmtree
+# import sys
+# from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import find_packages, setup
+# Command
 
 # Package meta-data.
 NAME = 'xirt'

@@ -203,8 +203,7 @@ def test_turn_indicator_start():
 def test_turn_indicator_multiple():
     # every three amino acids
     sequence = "AAPAAPAA"
-    length = 8.
-    assert 3 / 8. == features.get_turn_indicator(sequence)
+    assert 3 / len(sequence) == features.get_turn_indicator(sequence)
 
 
 def test_get_AA_matrix():
@@ -270,7 +269,7 @@ def test_get_AA_matrix_custom_position():
     assert np.all(AA_counts[columns].values == exp_results.values)
 
 
-def test_get_AA_matrix_custom_position():
+def test_get_AA_matrix_custom_position_short_pep():
     sequences = ["EE"]
     AA_counts = features.get_AA_matrix(sequences, residues=["E"], lcp=1, correct=False,
                                        pos_specific=True, ntermini=5)
