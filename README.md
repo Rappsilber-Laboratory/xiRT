@@ -1,6 +1,8 @@
 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 ![coverage](./documentation/coverage.svg)
-
+</p><a href="https://twitter.com/intent/follow?screen_name=RappsilberLab">
+        <img src="https://img.shields.io/twitter/follow/shields_io?style=social&logo=twitter"
+            alt="follow on Twitter"></a></p>
 # xiRT
 
 A python package for multi-dimensional retention time prediction for linear and crosslinked 
@@ -16,7 +18,7 @@ such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographicall
 ![xiRT Architecture](documentation/xiRT.PNG)
 
 ## Description
-[under construction]
+[xiRT is currently under construction to make it (painlessly) work for any chromatography combination.]
 
 # Usage
 
