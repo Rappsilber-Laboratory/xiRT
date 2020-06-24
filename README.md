@@ -3,15 +3,17 @@
 
 # xiRT
 
-A python package for multi-dimensional retention time prediction for linear and cross-linked 
+A python package for multi-dimensional retention time prediction for linear and crosslinked 
 peptides using a (siamese) deep neural network architecture. Figure 1 shows a simplified 
 network architecture.
 
 ### overview
 
-xiRT is a deep learning tool to predict the RT of linear and cross-linked peptides. xiRT requires 
+xiRT is a deep learning tool to predict the RT of linear and cross-linked peptides. xiRT requires the
 columns shown in the table below. Importantly, the xiRT framework requires that CSM are sorted
-such that Peptide1 - Peptide2 pairs are defined by peptide length / lexicographically. 
+such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically larger one.
+
+![xiRT Architecture](documentation/xiRT.PNG)
 
 ### input format
 | short name         | explicit column name | description                                                                    | Example     |
@@ -37,7 +39,14 @@ following columns need to be present:
 - xirt_hSAX
 
 ### config file
-To adapt the xiRT parameters a yaml config file needs to be prepared.
+To adapt the xiRT parameters a yaml config file needs to be prepared. The configuration file
+is used to determine network parameters (number of neurons, layers, regularization) but also for the
+definition of the prediction task (classification, regression, ordered regression). Depending
+on the decoding of the target variable the output layers need to be adapted. For standard RP 
+prediction, regression is essentially the only viable option. For SCX/hSAX (general classification)
+prediction the prediction task can be formulated as classification, regression or ordered regression.
+For the usage of regression for fractionation it is recommended that the estimated salt concentrations
+are used as target variable for the prediction (raw fraction numbers are possible too).
 
 ### Installation & Usage
 To install xiRT a pip package is under development. Future release can be installed via:
@@ -47,5 +56,8 @@ To enable CUDA support, the specific libraries need to be installed manually. Th
 dependencies are covered via the pip installation.
 
 To use xiRT a simple command line script gets installed with pip. To run the predictions ...
+
+### Contributors
+- Sven Giese
 
 
