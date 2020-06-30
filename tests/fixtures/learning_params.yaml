@@ -46,10 +46,9 @@ train:
   ncv: 3
   mode: "crossvalidation" # other modes are: train / crossvalidation / predict
   augment: False
-  sequence_type: "crosslinks"
+  sequence_type: "crosslink"
   pretrained_weights: "None"
   test_frac: 0.10
   sample_frac: 1
-  test_state: 21
   sample_state: 21
-  cv_state: 21
+

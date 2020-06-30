@@ -81,4 +81,6 @@ output:
   scx-metrics: mse
   scx-weight: 50
 siamese:
+  use: True
   merge_type: add
+
