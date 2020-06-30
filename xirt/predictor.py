@@ -63,6 +63,19 @@ class model_data:
         self.psms["fdr_mask"] = fdr_mask
 
     def set_unique_shuffled_sampled_training_idx(self, sample_frac=1, random_state=42):
+        """
+        Set the training index based on fdr mask and removing duplicates.
+
+        This function also servers for learning curves (by reducing the sample_frac) and
+        CV variations (using different states).
+
+        Args:
+            sample_frac: float, percentage of training samples to use
+            random_state: int, random state
+
+        Returns:
+            None
+        """
         psms_train_idx = self.psms[
             (self.psms["fdr_mask"]) & (self.psms["Duplicate"] == False)].sample(
             frac=sample_frac, random_state=random_state).index
@@ -117,31 +130,65 @@ class model_data:
         raise ValueError(
             "Given mode is not supported (one of train/crossvalidation) not: {}".format(mode))
 
-        for cv_i in self.cv_folds_ar:
-            train_init_loc, val_loc = list(rs.split(training_data._get_train_psms()))[0]
-            train_init_idx = self.psms
-            xtrain_init, xtest = train_test_split(training_data._get_train_psms(),
-                                                  test_size=test_size,
-                                                  random_state=test_state)
+        # for cv_i in self.cv_folds_ar:
+        #     train_init_loc, val_loc = list(rs.split(training_data._get_train_psms()))[0]
+        #     train_init_idx = self.psms
+        #     xtrain_init, xtest = train_test_split(training_data._get_train_psms(),
+        #                                           test_size=test_size,
+        #                                           random_state=test_state)
 
     def _get_train_psms(self):
+        """
+        Return the psms used for training.
+
+        Returns:
+            df, dataframe with psms passing training conditions
+        """
         return (self.psms.loc[self.train_idx])
 
     def _get_predict_psms(self):
+        """
+        Return the psms used for prediction.
+
+        Returns:
+            df, dataframe with psms passing training conditions
+        """
         return (self.psms.loc[self.predict_idx])
 
-    def _get_X(self, idx, meta=False):
+    def get_features(self, idx, meta=False):
+        """
+        Return the feature format for multi-task learning for linear and crosslinked peptides.
+
+        Args:
+            idx: ar-like, indices to subset feature data
+            meta: bool, if meta features should be included.
+
+        Returns:
+            df, feature dataframe
+        """
+
         if meta:
             # TODO
-            pass
+            xfeatures = None
         else:
-            X = (self.features1.filter(regex="rnn").loc[idx],
-                 self.features2.filter(regex="rnn").loc[idx])
+            xfeatures = (self.features1.filter(regex="rnn").loc[idx],
+                         self.features2.filter(regex="rnn").loc[idx])
+        return xfeatures
 
-        return X
+    def get_classes(self, idx):
+        """
+        Return the feature format for multi-task learning for linear and crosslinked peptides.
 
-    def _get_y(self, idx):
-        pass
+        Args:
+            idx: ar-like, indices to subset feature data
+
+        Returns:
+            df, feature dataframe
+        """
+        yt_cv = [xirtnet.reshapey(self.psms["xirt_hSAX_ordinal"].loc[idx].values),
+                 xirtnet.reshapey(self.psms["xirt_SCX_ordinal"].loc[idx].values),
+                 self.psms["xirt_RP"].loc[idx].values]
+        return yt_cv
 
 def generate_model(param, input_dim, sequence_type):
     """
@@ -233,20 +280,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     return training_data
 
 
-# %%
-def develop():
-    in_loc = r"C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\50pCSMFDR_universal_final.csv"
-    xiRT_loc = r"C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\xirt_params.yaml"
-    xiRT_params = yaml.load(open(xiRT_loc), Loader=yaml.FullLoader)
-    sequence_type = "crosslink"
-    fdr_cutoff = 0.05
-    sample_frac = 1
-    sample_state = 42
-    psms_df = pd.read_csv(in_loc)
-    data = preprocess(psms_df, sequence_type=sequence_type, max_length=-1, cl_residue=False,
-                      fraction_cols=["xirt_SCX", "xirt_hSAX"])
-
-
+# %% old code
 def train(data, fdr_cutoff=0.05, sample_frac=1, sample_state=42):
     """asdasdasdasdasdasd.
 
