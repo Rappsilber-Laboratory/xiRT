@@ -1,0 +1,55 @@
+# global settings
+# outpath: str, location to store the results
+# fdr: float, fdr filter that is applied before training on the data
+# depart-params: str, location of the yaml file for using the RT prediction from depart.
+
+global:
+    outpath: 'paper/data/results_2020_modelselection/clresidues/'
+    clean: False
+    psms_loc: "/home/svengiese/win/xifdr_psms/xisearch_cbnn_nf_ECHS_5pPSMFDR_CSM_xiFDR1.4.4.csv"
+# preprocessing options:
+# le: str, label encoder location
+# xi_annotation: str, location of the MS2_summary_data table
+# max_length: float, max length of sequences
+preprocessing:
+    le: None
+    xi_annotation: "/home/svengiese/depart_clms/paper/data/MS2_summary_data/ECCP_RECAL_MS2_summary_data.csv"
+    max_length: -1 # -1
+    cl_residue: True
+
+# train and transfer share the same options that are necessary to run xiML, here is a brief rundown:
+# include: bool, True | False, set this to True if you want to include train / transfer scenarios
+# load: bool, True | False, set this to True if you just want to load the previously saved
+#                           label encoder
+# engine: str, search engine that was used to generate the input data. Valid options are:
+# xi, xifdr, xionline, xioffline
+# linear: bool, True | False, if True indicates that this psms table is from linear identifications
+# psms_loc: str, location of the PSMS you want to use for training / transfer
+# ncv: int, cross-validation mode. Must be at least 3, 5 is recommended.
+# mode: str, train | crossval | predict:
+# train - will train the classifier in a special setup, dividing the data into 60/15/15 for
+#         train/val/test splits. Does not use cross-validation (ncv) parameter
+#         => should be used for training a classifier to be used on a different data set
+
+# crossval - will train the classifier in a cross-validation manner using 5 equally sized folds
+#            substracting the test_frac data as final evaluation data.
+#           => should be used for hyperparameter optimization
+
+# predict - core mode of the tool to use the predictions for later rescoring of PSMS. The folds
+#           will be divided into train/train/train/validation/test, where validation is used for
+#           early stopping and test for the prediction.
+#           => should be used for usage in xiML-rescoring afterwards.
+# test_frac: float, fraction of data to be used for testing. In Train mode also defines how many
+#            samples are left out for training.
+train:
+  fdr: 0.01
+  ncv: 3
+  mode: "crossvalidation" # other modes are: train / crossvalidation / predict
+  augment: False
+  sequence_type: "crosslinks"
+  pretrained_weights: "None"
+  test_frac: 0.10
+  sample_frac: 1
+  test_state: 21
+  sample_state: 21
+  cv_state: 21
