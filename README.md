@@ -1,16 +1,20 @@
-[![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
-![coverage](./documentation/coverage.svg)
+![logo](./documentation/xiRT_logo.png) [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 
-</p><a href="https://twitter.com/intent/follow?screen_name=RappsilberLab">
-        <img src="https://img.shields.io/twitter/follow/RappsilberLab?style=social&logo=twitter"
-            alt="follow on Twitter"></a></p>
+[![GitHub](https://flat.badgen.net/github/license/compomics/ms2pip_c)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Twitter](https://flat.badgen.net/twitter/follow/rappsilberlab?icon=twitter)](https://twitter.com/compomics)
+![coverage](./documentation/coverage.svg)  
 
-# xiRT
 
 A python package for multi-dimensional retention time prediction for linear and crosslinked 
 peptides using a (siamese) deep neural network architecture. Figure 1 shows a simplified 
 network architecture.
+---
 
+- [Overview](#overview)
+- [Description](#Description)
+- [Installation](#Installation)
+
+---
 ## overview
 
 xiRT is a deep learning tool to predict the RT of linear and cross-linked peptides. xiRT requires the

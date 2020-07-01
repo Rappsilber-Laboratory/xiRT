@@ -83,12 +83,16 @@ class xiRTNET:
             # merge the lower and upper part of the network
             if self.siamese_p["merge_type"].lower() == "add":
                 merge_func = Add
+
             elif self.siamese_p["merge_type"].lower() == "multiply":
                 merge_func = Multiply
+
             elif self.siamese_p["merge_type"].lower() == "average":
                 merge_func = Average
+
             elif self.siamese_p["merge_type"].lower() == "concatenate":
                 merge_func = Concatenate
+
             elif self.siamese_p["merge_type"].lower() == "maximum":
                 merge_func = Maximum
             else:
@@ -321,10 +325,13 @@ class xiRTNET:
         """
         if regularizer == "l1":
             regularizer_tmp = regularizers.l1(reg_value)
+
         elif regularizer == "l2":
             regularizer_tmp = regularizers.l2(reg_value)
+
         elif regularizer == "l1l2":
             regularizer_tmp = regularizers.l1_l2(reg_value, reg_value)
+
         else:
             raise KeyError("Regularizer not defined ({})".format(regularizer))
         return regularizer_tmp
@@ -334,11 +341,12 @@ class xiRTNET:
             plot_model(self.model, to_file=fig_path + "Network_Model.pdf", show_shapes=True,
                        show_layer_names=True, dpi=300, expand_nested=True)
         except ValueError as err:
-            print("Encountered an VaulueError, PDF is still written. ({})".format(err))
+            print("Encountered an ValueError, PDF is still written. ({})".format(err))
 
     def compile(self, loss=None, metric=None, loss_weights=None):
         # compile optimizer
         adam = optimizers.Adam(lr=self.learning_p["learningrate"])
+
         # overwrite parameters from config, if specified
         if not loss:
             loss = self.output_p["loss"]
@@ -347,7 +355,7 @@ class xiRTNET:
 
         self.model.compile(loss=loss, optimizer=adam, metrics=metric, loss_weights=loss_weights)
 
-    def fit(model):
+    def fit(X_train, y_train, X_val, y_val, X_train_meta=None, X_val_meta=None):
         # configure validation data format, depending on supplied validation split
         callbacks = get_callbacks(outname, check_point=True, log_csv=True, early_stopping=True,
                                   patience=comp_params["patience"],
@@ -373,8 +381,6 @@ class xiRTNET:
         history = model.fit(train_data, y_train, batch_size=comp_params["batch_size"],
                             epochs=comp_params["epochs"], verbose=v, callbacks=callbacks,
                             validation_data=validation_data, validation_split=validation_split)
-
-        print("Callbacks are stored here: {}".format(opt_params["callback-path"]))
 
     def predict(self):
         pass
