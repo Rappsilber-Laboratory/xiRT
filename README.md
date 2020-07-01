@@ -64,15 +64,14 @@ are used as target variable for the prediction (raw fraction numbers are possibl
 
 The first four columns should be self explanatory, if not check the sample input *#TODO*. 
 The fifth column ("CSMID") is a unique(!) integer that can be used as to retrieve CSMs. In addition, 
-depending on the number retention time domains that should to be learned/predicted the 
-following columns need to be present:
-
-- xirt_RP
-- xirt_SCX
-- xirt_hSAX
+depending on the number retention time domains that should to be learned/predicted the RT columns 
+should have a prefix "xirt_". For instance if 2 dimensions were measured in SCX and RP, the input
+should contain "xirt_RP" and "xirt_SCX". The same naming needs to be adapted for the network config.
 
 ## CLI interface
 [under construction]
+## network config
+## xiRT config
 
 ### Contributors
 - Sven Giese
