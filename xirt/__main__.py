@@ -5,6 +5,7 @@ import os
 import sys
 
 import pandas as pd
+import numpy as np
 import yaml
 
 from xirt import predictor as xr
@@ -44,20 +45,33 @@ def xirt_runner(peptides_file, xirt_loc, learning_loc):
     # convenience short cuts
     n_splits = learning_params["train"]["ncv"]
     test_size = learning_params["train"]["test_frac"]
+
     # preprocess training data
     training_data = xr.preprocess(matches_df,
                                   sequence_type=learning_params["train"]["sequence_type"],
                                   max_length=learning_params["preprocessing"]["max_length"],
                                   cl_residue=False, # learning_params["preprocessing"]["cl_residue"]
-                                  fraction_cols=["xirt_SCX", "xirt_hSAX"])
+                                  fraction_cols=xirt_params["predictions"]["fractions"])
 
     # set training index by FDR and duplicates
     training_data.set_fdr_mask(fdr_cutoff=learning_params["train"]["fdr"])
     training_data.set_unique_shuffled_sampled_training_idx(
         sample_frac=learning_params["train"]["sample_frac"],
         random_state=learning_params["train"]["sample_state"])
-    # adjust RT if necessary to guarantee smooth learning
-    training_data.psms["xirt_RP"] = training_data.psms["xirt_RP"] / 60.0
+
+    # adjust RT if necessary to guarantee smooth learning TODO remove!
+    training_data.psms["rp"] = training_data.psms["RP"] / 60.0
+
+    # init neural network structure
+    xirtnetwork = xirtnet.xiRTNET(xirt_params, input_dim=training_data.features2.shape[1])
+
+    # get the columns where the RT information is stored
+    frac_cols = [xirtnetwork.output_p[tt.lower() + "-column"] for tt in
+                 xirt_params["predictions"]["fractions"]]
+
+    cont_cols = [xirtnetwork.output_p[tt.lower() + "-column"] for tt in
+                 xirt_params["predictions"]["continues"]]
+    metric_columns = xirtnetwork.model.metrics_names
 
     cv_counter = 1
     # heart of the function
@@ -66,20 +80,18 @@ def xirt_runner(peptides_file, xirt_loc, learning_loc):
     # on the remaining fold
     for train_idx, val_idx, pred_idx in training_data.iter_splits(n_splits=n_splits,
                                                                   test_size=test_size):
-        break
-        # init neural network structure
-        xirtnetwork = xirtnet.xiRTNET(xirt_params, input_dim=training_data.features2.shape[1])
         # assemble the layers
         xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
+
         # compile for training
         xirtnetwork.compile()
 
         # assemble training data
         xt_cv = training_data.get_features(train_idx)
-        yt_cv = training_data.get_classes(train_idx)
+        yt_cv = training_data.get_classes(train_idx, frac_cols=frac_cols, cont_cols=cont_cols)
 
         xv_cv = training_data.get_features(val_idx)
-        yv_cv = training_data.get_classes(val_idx)
+        yv_cv = training_data.get_classes(val_idx, frac_cols=frac_cols, cont_cols=cont_cols)
 
         # fit the mode, use the validation split to determine the best
         # epoch for selecting the best weights
@@ -87,8 +99,12 @@ def xirt_runner(peptides_file, xirt_loc, learning_loc):
                                         epochs=xirt_params["learning"]["epochs"],
                                         batch_size=xirt_params["learning"]["batch_size"],
                                         verbose=xirt_params["learning"]["verbose"])
+
         predictions = xirtnetwork.model.predict(training_data.get_features(pred_idx))
 
+        # store predictions
+        # store metrics
+        # store model? / callback
         df_history = pd.DataFrame(history.history)
         df_history["CV"] = cv_counter
         cv_counter += 1

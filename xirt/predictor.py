@@ -12,16 +12,6 @@ from xirt import sequences as xs
 from xirt import xirtnet
 
 
-def train_xirt(csms_df, params_xirt):
-    csms_df = pd.read_csv(
-        "C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\50pCSMFDR_universal_final.csv")
-    params_xirt_loc = "C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\xirt_params.yaml"
-    params_xirt = yaml.load(open(params_xirt_loc), Loader=yaml.FullLoader)
-
-    training_data = preprocess(csms_df, sequence_type="crosslink", max_length=-1,
-                               cl_residue=True, fraction_cols=["xirt_SCX", "xiRT_hSAX"])
-
-
 class model_data:
     """Class to keep data together."""
 
@@ -90,13 +80,18 @@ class model_data:
         cv_pattern = ["t"] * (cv_folds_ar[-1] - 1) + ["v"]
         train_df_idx = self.train_idx.values
 
-        # TODO Raise error if test_size equals 0, does that work for CV?
-        # TODO Raise error if not shuffled
+        if test_size <= 0:
+            raise ValueError('Test split value must be > 0. Please set test_size to min 0.1 (10%).')
+
+        if not self.shuffled:
+            raise ValueError("Data must be shuffled to avoid undesired bias in the splits.")
+
         if len(cv_pattern) == 1:
             # train on entire data set - a fraction for testing/validation is mandatory!
             # syntax a bit confusing:
             # split data into 100% - 2x test size, % test size, % test size
             # e.g. test-size= 10% --> 80%, 10%, 10%
+            # prediction set is used for model assessment here
             train_idx, val_idx, pre_idx = \
                 np.split(train_df_idx, [int((1-test_size*2)*len(train_df_idx)),
                                         int((1-test_size)*len(train_df_idx))])
@@ -127,33 +122,23 @@ class model_data:
 
                 yield train_idx, val_idx, pre_idx
 
-        raise ValueError(
-            "Given mode is not supported (one of train/crossvalidation) not: {}".format(mode))
-
-        # for cv_i in self.cv_folds_ar:
-        #     train_init_loc, val_loc = list(rs.split(training_data._get_train_psms()))[0]
-        #     train_init_idx = self.psms
-        #     xtrain_init, xtest = train_test_split(training_data._get_train_psms(),
-        #                                           test_size=test_size,
-        #                                           random_state=test_state)
-
-    def _get_train_psms(self):
+    def get_train_psms(self):
         """
         Return the psms used for training.
 
         Returns:
             df, dataframe with psms passing training conditions
         """
-        return (self.psms.loc[self.train_idx])
+        return self.psms.loc[self.train_idx]
 
-    def _get_predict_psms(self):
+    def get_predict_psms(self):
         """
         Return the psms used for prediction.
 
         Returns:
             df, dataframe with psms passing training conditions
         """
-        return (self.psms.loc[self.predict_idx])
+        return self.psms.loc[self.predict_idx]
 
     def get_features(self, idx, meta=False):
         """
@@ -175,20 +160,27 @@ class model_data:
                          self.features2.filter(regex="rnn").loc[idx])
         return xfeatures
 
-    def get_classes(self, idx):
+    def get_classes(self, idx, frac_cols, cont_cols):
         """
         Return the feature format for multi-task learning for linear and crosslinked peptides.
 
         Args:
             idx: ar-like, indices to subset feature data
-
+            frac_cols: ar-like, strings with categorical variables
+            cont_cols: ar-like, strings with continuous variables
         Returns:
             df, feature dataframe
         """
-        yt_cv = [xirtnet.reshapey(self.psms["xirt_hSAX_ordinal"].loc[idx].values),
-                 xirtnet.reshapey(self.psms["xirt_SCX_ordinal"].loc[idx].values),
-                 self.psms["xirt_RP"].loc[idx].values]
-        return yt_cv
+        # if only continous columns, only return these etc.
+        if len(frac_cols) == 0:
+            return [self.psms[ccol].loc[idx].values for ccol in cont_cols]
+
+        if len(cont_cols) == 0:
+            return [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
+
+        return [[xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols],
+                [self.psms[ccol].loc[idx].values for ccol in cont_cols]]
+
 
 def generate_model(param, input_dim, sequence_type):
     """
@@ -215,7 +207,7 @@ def generate_model(param, input_dim, sequence_type):
 
 
 def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=True,
-               fraction_cols=["xirt_SCX", "xirt_hSAX"]):
+               fraction_cols=[]):
     """Prepare peptide identifications to be used with xiRT.
 
     High-level wrapper performing multiple steps. In processing order this function:
@@ -272,6 +264,8 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     features_rnn_seq1, features_rnn_seq2, le = \
         xp.featurize_sequences(matches_df, seq_cols=seq_proc, max_length=max_length)
 
+    # add the two fraction encoding columns
+    # psms_df[col + "_1hot"] and psms_df[col + "_ordinal"]
     if len(fraction_cols) > 0:
         xp.fraction_encoding(matches_df, rt_methods=fraction_cols)
 

@@ -20,6 +20,28 @@ from tensorflow.python.keras.layers import CuDNNGRU, CuDNNLSTM
 from tqdm.keras import TqdmCallback
 
 
+def todo_params():
+    def create_params(param):
+        """
+        Creates dictionaries with parameters based on a param dictionary. The result can be
+        passed to a neural network model for compilation.
+
+        :param param: dict, parameters for metrics, losses and task weights
+        :return:
+        """
+        metrics = {"RP": param["output"]["rp-metrics"],
+                   "SCX": param["output"]["scx-metrics"],
+                   "hSAX": param["output"]["hsax-metrics"]}
+
+        loss_weights = {"RP": param["output"]["rp-weight"],
+                        "hSAX": param["output"]["class-weight"],
+                        "SCX": param["output"]["class-weight"]}
+
+        multi_task_loss = {"RP": param["output"]["rp-loss"],
+                           "SCX": param["output"]["scx-loss"],
+                           "hSAX": param["output"]["scx-loss"]}
+        return loss_weights, metrics, multi_task_loss
+
 def loss_ordered(y_true, y_pred):
     weights = K.cast(K.abs(K.argmax(y_true, axis=1) - K.argmax(y_pred, axis=1))
                      / (K.int_shape(y_pred)[1] - 1), dtype='float32')
@@ -66,7 +88,11 @@ class xiRTNET:
         self.output_p = params["output"]
         self.siamese_p = params["siamese"]
 
-    def build_model(self, single_task="None", siamese=False):
+        self.tasks = np.concatenate([params["predictions"]["continues"],
+                                     params["predictions"]["fractions"]])
+        self.tasks = [i.lower() for i in self.tasks]
+
+    def build_model(self, siamese=False):
         inlayer, net = self._build_base_network()
 
         if siamese:
@@ -81,45 +107,46 @@ class xiRTNET:
             processed_b = base_network(input_b)
 
             # merge the lower and upper part of the network
-            if self.siamese_p["merge_type"].lower() == "add":
-                merge_func = Add
-
-            elif self.siamese_p["merge_type"].lower() == "multiply":
-                merge_func = Multiply
-
-            elif self.siamese_p["merge_type"].lower() == "average":
-                merge_func = Average
-
-            elif self.siamese_p["merge_type"].lower() == "concatenate":
-                merge_func = Concatenate
-
-            elif self.siamese_p["merge_type"].lower() == "maximum":
-                merge_func = Maximum
-            else:
-                raise KeyError("Merging operation not supported ({})".
-                               format(self.siamese_p["merge_type"]))
+            merge_func = self._add_siamese_connector()
             merger_layer = merge_func()([processed_a, processed_b])
 
             net = Model([input_a, input_b], merger_layer)
             # create the individual prediction net works
+            # shortcut to acces output parameters
             act_conf = self.output_p
-            hsax_task = self._add_task_dense_layers(merger_layer, None)
-            hsax_task = Dense(act_conf["hsax-dimension"], activation=act_conf["hsax-activation"],
-                              name="hSAX")(hsax_task)
 
-            scx_task = self._add_task_dense_layers(merger_layer, None)
-            scx_task = Dense(act_conf["scx-dimension"], activation=act_conf["scx-activation"],
-                             name="SCX")(scx_task)
+            tasks_ar = []
+            for task_i in self.tasks:
+                tmp_task = self._add_task_dense_layers(merger_layer, None)
+                tmp_task = Dense(act_conf[task_i + "-dimension"],
+                                 activation=act_conf[task_i + "-activation"],
+                                 name=task_i)(tmp_task)
+                tasks_ar.append(tmp_task)
 
-            rp_task = self._add_task_dense_layers(merger_layer, None)
-            rp_task = Dense(act_conf["rp-dimension"], activation=act_conf["rp-activation"],
-                            name="RP")(rp_task)
-
-            model_full = Model(inputs=net.input, outputs=[hsax_task, scx_task, rp_task])
+            model_full = Model(inputs=net.input, outputs=tasks_ar)
         else:
-            model_full = self._build_task_network(inlayer, input_meta=None, net=net,
-                                                  single_task=single_task)
+            model_full = self._build_task_network(inlayer, input_meta=None, net=net)
         self.model = model_full
+
+    def _add_siamese_connector(self):
+        if self.siamese_p["merge_type"].lower() == "add":
+            merge_func = Add
+
+        elif self.siamese_p["merge_type"].lower() == "multiply":
+            merge_func = Multiply
+
+        elif self.siamese_p["merge_type"].lower() == "average":
+            merge_func = Average
+
+        elif self.siamese_p["merge_type"].lower() == "concatenate":
+            merge_func = Concatenate
+
+        elif self.siamese_p["merge_type"].lower() == "maximum":
+            merge_func = Maximum
+        else:
+            raise KeyError("Merging operation not supported ({})".
+                           format(self.siamese_p["merge_type"]))
+        return merge_func
 
     def _build_base_network(self):
         """
@@ -172,34 +199,20 @@ class xiRTNET:
 
         # create the individual prediction net works
         act_conf = self.output_p
-        hsax_task = self._add_task_dense_layers(net, net_meta)
-        hsax_task = Dense(act_conf["hsax-dimension"], activation=act_conf["hsax-activation"],
-                          name="hSAX")(hsax_task)
 
-        if single_task.lower() == "hsax":
-            model = Model(inputs=inlayer, outputs=[hsax_task])
-            return model
-
-        scx_task = self._add_task_dense_layers(net, net_meta)
-        scx_task = Dense(act_conf["scx-dimension"], activation=act_conf["scx-activation"],
-                         name="SCX")(scx_task)
-        if single_task.lower() == "scx":
-            model = Model(inputs=inlayer, outputs=[scx_task])
-            return model
-
-        rp_task = self._add_task_dense_layers(net, net_meta)
-        rp_task = Dense(act_conf["rp-dimension"], activation=act_conf["rp-activation"],
-                        name="RP")(rp_task)
-
-        if single_task.lower() == "rp":
-            model = Model(inputs=inlayer, outputs=[rp_task])
-            return model
+        tasks_ar = []
+        for task_i in self.tasks:
+            tmp_task = self._add_task_dense_layers(net, None)
+            tmp_task = Dense(act_conf[task_i + "-dimension"],
+                             activation=act_conf[task_i + "-activation"],
+                             name=task_i)(tmp_task)
+            tasks_ar.append(tmp_task)
 
         if input_meta is None:
-            model = Model(inputs=inlayer, outputs=[hsax_task, scx_task, rp_task])
+            model = Model(inputs=inlayer, outputs=tasks_ar)
         else:
             model = Model(inputs=[net.input, net_meta.input],
-                          outputs=[hsax_task, scx_task, rp_task])
+                          outputs=tasks_ar)
 
         return model
 
@@ -343,15 +356,14 @@ class xiRTNET:
         except ValueError as err:
             print("Encountered an ValueError, PDF is still written. ({})".format(err))
 
-    def compile(self, loss=None, metric=None, loss_weights=None):
-        # compile optimizer
+    def compile(self):
+        # set optimizer
         adam = optimizers.Adam(lr=self.learning_p["learningrate"])
 
-        # overwrite parameters from config, if specified
-        if not loss:
-            loss = self.output_p["loss"]
-        if not metric:
-            metric = [self.output_p["metric"]]
+        # get parameters from config file
+        loss = {i: self.output_p[i+"-loss"] for i in self.tasks}
+        metric = {i: self.output_p[i+"-metrics"] for i in self.tasks}
+        loss_weights = {i: self.output_p[i+"-weight"] for i in self.tasks}
 
         self.model.compile(loss=loss, optimizer=adam, metrics=metric, loss_weights=loss_weights)
 

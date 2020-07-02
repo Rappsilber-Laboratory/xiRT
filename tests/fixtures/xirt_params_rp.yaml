@@ -1,0 +1,73 @@
+LSTM:
+  activation: tanh
+  activity_regularization: l2
+  activityregularizer_value: 0.001
+  bidirectional: true
+  kernel_regularization: l2
+  kernelregularizer_value: 0.001
+  lstm_bn: true
+  nlayers: 1
+  type: GRU
+  units: 50
+conv:
+  activation: -1
+  conv_bn: -1
+  kernel_size: -1
+  nfilter: -1
+  nlayers: 0
+  pool_size: -1
+  pooling: -1
+dense:
+  activation:
+  - relu
+  - relu
+  - relu
+  dense_bn:
+  - true
+  - true
+  - true
+  dropout:
+  - 0.1
+  - 0.1
+  - 0.1
+  kernel_regularizer:
+  - l2
+  - l2
+  - l2
+  neurons:
+  - 50
+  - 25
+  - 10
+  nlayers: 3
+  regularization:
+  - true
+  - true
+  - true
+  regularizer_value:
+  - 0.001
+  - 0.001
+  - 0.001
+embedding:
+  length: 50
+learning:
+  batch_size: 128
+  epochs: 75
+  learningrate: 0.001
+  patience: 15
+  verbose: 1
+output:
+  callback-path: data/results/callbacks/
+  rp-activation: linear
+  rp-column: rp
+  rp-dimension: 1
+  rp-loss: mse
+  rp-metrics: mse
+  rp-weight: 1
+siamese:
+  use: True
+  merge_type: add
+predictions:
+  continues:
+    - RP
+  # simply write fractions: [] if no fraction prediction is desired
+  fractions: []
