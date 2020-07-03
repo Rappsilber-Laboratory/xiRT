@@ -1,4 +1,5 @@
 """Module to build the xiRT-network"""
+import os
 import time
 
 import numpy as np
@@ -20,28 +21,6 @@ from tensorflow.python.keras.layers import CuDNNGRU, CuDNNLSTM
 from tqdm.keras import TqdmCallback
 
 
-def todo_params():
-    def create_params(param):
-        """
-        Creates dictionaries with parameters based on a param dictionary. The result can be
-        passed to a neural network model for compilation.
-
-        :param param: dict, parameters for metrics, losses and task weights
-        :return:
-        """
-        metrics = {"RP": param["output"]["rp-metrics"],
-                   "SCX": param["output"]["scx-metrics"],
-                   "hSAX": param["output"]["hsax-metrics"]}
-
-        loss_weights = {"RP": param["output"]["rp-weight"],
-                        "hSAX": param["output"]["class-weight"],
-                        "SCX": param["output"]["class-weight"]}
-
-        multi_task_loss = {"RP": param["output"]["rp-loss"],
-                           "SCX": param["output"]["scx-loss"],
-                           "hSAX": param["output"]["scx-loss"]}
-        return loss_weights, metrics, multi_task_loss
-
 def loss_ordered(y_true, y_pred):
     weights = K.cast(K.abs(K.argmax(y_true, axis=1) - K.argmax(y_pred, axis=1))
                      / (K.int_shape(y_pred)[1] - 1), dtype='float32')
@@ -49,7 +28,6 @@ def loss_ordered(y_true, y_pred):
 
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
-
 if gpus:
     # Currently, memory growth needs to be the same across GPUs
     try:
@@ -87,6 +65,7 @@ class xiRTNET:
         self.learning_p = params["learning"]
         self.output_p = params["output"]
         self.siamese_p = params["siamese"]
+        self.callback_p = params["callbacks"]
 
         self.tasks = np.concatenate([params["predictions"]["continues"],
                                      params["predictions"]["fractions"]])
@@ -129,6 +108,12 @@ class xiRTNET:
         self.model = model_full
 
     def _add_siamese_connector(self):
+        """
+        Add the siamese layer to connect the individual data from the two crosslink branches.
+
+        Returns:
+            layer, merging layer, e.g. add, multiply, average, concatenate, maximum, minimum
+        """
         if self.siamese_p["merge_type"].lower() == "add":
             merge_func = Add
 
@@ -155,7 +140,7 @@ class xiRTNET:
         Function can be used to  build a scaffold for siamese networks.
 
         Returns:
-
+            tuple, (input, network): the input data structure and the network structure from tf 2.0
         """
         # init the input layer
         inlayer = Input(shape=self.input_dim, name="main_input")
@@ -361,54 +346,99 @@ class xiRTNET:
         adam = optimizers.Adam(lr=self.learning_p["learningrate"])
 
         # get parameters from config file
-        loss = {i: self.output_p[i+"-loss"] for i in self.tasks}
-        metric = {i: self.output_p[i+"-metrics"] for i in self.tasks}
-        loss_weights = {i: self.output_p[i+"-weight"] for i in self.tasks}
+        loss = {i: self.output_p[i + "-loss"] for i in self.tasks}
+        metric = {i: self.output_p[i + "-metrics"] for i in self.tasks}
+        loss_weights = {i: self.output_p[i + "-weight"] for i in self.tasks}
 
         self.model.compile(loss=loss, optimizer=adam, metrics=metric, loss_weights=loss_weights)
 
-    def fit(X_train, y_train, X_val, y_val, X_train_meta=None, X_val_meta=None):
-        # configure validation data format, depending on supplied validation split
-        callbacks = get_callbacks(outname, check_point=True, log_csv=True, early_stopping=True,
-                                  patience=comp_params["patience"],
-                                  prefix_path=opt_params["callback-path"])
-        if len(X_val) == 0:
-            # if no validation data is given, make sure to use at least 10% for early stopping
-            validation_data = None
-            validation_split = 0.1
+    def get_callbacks(self, suffix=""):
+        """
+        Create a list of callbacks to be passed to the fit function from the neural network model.
 
-        else:
-            validation_split = 0.0
-            if X_train_meta is None:
-                validation_data = (X_val, y_val)
-            else:
-                validation_data = ([X_val, X_val_meta], y_val)
 
-        # configure train data format, depending on supplied meta data
-        if X_train_meta is None:
-            train_data = X_train
-        else:
-            train_data = [X_train, X_train_meta]
+        Args:
+            suffix: str, suf to use for the models / weights during callback savings
 
-        history = model.fit(train_data, y_train, batch_size=comp_params["batch_size"],
-                            epochs=comp_params["epochs"], verbose=v, callbacks=callbacks,
-                            validation_data=validation_data, validation_split=validation_split)
+        Returns:
+            ar-like, list of callbacks
 
-    def predict(self):
-        pass
+        """
 
-    def store(self):
-        pass
+        # collect callbacks here
+        callbacks = []
+        prefix_path = self.callback_p["callback_path"]
+
+        if not os.path.exists(prefix_path):
+            os.makedirs(prefix_path)
+
+        if self.callback_p["progressbar"]:
+            callbacks.append(TqdmCallback(verbose=0))
+
+        if self.callback_p["reduce_lr"]:
+            reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss',
+                                               factor=self.callback_p["reduce_lr_factor"],
+                                               patience=self.callback_p["reduce_lr_patience"],
+                                               verbose=1, min_delta=1e-4, mode='min')
+            callbacks.append(reduce_lr_loss)
+
+        if self.callback_p["early_stopping"]:
+            # if the val_loss does not improve, stop
+            es = EarlyStopping(monitor='val_loss', mode='min', verbose=1,
+                               patience=self.callback_p["early_stopping_patience"],
+                               restore_best_weights=True)
+            callbacks.append(es)
+
+        if self.callback_p["check_point"]:
+            # save the best performing model
+            mc = ModelCheckpoint(os.path.join(prefix_path, 'xirt_model_{}.h5'.format(suffix)),
+                                 monitor='val_loss', mode='min', verbose=0,
+                                 save_best_only=True)
+
+            mc2 = ModelCheckpoint(os.path.join(prefix_path, 'xirt_weights_{}.h5'.format(suffix)),
+                                  monitor='val_loss', mode='min', verbose=0,
+                                  save_best_only=True, save_weights_only=True)
+            callbacks.append(mc)
+            callbacks.append(mc2)
+
+        if self.callback_p["log_csv"]:
+            # log some stuff (what?)
+            csv_logger = CSVLogger(
+                os.path.join(prefix_path, 'xirt_epochlog_{}.log'.format(suffix)))
+            callbacks.append(csv_logger)
+
+        if self.callback_p["tensor_board"]:
+            # use tensorboard logger
+            tb = TensorBoard(log_dir=os.path.join(prefix_path, "tensorboard"),
+                             embeddings_freq=0)
+            callbacks.append(tb)
+
+        return callbacks
 
     def print_layers(self):
+        """
+        Print layers form the current model.
+
+        Returns:
+            None
+        """
         print([i.name for i in self.model.layers])
 
     def get_param_overview(self):
+        """
+        Print parameters from the model.
+
+        Returns:
+            None
+        """
         trainable_count = np.sum([K.count_params(w) for w in self.model.trainable_weights])
         non_trainable_count = np.sum([K.count_params(w) for w in self.model.non_trainable_weights])
         print('Total params: {:,}'.format(trainable_count + non_trainable_count))
         print('Trainable params: {:,}'.format(trainable_count))
         print('Non-trainable params: {:,}'.format(non_trainable_count))
+
+    def load_weights(self, location):
+        self.model.load_weights(location)
 
 
 def params_to_df(params, outpath):
@@ -427,136 +457,6 @@ def params_to_df(params, outpath):
     params_df["paramid"] = np.arange(len(params))
     params_df.to_csv(outpath)
     return (params_df)
-
-
-def get_callbacks(outname, reduce_lr=True, early_stopping=True, check_point=True, log_csv=True,
-                  tensor_board=False, progressbar=True, prefix_path="", patience=10):
-    """Returns a list of callbacks.
-
-    :param outname: str, path for the output
-    :param early_stopping: bool, if True adds this callback to the return arguments
-    :param check_point: bool, if True adds this callback to the return arguments
-    :param log_csv: bool, if True adds this callback to the return arguments
-    :param tensor_board: bool, if True adds this callback to the return arguments
-    :param prefix_path: str, path to store the callback results
-    :param patience: int, number of epochs without improvement to tolerate before stopping
-    :return:
-    """
-    callbacks = []
-
-    if progressbar:
-        callbacks.append(TqdmCallback(verbose=0))
-
-    if reduce_lr:
-        reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=7, verbose=1,
-                                           min_delta=1e-4, mode='min')
-        # factor=0.1
-        callbacks.append(reduce_lr_loss)
-
-    if early_stopping:
-        # if the val_loss does not improve, stop
-        es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=patience,
-                           restore_best_weights=True)
-        callbacks.append(es)
-
-    if check_point:
-        # save the best performing model
-        mc = ModelCheckpoint(prefix_path + '/{}_model.h5'.format(outname),
-                             monitor='val_loss', mode='min', verbose=0,
-                             save_best_only=True)
-        # "/model_{}{}_{}.h5".format(date_prefix, id_str_cv, name)
-        mc2 = ModelCheckpoint(prefix_path + '/{}_weights.h5'.format(outname),
-                              monitor='val_loss', mode='min', verbose=0,
-                              save_best_only=True, save_weights_only=True)
-        callbacks.append(mc)
-        callbacks.append(mc2)
-
-    if log_csv:
-        # log some stuff (what?)
-        csv_logger = CSVLogger(prefix_path + '/{}_epochlog.log'.format(outname))
-        callbacks.append(csv_logger)
-
-    if tensor_board:
-        # use tensorboard logger
-        tb = TensorBoard(log_dir='tensorboard/', embeddings_freq=0)
-        callbacks.append(tb)
-
-    return callbacks
-
-
-def fit_model(model, config, X_train, y_train, X_val, y_val, loss=None, metric=None,
-              loss_weights=None, v=0, outname="", X_train_meta=None, X_val_meta=None):
-    """Compile and / or fit the model.
-
-    :param model:
-    :param config:
-    :param X_train:
-    :param y_train:
-    :param X_val:
-    :param y_val:
-    :param loss:
-    :param metric:
-    :param loss_weights:
-    :param v:
-    :param outname:
-    :param X_train_meta:
-    :param X_val_meta:
-    :return:
-
-    model = xiRTNET
-    config = param
-    X_train = np.asarray(Xcv_train)
-    y_train = ycv_train
-    X_val = np.asarray(Xcv_val)
-    y_val = ycv_val
-    loss = multi_task_loss
-    metric = metrics
-    loss_weights = loss_weights
-    """
-    comp_params = config["learning"]
-    opt_params = config["output"]
-
-    # compile optimizer
-    adam = optimizers.Adam(lr=comp_params["learningrate"])
-
-    if not loss:
-        loss = opt_params["loss"]
-
-    if not metric:
-        metric = [opt_params["metric"]]
-
-    model.compile(loss=loss, optimizer=adam, metrics=metric, loss_weights=loss_weights)
-
-    # configure validation data format, depending on supplied validation split
-    callbacks = get_callbacks(outname, check_point=True, log_csv=True, early_stopping=True,
-                              patience=comp_params["patience"],
-                              prefix_path=opt_params["callback-path"])
-    if len(X_val) == 0:
-        # if no validation data is given, make sure to use at least 10% for early stopping
-        validation_data = None
-        validation_split = 0.1
-
-    else:
-        validation_split = 0.0
-        if X_train_meta is None:
-            validation_data = (X_val, y_val)
-        else:
-            validation_data = ([X_val, X_val_meta], y_val)
-
-    # configure train data format, depending on supplied meta data
-    if X_train_meta is None:
-        train_data = X_train
-    else:
-        train_data = [X_train, X_train_meta]
-
-    # fit model
-    print("Fitting Model: ")
-    history = model.fit(train_data, y_train, batch_size=comp_params["batch_size"],
-                        epochs=comp_params["epochs"], verbose=v, callbacks=callbacks,
-                        validation_data=validation_data, validation_split=validation_split)
-
-    print("Callbacks are stored here: {}".format(opt_params["callback-path"]))
-    return history, model
 
 
 def init_prediction_df(xifdr_df, paramid=-1, linear_cols=True):
@@ -602,55 +502,6 @@ def init_prediction_df(xifdr_df, paramid=-1, linear_cols=True):
     return (prediction_df)
 
 
-def store_predictions(prediction_df, X_pred_cv, length, hsax, scx, rp, le, model, i,
-                      single_seq_pred=True, xcv_pred_meta=pd.DataFrame()):
-    """Writes the predictions to the result dataframe and optionally computes
-    the predictions for the individual linear peptide sequences.
-
-    Parameters:
-    ----------
-    prediction_df: df, dataframe where the predictions should be stored
-    X_pred_cv: df, dataframe with an iteration of CV folds that is used for prediction.
-    length
-    :return:
-    """
-    prediction_df["hSAX_prediction"].loc[X_pred_cv.index] = np.argmax(hsax, axis=1)
-    prediction_df["hSAX_probability"].loc[X_pred_cv.index] = np.max(hsax, axis=1)
-
-    prediction_df["SCX_prediction"].loc[X_pred_cv.index] = np.argmax(scx, axis=1)
-    prediction_df["SCX_probability"].loc[X_pred_cv.index] = np.max(scx, axis=1)
-
-    prediction_df["RP_prediction"].loc[X_pred_cv.index] = np.ravel(rp)
-    prediction_df["CV_FOLD"].loc[X_pred_cv.index] = i
-
-    if single_seq_pred:
-        pepseq1 = sequence.pad_sequences(df.retrieve_pepseq(X_pred_cv, le, peptide_id=0), length)
-        pepseq2 = sequence.pad_sequences(df.retrieve_pepseq(X_pred_cv, le, peptide_id=1), length)
-        names = ["pepseq1", "pepseq2"]
-        for seq, name in zip([pepseq1, pepseq2], names):
-            if xcv_pred_meta.empty:
-                hsax_indv, scx_indv, rp_indv = model.predict(seq)
-            else:
-                hsax_indv, scx_indv, rp_indv = model.predict((seq, xcv_pred_meta))
-
-            prediction_df["hSAX_prediction_{}".format(name)].loc[X_pred_cv.index] = \
-                np.argmax(hsax_indv, axis=1)
-            prediction_df["hSAX_probability_{}".format(name)].loc[X_pred_cv.index] = \
-                np.max(hsax_indv, axis=1)
-            prediction_df["SCX_prediction_{}".format(name)].loc[X_pred_cv.index] = \
-                np.argmax(scx_indv, axis=1)
-            prediction_df["SCX_probability_{}".format(name)].loc[X_pred_cv.index] = \
-                np.max(scx_indv, axis=1)
-            prediction_df["RP_prediction_{}".format(name)].loc[X_pred_cv.index] = \
-                np.ravel(rp_indv)
-
-
-def format_metrics(metrics, train_metrics):
-    train_str = "; ".join(["{}: {:.2f}".format(i, j) for i, j in zip(metrics[:-1],
-                                                                     train_metrics)])
-    return train_str
-
-
 def pseudo_csv_logger(cv_fold, date_prefix, df_metrics, outpath, paramid):
     """Writes the results of the CV iteration to a file.
 
@@ -686,52 +537,17 @@ def load_model_time(logging, model_path):
     return model
 
 
-def create_params(param):
-    """Creates dictionaries with parameters based on a param dictionary. The
-    result can be passed to a neural network model for compilation.
-
-    :param param: dict, parameters for metrics, losses and task weights
-    :return:
-    """
-    metrics = {"RP": param["output"]["rp-metrics"],
-               "SCX": param["output"]["scx-metrics"],
-               "hSAX": param["output"]["hsax-metrics"]}
-
-    loss_weights = {"RP": param["output"]["rp-weight"],
-                    "hSAX": param["output"]["class-weight"],
-                    "SCX": param["output"]["class-weight"]}
-
-    multi_task_loss = {"RP": param["output"]["rp-loss"],
-                       "SCX": param["output"]["scx-loss"],
-                       "hSAX": param["output"]["scx-loss"]}
-    return loss_weights, metrics, multi_task_loss
-
-
-def prepare_multitask_y(y_train, params):
-    """Reshapes the target variables into a format useable for the multi-task
-    model.
-
-    Parameter:
-    ---------
-    y_train: ar-like, must contain defined columns
-    """
-    if params["hsax-activation"] == "linear":
-        return ([(y_train[params["hsax-column"]].values),
-                 (y_train[params["scx-column"]].values),
-                 (y_train[params["rp-column"]].values)])
-    else:
-        return ([reshapey(y_train[params["hsax-column"]].values),
-                 reshapey(y_train[params["scx-column"]].values),
-                 y_train[params["rp-column"]].values])
-
-
 def reshapey(values):
-    """Flattens the arrays that were stored in a single data frame cell, such
-    that the shape is again usable for the neural network input.
-
-    :param values:
-    :return:
     """
-    nrows = len(values)
-    ncols = values[0].size
-    return np.array([y for x in values for y in x]).reshape(nrows, ncols)
+    Flattens the arrays that were stored in a single data frame cell.
+
+    Formatting is needed to pass the data to the neural network input.
+
+    Args:
+        values:
+
+    Returns:
+        ar-like, formatted array
+    """
+    # len(values) = rows, values[0].size = ncols
+    return np.array([y for x in values for y in x]).reshape(len(values), values[0].size)
