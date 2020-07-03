@@ -25,7 +25,7 @@ def test_preprocessing_linear():
 
 
 def test_data():
-    data = xr.model_data(pd.DataFrame(), [1], [2], None)
+    data = xr.ModelData(pd.DataFrame(), [1], [2], None)
     assert data.psms == pd.DataFrame()
     assert data.features1 == [1]
     assert data.features2 == [2]
@@ -41,7 +41,7 @@ def test_model_data_trainable():
     fasta1 = ["HUMAN"] * 5
     fasta2 = ["HUMAN"] * 5
     isTT = [True, True, True, False, True]
-    data = xr.model_data(
+    data = xr.ModelData(
         pd.DataFrame(np.column_stack([peptide1, peptide2, fasta1, fasta2]),
                      columns=["Peptide1", "Peptide2", "Fasta1", "Fasta2"]),
         [], [], None)
@@ -58,7 +58,7 @@ def test_model_data_shuffle():
     peptide2 = ["Peptide" + str(i) for i in np.arange(11, 16)]
     fdr_mask = np.array([True, True, True, False, False])
     is_duplicate = [False, False, True, True, True]
-    data = xr.model_data(
+    data = xr.ModelData(
         pd.DataFrame(np.column_stack([peptide1, peptide2]), columns=["Peptide1", "Peptide2"]),
         [], [], None)
     data.psms["fdr_mask"] = fdr_mask
@@ -80,7 +80,7 @@ def test_model_data_set_cv3():
     peptide2 = ["Peptide" + str(i) for i in np.arange(101, 201)]
     features1 = pd.DataFrame(np.random.rand(len(peptide1), 50))
     features1.index = np.arange(100, 200)
-    data = xr.model_data(
+    data = xr.ModelData(
         pd.DataFrame(np.column_stack([peptide1, peptide2]), columns=["Peptide1", "Peptide2"]),
         features1, [], None)
     data.train_idx = np.arange(100, 180)
@@ -97,7 +97,7 @@ def test_model_data_set_cv1():
     peptide2 = ["Peptide" + str(i) for i in np.arange(101, 201)]
     features1 = pd.DataFrame(np.random.rand(len(peptide1), 50))
     features1.index = np.arange(100, 200)
-    data = xr.model_data(
+    data = xr.ModelData(
         pd.DataFrame(np.column_stack([peptide1, peptide2]), columns=["Peptide1", "Peptide2"]),
         features1, [], None)
     data.train_idx = np.arange(100, 180)
