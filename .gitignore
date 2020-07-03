@@ -11,6 +11,7 @@ __pycache__/
 .Python
 pipenv
 build/
+results/
 develop-eggs/
 dist/
 downloads/

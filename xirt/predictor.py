@@ -1,28 +1,16 @@
 """Module to organize predictions from CLMS data."""
 import sys
-import warnings
 
-import pandas as pd
-import yaml
 import numpy as np
-from sklearn.model_selection import KFold, train_test_split, ShuffleSplit
+import pandas as pd
+from sklearn.model_selection import KFold
 
 from xirt import processing as xp
 from xirt import sequences as xs
 from xirt import xirtnet
 
 
-def train_xirt(csms_df, params_xirt):
-    csms_df = pd.read_csv(
-        "C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\50pCSMFDR_universal_final.csv")
-    params_xirt_loc = "C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\xirt_params.yaml"
-    params_xirt = yaml.load(open(params_xirt_loc), Loader=yaml.FullLoader)
-
-    training_data = preprocess(csms_df, sequence_type="crosslink", max_length=-1,
-                               cl_residue=True, fraction_cols=["xirt_SCX", "xiRT_hSAX"])
-
-
-class model_data:
+class ModelData:
     """Class to keep data together."""
 
     def __init__(self, psms_df, features1, features2=pd.DataFrame(), le=None):
@@ -42,6 +30,8 @@ class model_data:
         self.train_idx = []
         self.predict_idx = []
         self.cv_idx = []
+        # init prediction df
+        self.prediction_df = pd.DataFrame(index=psms_df.index)
 
     def set_fdr_mask(self, fdr_cutoff, str_filter=""):
         """
@@ -90,16 +80,21 @@ class model_data:
         cv_pattern = ["t"] * (cv_folds_ar[-1] - 1) + ["v"]
         train_df_idx = self.train_idx.values
 
-        # TODO Raise error if test_size equals 0, does that work for CV?
-        # TODO Raise error if not shuffled
+        if test_size <= 0:
+            raise ValueError('Test split value must be > 0. Please set test_size to min 0.1 (10%).')
+
+        if not self.shuffled:
+            raise ValueError("Data must be shuffled to avoid undesired bias in the splits.")
+
         if len(cv_pattern) == 1:
             # train on entire data set - a fraction for testing/validation is mandatory!
             # syntax a bit confusing:
             # split data into 100% - 2x test size, % test size, % test size
             # e.g. test-size= 10% --> 80%, 10%, 10%
+            # prediction set is used for model assessment here
             train_idx, val_idx, pre_idx = \
-                np.split(train_df_idx, [int((1-test_size*2)*len(train_df_idx)),
-                                        int((1-test_size)*len(train_df_idx))])
+                np.split(train_df_idx, [int((1 - test_size * 2) * len(train_df_idx)),
+                                        int((1 - test_size) * len(train_df_idx))])
             yield train_idx, val_idx, pre_idx
 
         else:
@@ -127,33 +122,23 @@ class model_data:
 
                 yield train_idx, val_idx, pre_idx
 
-        raise ValueError(
-            "Given mode is not supported (one of train/crossvalidation) not: {}".format(mode))
-
-        # for cv_i in self.cv_folds_ar:
-        #     train_init_loc, val_loc = list(rs.split(training_data._get_train_psms()))[0]
-        #     train_init_idx = self.psms
-        #     xtrain_init, xtest = train_test_split(training_data._get_train_psms(),
-        #                                           test_size=test_size,
-        #                                           random_state=test_state)
-
-    def _get_train_psms(self):
+    def get_train_psms(self):
         """
         Return the psms used for training.
 
         Returns:
             df, dataframe with psms passing training conditions
         """
-        return (self.psms.loc[self.train_idx])
+        return self.psms.loc[self.train_idx]
 
-    def _get_predict_psms(self):
+    def get_predict_psms(self):
         """
         Return the psms used for prediction.
 
         Returns:
             df, dataframe with psms passing training conditions
         """
-        return (self.psms.loc[self.predict_idx])
+        return self.psms.loc[self.predict_idx]
 
     def get_features(self, idx, meta=False):
         """
@@ -175,47 +160,109 @@ class model_data:
                          self.features2.filter(regex="rnn").loc[idx])
         return xfeatures
 
-    def get_classes(self, idx):
+    def get_classes(self, idx, frac_cols, cont_cols):
         """
         Return the feature format for multi-task learning for linear and crosslinked peptides.
 
         Args:
             idx: ar-like, indices to subset feature data
-
+            frac_cols: ar-like, strings with categorical variables
+            cont_cols: ar-like, strings with continuous variables
         Returns:
             df, feature dataframe
         """
-        yt_cv = [xirtnet.reshapey(self.psms["xirt_hSAX_ordinal"].loc[idx].values),
-                 xirtnet.reshapey(self.psms["xirt_SCX_ordinal"].loc[idx].values),
-                 self.psms["xirt_RP"].loc[idx].values]
-        return yt_cv
+        # if only continous columns, only return these etc.
+        if len(frac_cols) == 0:
+            return [self.psms[ccol].loc[idx].values for ccol in cont_cols]
 
-def generate_model(param, input_dim, sequence_type):
-    """
-    Function to build the network architecture.
+        if len(cont_cols) == 0:
+            return [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
 
-    If the input is linear or pseudolinear the resulting networks dont feature the Siamese
-    architecutre. Only for the crosslinks the Siamese architecture is used.
+        return [[xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols],
+                [self.psms[ccol].loc[idx].values for ccol in cont_cols]]
 
-    Args:
-        param: dict, parameters to init the architecture
-        input_dim: int, number of columns that are used as input for the network (rnn_features)
-        sequence_type: str, one of linear, pseudolinear, crosslink
+    def predict_and_store(self, xirtnetwork, xdata, store_idx):
+        """
+        Generate and store predictions for the observations from store_idx.
 
-    Returns:
+        Formatting, prediction and indexing is all done via this high-level wrapper function.
+        The given network model will be used to predict for all CSMs (store_idx) the respective
+        RT dimensions. The predictions are processed so that they can be stored in a table.
 
-    """
-    if sequence_type in ("linear", "pseudolinear"):
-        xiRTNET = xirtnet.build_xirtnet(config=param, input_dim=input_dim,
-                                        input_meta=None, single_task="None")
-    else:
-        xiRTNET = xirtnet.build_siamese(config=param, input_dim=input_dim,
-                                        input_meta=None, single_task="None")
-    return xiRTNET
+        Parameters:
+            xirtnetwork: xirnetwork, class object xirt
+            xdata: tuple of dataframes, corresponding on the RNN / features of the one/two peptides
+            store_idx: ar-like, indices to be used for the prediction process.
+
+        Returns:
+            None
+        """
+        # store crosslink predictions
+        predictions = xirtnetwork.model.predict(xdata)
+        self.store_predictions(xirtnetwork, predictions, store_idx, suf="")
+
+        # if single predictions should be included in the df.Not meaningful for linear peptides.
+        # For crosslinked peptides, the raw RT time of the two peptides are added.
+        if xirtnetwork.siamese_p["single_predictions"]:
+            # create dummy input with all zeroes as second peptide
+            dummy = np.zeros_like(xdata[0])
+            pep1_predictions = xirtnetwork.model.predict((xdata[0], dummy))
+            self.store_predictions(xirtnetwork, pep1_predictions, store_idx, suf="peptide1")
+
+            pep2_predictions = xirtnetwork.model.predict((xdata[1], dummy))
+            self.store_predictions(xirtnetwork, pep2_predictions, store_idx, suf="peptide2")
+
+    def store_predictions(self, xirtnetwork, predictions, store_idx, suf=""):
+        """
+        Format predictions to store them in a prediction dataframe.
+
+        This function processes linear, softmax, sigmoid predictions differently. For linear
+        activations no processing apart from 1d flattening is done. For softmax the class prediction
+        and the probability are retrieved. For sigmoid (usually used for ordered regression style
+        predictions, the class values are retrieved.
+
+        Args:
+            xirtnetwork:    tf obj, trained network model
+            predictions: ar-like, array with predictions
+            store_idx: ar-like, index belonging to the predictions to the predictions
+            suf: str, suffix to append to the default column names for the predictions
+        Returns:
+            None
+        """
+        # make column name nicer
+        if len(suf) > 0:
+            suf = "-" + suf
+
+        for task_i, pred_ar in zip(xirtnetwork.tasks, [predictions]):
+            # only init once
+            if task_i + "-prediction" + suf not in self.prediction_df.columns:
+                self.prediction_df[task_i + "-prediction" + suf] = -1000000
+            # get activation type because linear, sigmoid, softmax all require different encoding/
+            # processing
+            pred_type = xirtnetwork.output_p[task_i + "-activation"]
+
+            if pred_type == "linear":
+                # easiest, just ravel to 1d ar
+                self.prediction_df[task_i + "-prediction" + suf].at[store_idx] = np.ravel(
+                    pred_ar)
+
+            elif pred_type == "softmax":
+                # classification, take maximum probability as class value
+                self.prediction_df[task_i + "-prediction" + suf].at[store_idx] = \
+                    np.argmax(pred_ar, axis=1) + 1
+                self.prediction_df[task_i + "-probability" + suf].at[store_idx] = \
+                    pred_ar[np.argmax(pred_ar, axis=1)]
+
+            elif pred_type == "sigmoid":
+                # TODO
+                pass
+
+            else:
+                raise ValueError("{} not supported, only linear/softmax/sigmoid".format(pred_type))
 
 
 def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=True,
-               fraction_cols=["xirt_SCX", "xirt_hSAX"]):
+               fraction_cols=[]):
     """Prepare peptide identifications to be used with xiRT.
 
     High-level wrapper performing multiple steps. In processing order this function:
@@ -229,7 +276,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         max_length: int, maximal length of peptide sequences to consider. Longer sequences will
         be removed
         cl_residue: bool, if true handles cross-link sites as additional modifications
-
+        fraction_cols: ar-like, list of columsn that encode frationation data
     Returns:
         model_data, processed feature dataframes and label encoder
     """
@@ -272,91 +319,11 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     features_rnn_seq1, features_rnn_seq2, le = \
         xp.featurize_sequences(matches_df, seq_cols=seq_proc, max_length=max_length)
 
+    # add the two fraction encoding columns
+    # psms_df[col + "_1hot"] and psms_df[col + "_ordinal"]
     if len(fraction_cols) > 0:
         xp.fraction_encoding(matches_df, rt_methods=fraction_cols)
 
     # keep all data together in a data class
-    training_data = model_data(matches_df, features_rnn_seq1, features_rnn_seq2, le=le)
+    training_data = ModelData(matches_df, features_rnn_seq1, features_rnn_seq2, le=le)
     return training_data
-
-
-# %% old code
-def train(data, fdr_cutoff=0.05, sample_frac=1, sample_state=42):
-    """asdasdasdasdasdasd.
-
-    Args:
-        data:
-        fdr_cutoff:
-        sample_frac:
-        sample_state:
-
-    Returns:
-    """
-    data.psms["xirt_RP"] = data.psms["xirt_RP"] / 60.
-
-    # extract the training data
-    psms_train = data.psms[(data.psms["FDR"] <= fdr_cutoff)
-                           & (data.psms["isTT"])
-                           & (data.psms["Duplicate"] == False)]
-    psms_train = psms_train.sample(frac=sample_frac, random_state=sample_state)
-    psms_train["depart_training"] = True
-
-    # psms not involved in training
-    psms_nontrain = data.psms.loc[data.psms.index.difference(psms_train.index)]
-
-    loss_weights, metrics, multi_task_loss = xirtnet.create_params(xiRT_params)
-    xiRTNET = generate_model(xiRT_params, data.features1, sequence_type)
-    xirtnet.compile_model(xiRTNET, xiRT_params, loss=multi_task_loss,
-                          metric=metrics, loss_weights=loss_weights)
-    outname = r"C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\temp\\"
-    train_data = [data.features1.loc[psms_train.index],
-                  data.features1.loc[psms_train.index]]
-
-    temp_config = xiRT_params["output"]
-    temp_config["hsax-column"] = "xirt_hSAX_ordinal"
-    temp_config["scx-column"] = "xirt_SCX_ordinal"
-    temp_config["rp-column"] = "xirt_RP"
-
-    callbacks = xirtnet.get_callbacks("dummy", check_point=True, log_csv=True, early_stopping=True,
-                                      patience=5, prefix_path=outname)
-
-    y_train = xirtnet.prepare_multitask_y(psms_train.loc[psms_train.index], xiRT_params["output"])
-    history = xiRTNET.fit(train_data, y_train, batch_size=512, epochs=50, callbacks=callbacks)
-    predictions = xiRTNET.predict(train_data)
-
-    import seaborn as sns
-    import numpy as np
-    import matplotlib.pyplot as plt
-    sns.jointplot(y_train[2], np.ravel(predictions[2]))
-    plt.show()
-
-
-def generate_cv_idx(cv_seed, cv_type, ncv, psms_df, rnn_features):
-    # if cv_type == "simple":
-    idxs, single_indices, _ = get_folds(rnn_features, ncv, cv_seed)
-    single_indices = np.array([psms_df.iloc[i].index.values for i in single_indices])
-    # else:
-    #     idxs, single_indices, qc = get_folds_minimize_overlap(psms_df, ncv, cv_seed)
-    #     single_indices = np.array([np.array(n_layer) for n_layer in single_indices])
-    return idxs, single_indices
-
-
-def get_folds(rnn_features, ncv=5, cv_seed=2020):
-    """Return train and test indices for a dataframe.
-
-    :param cv_seed: int, seed for random number generation
-    :param ncv: int, number of folds
-    :param rnn_features: df, dataframe with features
-    :return: (idx, single_indices), The idx array is a simple np array from 0 to ncv-1. The single_
-    indices are the 0-based row numbers for the individual folds.
-    """
-    kf = KFold(n_splits=ncv, random_state=cv_seed)
-    kf.get_n_splits(rnn_features)
-    single_indices = []
-    # get the all indices in a list to make it easier to iterate over them
-    # important: these gives not the pandas index but the row numbers
-    for train_index, test_index in kf.split(rnn_features):
-        single_indices.append(test_index)
-    single_indices = np.array(single_indices)
-    idxs = np.arange(ncv)
-    return idxs, single_indices, None

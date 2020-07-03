@@ -172,7 +172,7 @@ def modify_cl_residues(matches_df, seq_in=["Peptide1", "Peptide2"]):
     """
     Change the cross-linked residues to modified residues.
 
-    Function uses the Seqar_*suffix columns to compute the new peptides.
+    Function uses the Seqar_*suf columns to compute the new peptides.
 
     Args:
         matches_df: df, dataframe with peptide identifications. Required columns
