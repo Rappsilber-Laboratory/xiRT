@@ -138,7 +138,8 @@ def get_loglength(seq):
 def get_shortest_distance(seq, opt="nterm"):
     """Computes the shortest distance of D/E, K/R to the C, N-term.
 
-    TODO: improve doc
+    Parameters:
+        seq: str, peptide sequence
     """
     return (1. * add_shortest_distance(seq, opt=opt, verbose=False))
 
@@ -496,3 +497,28 @@ def simply_alphabet(seq):
     """Some sequences are encoded with 'U', arbitrarly choose C as residue to
     replace any U (Selenocystein)"""
     return seq.replace("U", "C")
+
+
+def compute_prediction_errors(obs_df, preds_df, tasks, single_predictions=False):
+    """
+    Computes the errors of the observed and predicted RT.
+
+    Args:
+        obs_df: df, with observed RT
+        preds_df: df, with predicted RT
+        tasks: ar-like, list of strings that match the observed RT columns
+        single_predictions: bool, if single peptide predictions are used
+
+    Returns:
+        None
+    """
+    # only generate single error feature; viable for crosslinks and linears
+    if single_predictions:
+        for task_i in tasks:
+            preds_df["{}-error".format(task_i)] = obs_df[task_i] - preds_df[task_i+"-prediction"]
+    else:
+        # generate 3x error features; only viable for crosslinks
+        for suffix in ["", "-peptide1", "-peptide2"]:
+            for task_i in tasks:
+                preds_df["{}-error{}".format(task_i, suffix)] = \
+                    obs_df[task_i] - preds_df["{}-prediction{}".format(task_i, suffix)]
