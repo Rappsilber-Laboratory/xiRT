@@ -17,16 +17,31 @@ peptides using a (siamese) deep neural network architecture.
 ## overview
 
 xiRT is a deep learning tool to predict the RT of linear and cross-linked peptides from multiple
-fractionation dimensions including RP typtically coupled to the mass spectrometer. xiRT requires the
+fractionation dimensions including RP (typically coupled to the mass spectrometer). xiRT requires the
 columns shown in the table below. Importantly, the xiRT framework requires that CSM are sorted
-such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically larger one.
+such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically larger one for
+crosslinked RT predictions.
 
 ![xiRT Architecture](documentation/xiRT.PNG)
 
 ## Description
-[xiRT is currently under construction to make it (painlessly) work for any chromatography combination.]
+xiRT is meant to be used to generate additional information about CSMs for machine learning-based
+rescoring frameworks (similar to percolator). However, xiRT also delivers RT prediction for various 
+scenarios. Therefore xiRT offers several training / prediction  modes that need to be configured 
+depending on the use case. At the moment training, prediction, crossvalidation are the supporte
+modes.
+- *training*: trains xiRT on the input CSMs (using 10% for validation) and stores a trained model
+- *prediction*: use a pretrained model and predict RTs for the input CSMs
+- *crossvalidation*: load/train a model and predict RTs for all data points without using them
+in the training process. Requires the training of several models during CV
+
+Note: all modes can be supplemented by using a pretrained model ("transfer learning").
 
 # Usage
+
+xiRT is a python package that comes with a exectuable python file. To run xiRT follow the steps 
+below.
+
 
 ## Installation 
 To install xiRT a pip package is under development. Future release can be installed via:
@@ -43,9 +58,10 @@ is used to determine network parameters (number of neurons, layers, regularizati
 definition of the prediction task (classification, regression, ordered regression). Depending
 on the decoding of the target variable the output layers need to be adapted. For standard RP 
 prediction, regression is essentially the only viable option. For SCX/hSAX (general classification)
-prediction the prediction task can be formulated as classification, regression or ordered regression.
-For the usage of regression for fractionation it is recommended that the estimated salt concentrations
-are used as target variable for the prediction (raw fraction numbers are possible too).
+the prediction task can be formulated as classification, regression or ordered regression.
+For the usage of regression for fractionation it is recommended that the estimated salt 
+concentrations are used as target variable for the prediction 
+(raw fraction numbers are possible too).
 
 
 ## input format
@@ -65,8 +81,7 @@ are used as target variable for the prediction (raw fraction numbers are possibl
 The first four columns should be self explanatory, if not check the sample input *#TODO*. 
 The fifth column ("CSMID") is a unique(!) integer that can be used as to retrieve CSMs. In addition, 
 depending on the number retention time domains that should to be learned/predicted the RT columns 
-should have a prefix "xirt_". For instance if 2 dimensions were measured in SCX and RP, the input
-should contain "xirt_RP" and "xirt_SCX". The same naming needs to be adapted for the network config.
+need to be present. The column names need to match the configuration in the network parameter yaml.
 
 ## CLI interface
 [under construction]
