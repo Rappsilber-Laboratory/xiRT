@@ -2,11 +2,9 @@
 # outpath: str, location to store the results
 # fdr: float, fdr filter that is applied before training on the data
 # depart-params: str, location of the yaml file for using the RT prediction from depart.
-
 global:
-    outpath: 'paper/data/results_2020_modelselection/clresidues/'
+    outpath: 'C:\Users\Hanjo\Documents\xiRT\results\'
     clean: False
-    psms_loc: "/home/svengiese/win/xifdr_psms/xisearch_cbnn_nf_ECHS_5pPSMFDR_CSM_xiFDR1.4.4.csv"
 # preprocessing options:
 # le: str, label encoder location
 # xi_annotation: str, location of the MS2_summary_data table
@@ -51,4 +49,3 @@ train:
   test_frac: 0.10
   sample_frac: 1
   sample_state: 21
-
