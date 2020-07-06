@@ -12,7 +12,7 @@ from xirt import xirtnet
 from xirt import features as xf
 
 
-def arg_parser():
+def arg_parser():  # pragma: not covered
     """
     Parse the arguments from the CLI.
 
@@ -22,7 +22,7 @@ def arg_parser():
     description = """
     xiRT is a machine learning tool for the (multidimensional) RT prediction of linear and
     crosslinked peptides. Use --help to see the command line arguments or visit the github page:
-    #TODO 
+    #TODO
     """
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-p", "--xirt_params", "xirt_params", meta_var="xirt_params",
@@ -37,9 +37,21 @@ def arg_parser():
     return args
 
 
-def xirt_runner(peptides_file, xirt_loc, learning_loc, single_pep_predictions=True):
+def xirt_runner(peptides_file, xirt_loc, setup_loc):
+    """
+    Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
+
+    Args:
+        peptides_file: str, location of the input psm/csm file
+        xirt_loc: str, location of the yaml file for xirt
+        setup_loc: str, location of the setup yaml
+        single_pep_predictions:
+
+    Returns:
+        None
+    """
     xirt_params = yaml.load(open(xirt_loc), Loader=yaml.FullLoader)
-    learning_params = yaml.load(open(learning_loc), Loader=yaml.FullLoader)
+    learning_params = yaml.load(open(setup_loc), Loader=yaml.FullLoader)
     matches_df = pd.read_csv(peptides_file)
 
     # convenience short cuts
@@ -181,7 +193,7 @@ def xirt_runner(peptides_file, xirt_loc, learning_loc, single_pep_predictions=Tr
     print("Done.")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":   # pragma: no cover
     # parse arguments
     args = arg_parser()
 

@@ -8,18 +8,20 @@ import pandas as pd
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from Bio.SeqUtils.ProtParamData import kd
 from pyteomics import parser
+from sklearn.preprocessing import PolynomialFeatures
 
 from xirt import sequences
 
 
 def create_simple_features(df, seq_column="Sequence"):
-    """Creates a simple feture matrix using the complete sequence, AA-position
-    specific counts are excluded.
+    """
+    Create a simple feature matrix using the complete sequence (not position specific).
 
     Parameters:
-    ----------
-    df: dataframe,
-        containing a "Sequence" column
+        df: dataframe,
+            containing a "Sequence" column
+    Returns:
+        df, feature dataframe
     """
     df[seq_column] = df[seq_column].apply(simply_alphabet).values
     ff_df = pd.DataFrame()
@@ -38,15 +40,18 @@ def create_simple_features(df, seq_column="Sequence"):
 
 def create_all_features(df, alphabet=parser.std_amino_acids, pos_specific=False, lcp=0.2,
                         correct=True):
-    """Computes all features for the given sequence column of the dataframe.
+    """
+    Compute all features for the given sequence column of the dataframe.
 
-    Parameters:
-    ----------
-    df: dataframe,
-        containing a "Sequence" column
+    Args:
+        df: Must contain a "Sequence" column
+        alphabet: list, amino acids in alphabet
+        pos_specific: bool, if AAs should be treated with position specific indices
+        lcp: float, length correctionf actor
+        correct: bool, if lcp should be used
 
-    alphabet: AA list,
-             List of valid AA and modifications in pyteomics format
+    Returns:
+        df, feature dataframe
     """
     df["Sequence"] = df["Sequence"].apply(simply_alphabet).values
     ff_df = pd.DataFrame()
@@ -75,17 +80,13 @@ def create_all_features(df, alphabet=parser.std_amino_acids, pos_specific=False,
     else:
         orig_sequences = df["Sequence"]
 
-    # save y data fraom original df
-    try:
-        ff_df["Fraction"] = df["Fraction"]
-    except KeyError:
-        print("No Fraction in df. Continuing...")
-    nterm_mods = extract_nterm_mods(orig_sequences)
+    nterm_mods = np.ravel(extract_nterm_mods(orig_sequences))
     orig_sequences = orig_sequences.apply(sequences.remove_brackets_underscores)
 
     # add gl/ac features
     for mod in nterm_mods:
         ff_df[mod] = orig_sequences.apply(get_nterm_mod, mod=mod)
+
     orig_sequences = orig_sequences.apply(sequences.replace_numbers)
     orig_sequences = orig_sequences.apply(sequences.rewrite_modsequences)
 
@@ -97,24 +98,22 @@ def create_all_features(df, alphabet=parser.std_amino_acids, pos_specific=False,
 
 
 def get_hydrophobicity(sequence):
-    """Computes the overall hydrophobicity of a peptide sequence.
+    """Compute the overall hydrophobicity of a peptide sequence.
 
     Simple summation is used of the indices according to kyte/doolittle.
     Modifications are non-standard amino acids are ignored.
 
     Parameters
-    ----------
-    sequence: str. peptide sequence
+        sequence: str. peptide sequence
 
-    Returns
-    -------
-    float, hydrophobicity
+    Return
+        float, hydrophobicity
     """
     return np.sum([kd[i] for i in sequence if i in kd])
 
 
 def get_nterm_mod(seq, mod):
-    """Checks for a given nterminal mod.
+    """Check for a given nterminal mod.
 
     If the sequences contains the mod a 1 is returned, else 0.
     """
@@ -136,36 +135,52 @@ def get_loglength(seq):
 
 
 def get_shortest_distance(seq, opt="nterm"):
-    """Computes the shortest distance of D/E, K/R to the C, N-term.
+    """Compute the shortest distance of D/E, K/R to the C, N-term.
 
     Parameters:
         seq: str, peptide sequence
     """
-    return (1. * add_shortest_distance(seq, opt=opt, verbose=False))
+    return (1. * add_shortest_distance(seq, opt=opt))
 
 
 def get_cterm_residue_indicator(seq):
-    """Returns 1 if Lysine 0 if Arg."""
+    """
+    Return 1 if Lysine 0 if Arg.
+
+    Args:
+        seq: str, sequence
+
+    Returns:
+        int (1, 0)
+    """
     if seq[-1:] == "K":
-        return (1)
+        return 1
     else:
-        return (0)
+        return 0
 
 
 def get_nmods(mod_seq, mod_str="Oxidation"):
-    """Get the number of modifications."""
-    return (mod_seq.count(mod_str))
+    """
+    Get the number of modifications.
+
+    Args:
+        mod_seq: str, modified sequence string
+        mod_str: str, modification string to count
+
+    Returns:
+        int, number of mods seen in mod_seq
+    """
+    return mod_seq.count(mod_str)
 
 
 def get_estimated_charge(seq):
     """
-    Computes net charge - or be more accurate an estimate of the contributed
-    residue charge in a peptide ignoring the termini.
+    Compute net charge - or be more accurate an estimate of the contributed residue charge.
 
     Parameters:
-    -----------
-    sequence: str,
-                Peptide Sequence
+        sequence: str, Peptide Sequence
+    Returns:
+        float, estimated charge
     """
     return (seq.count("D") + seq.count("E") + (0.3 * seq.count("F")
                                                + 0.8 * seq.count("W")
@@ -175,44 +190,50 @@ def get_estimated_charge(seq):
 
 def get_residue_charge(seq):
     """
-    Computes net charge - or be more accurate an estimate of the contributed
-    residue charge in a peptide ignoring the termini.
+    Compute net charge - by summing D/E/K/R charges.
 
     Parameters:
-    -----------
     seq: str,
                 Peptide Sequence
+    Returns:
+        float, charge
     """
-    return (seq.count("D") + seq.count("E") - seq.count("K") - seq.count("R"))
+    return seq.count("D") + seq.count("E") - seq.count("K") - seq.count("R")
 
 
 def get_aa_count(pepseq, residue, pos=-1, direction="N"):
-    """Returns the AA count of a specific residue."""
+    """
+    Return the AA count of a specific residue.
 
-    if pos == -1:
-        return (pepseq.count(residue))
-    else:
-        if direction == "N":
-            return (pepseq[pos:pos + 1].count(residue))
-        else:
-            return (pepseq[-pos - 1:][0].count(residue))
-
-
-def add_shortest_distance(orig_sequence, opt="cterm", verbose=False):
-    """Computes the shortest distance of a amino acids to n/cterm. E, D, C-term
-    K, R, N-term.
-
-    Parameters:
-    ---------------------
-    orig_sequence: string,
-                  amino acid string
-    opt: str,
-         either "cterm" or "nterm". Each are defined with a set of amino acids
-
+    Args:
+        pepseq: str, peptide sequence
+        residue: char, residue
+        pos: int, position index
+        direction: str, either N or C.
 
     Returns:
-    ---------------------
-    int: distance to either termini specified
+        int, number of amino acids at a specific position / in the sequence.
+    """
+    if pos == -1:
+        return pepseq.count(residue)
+    else:
+        if direction == "N":
+            return pepseq[pos:pos + 1].count(residue)
+        else:
+            return pepseq[-pos - 1:][0].count(residue)
+
+
+def add_shortest_distance(orig_sequence, opt="cterm"):
+    """Compute the shortest distance of a amino acids to n/cterm. E, D, C-term / K, R, N-term.
+
+    Parameters:
+        orig_sequence: string,
+                      amino acid string
+        opt: str,
+             either "cterm" or "nterm". Each are defined with a set of amino acids
+
+    Returns:
+        int: distance to either termini specified
     """
     # define shortest distance of tragets to cterm
     if opt == "cterm":
@@ -234,35 +255,41 @@ def add_shortest_distance(orig_sequence, opt="cterm", verbose=False):
     return pos
 
 
-def extract_nterm_mods(sequences):
-    """Extracts the nterm mods."""
+def extract_nterm_mods(seq):
+    """
+    Extract nterminal mods, e.g. acA.
+
+    Args:
+        seq: str, peptide sequence
+
+    Returns:
+        ar-like, list of modifications
+    """
     # matches all nterminal mods, e.g. glD or acA
     nterm_pattern = re.compile(r'^([a-z]+)([A-Z])')
     mods = []
     # test each sequence for non-AA letters
-    for ii, seqi in enumerate(sequences):
+    for ii, seqi in enumerate(seq):
         nterm_match = re.findall(nterm_pattern, seqi)
         # nterminal acetylation
         if len(nterm_match) == 0:
             pass
         else:
             mods.append([nterm_match[0][0]])
-    return (mods)
+    return mods
 
 
 def get_patches(seq, aa_set1=["D", "E"], aa_set2=None, counts_only=True):
-    """Adds counts for patches of amino acids. A pattern is loosely defined as
-    string of amino acids of a specific class, e.g. aromatic (FYW). The pattern
-    is only counted if at least two consecutive residues occur: XXXXFFXXXX
+    """Add counts for patches of amino acids.
+
+    A pattern is loosely defined as string of amino acids of a specific class, e.g. aromatic (FYW).
+    The pattern is only counted if at least two consecutive residues occur: XXXXFFXXXX
     would be a pattern but also XFFFXXX.
 
-    Parameters:
-    -------------------------
-    aromatic, acidic, basic, mixed: bool,
-        if True, the respective amino acids are located in the sequence
-        and checked for 'patterns'.
+    Parameters
+        seq: str, peptide sequence
 
-    aminoacids: list,
+        aa_set1/aa_set2: ar-like, list of amino acids to look for patches
                 The following features were intended:
                     - D, E (acidic)
                     - K, R (basic)
@@ -274,12 +301,6 @@ def get_patches(seq, aa_set1=["D", "E"], aa_set2=None, counts_only=True):
                 "acidic_patterns",
                 if False, DE, ED are counts are added in separate columns.
                 Same is true for the combinations of KRH and WYF.
-
-
-    aa_set1 = ["K", "R"]
-    aa_set2 = ["D", "E"]
-    seq = "XXEEXXDEXXKRRD"
-    re.findall(pattern, seq)
     """
     # this representation is used to be easily also used if not only
     # the counts but also the patterns are requested.
@@ -307,14 +328,14 @@ def get_patches(seq, aa_set1=["D", "E"], aa_set2=None, counts_only=True):
         return res
 
 
-def get_sandwich(seq, aa="FYW", single_value=True):
-    """Adds sandwich counts based on aromatics ()
+def get_sandwich(seq, aa="FYW"):
+    """
+    Add sandwich counts based on aromatics.
 
     Parameters:
-    ----------------------
-
-    aa: str,
-         amino acids to check fo rsandwiches. Def:FYW
+        seq: str, peptide sequence
+        aa: str,
+             amino acids to check fo rsandwiches. Def:FYW
     """
     # count sandwich patterns between all aromatic aminocds and do not
     # distinguish between WxY and WxW.
@@ -324,8 +345,7 @@ def get_sandwich(seq, aa="FYW", single_value=True):
 
 def get_structure_perc(seq, structure="helix"):
     """
-    Get the percentage of amino acids that are in specific secondary
-    structure elements.
+    Get the percentage of amino acids that are in specific secondary structure elements.
 
     Args:
         seq: str, peptide sequence
@@ -347,30 +367,54 @@ def get_structure_perc(seq, structure="helix"):
 
 
 def get_gravy(seq):
-    """Gets the gravy of the sequence."""
+    """
+    Compute the gravy of the sequence.
+
+    Args:
+        seq: peptide sequence
+
+    Returns:
+        float, grav score from biopython
+    """
     bio_seq = ProteinAnalysis(seq)
     return bio_seq.gravy()
 
 
 def get_aromaticity(seq):
-    """Gets the aromaticity of the sequence."""
+    """Get the aromaticity of the sequence.
+
+    Parameters:
+        seq: str, peptide sequence
+
+    Returns:
+            float, aromaticity (biopython)
+    """
     bio_seq = ProteinAnalysis(seq)
     return bio_seq.aromaticity()
 
 
 def get_pi(seq):
-    """Gets the pI of the sequence."""
+    """Get the pI of the sequence.
+
+    Parameters:
+        seq: str, peptide sequence
+
+    Returns:
+            float, isoelectric point (biopython)
+    """
     bio_seq = ProteinAnalysis(seq)
     return bio_seq.isoelectric_point()
 
 
 def get_turn_indicator(seq):
-    """Computes the average number of amino acids between Proline residues.
+    """
+    Compute the average number of amino acids between Proline residues.
 
-    Example:
-    -----------------------
-    myseq = "ASDPASDL"
-    myseq2= "ASDPASDP"
+    Parameters:
+        seq: str, peptide sequence
+
+    Returns:
+            float, turn indicator (biopython)
     """
     starts = [i.start() for i in re.finditer("P", seq)]
     # no prolines
@@ -386,43 +430,52 @@ def get_turn_indicator(seq):
 
 
 def get_weight(seq):
-    """Get weight  of peptide."""
+    """
+    Get weight  of peptide.
+
+    Parameters:
+        seq: str, peptide sequence
+
+    Returns:
+            float, weight (biopython)
+    """
     bio_seq = ProteinAnalysis(seq)
     return bio_seq.molecular_weight()
 
 
 def get_AA_matrix(sequences, pos_specific=False, ntermini=5, lcp=1,
                   correct=False, residues=parser.std_amino_acids):
-    """Counts the amino acid in a peptide sequence. Counting uses the pyteomics
-    amino_acid composition. Modified residues of the pattern "modA" are already
-    supported.
+    """Count the amino acid in a peptide sequence.
 
+    Counting uses the pyteomics amino_acid composition. Modified residues of the pattern "modA"
+    are already supported.
     If the modifications should not be considered another sequence column
     can be used. As read on the pyteomics doc an "lcp" factor can substantially
     increase the prediction accuracy.
 
     Parameters:
-    -----------------------------------
-    df: ar, with sequences
+        sequences: ar-like, with peptide sequences
 
-    seq_column: string,
-                sequence column that is used to generate the features
+        pos_specific: bool, indicator if position specific amino acid should be counted
 
-    mods: bool,
-          1 (default) or zero. If one: oxM and M area treated as different
-          entities.
+        ntermini: int,
+            the number of termini to consider in the pos_specific case
+
+        lcp: float, length correction factor
+
+        correct: bool, if lcp should be applied
+
+        residues: ar-like, residues in the alphabet
 
     Examples:
-    -----------------------------------
-    #modification and termini supporting
-    >>mystr = "nAAAAAAAAAAAAAAAGAAGcK"
+        #modification and termini supporting
+        >>mystr = "nAAAAAAAAAAAAAAAGAAGcK"
 
-    #just aa composition
-    >>mystr = "AAAAAAAAAAAAAAAGAAGK"
+        #just aa composition
+        >>mystr = "AAAAAAAAAAAAAAAGAAGK"
 
     Returns:
-    --------------------------------------
-    df: dataframe with amino acid count columns
+        df: dataframe with amino acid count columns
     """
     df = pd.DataFrame()
     df["Sequence"] = sequences.copy()
@@ -494,14 +547,17 @@ def get_AA_matrix(sequences, pos_specific=False, ntermini=5, lcp=1,
 
 
 def simply_alphabet(seq):
-    """Some sequences are encoded with 'U', arbitrarly choose C as residue to
-    replace any U (Selenocystein)"""
+    """Replace all U amino acids with C.
+
+    Parameters:
+        seq: str, peptide sequence
+    """
     return seq.replace("U", "C")
 
 
 def compute_prediction_errors(obs_df, preds_df, tasks, single_predictions=False):
     """
-    Computes the errors of the observed and predicted RT.
+    Compute the errors of the observed and predicted RT.
 
     Args:
         obs_df: df, with observed RT
@@ -514,11 +570,40 @@ def compute_prediction_errors(obs_df, preds_df, tasks, single_predictions=False)
     """
     # only generate single error feature; viable for crosslinks and linears
     if single_predictions:
-        for task_i in tasks:
-            preds_df["{}-error".format(task_i)] = obs_df[task_i] - preds_df[task_i+"-prediction"]
-    else:
         # generate 3x error features; only viable for crosslinks
         for suffix in ["", "-peptide1", "-peptide2"]:
             for task_i in tasks:
                 preds_df["{}-error{}".format(task_i, suffix)] = \
                     obs_df[task_i] - preds_df["{}-prediction{}".format(task_i, suffix)]
+    else:
+        for task_i in tasks:
+            preds_df["{}-error".format(task_i)] = obs_df[task_i] - preds_df[task_i+"-prediction"]
+
+
+def add_interactions(feature_df, degree=2, interactions_only=True):
+    """
+    Add interactions from sklearns Polynomial feature generator.
+
+    Parameters
+    ----------
+    feature_df : df
+        dataframe with feature columns
+
+    Returns
+    -------
+    df, dataframe including polynomial features
+
+    """
+    # add interactions
+    feng = PolynomialFeatures(degree=degree, interaction_only=interactions_only, include_bias=False)
+    # sort dataframe properties
+    tmp_idx = feature_df.index
+    columns = feature_df.columns
+
+    feature_df_ia = feng.fit_transform(feature_df)
+    feature_df_ia = pd.DataFrame(feature_df_ia)
+
+    # old row and column names
+    feature_df_ia.index = tmp_idx
+    feature_df_ia.columns = feng.get_feature_names(columns)
+    return feature_df_ia

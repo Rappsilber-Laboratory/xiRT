@@ -37,13 +37,13 @@ in the training process. Requires the training of several models during CV
 
 Note: all modes can be supplemented by using a pretrained model ("transfer learning").
 
-# Usage
+## Usage
 
 xiRT is a python package that comes with a exectuable python file. To run xiRT follow the steps 
 below.
 
 
-## Installation 
+### Installation 
 To install xiRT a pip package is under development. Future release can be installed via:
 >pip install xirt
 
@@ -52,7 +52,7 @@ dependencies are covered via the pip installation.
 
 To use xiRT a simple command line script gets installed with pip. To run the predictions ...
 
-## config file
+### config file
 To adapt the xiRT parameters a yaml config file needs to be prepared. The configuration file
 is used to determine network parameters (number of neurons, layers, regularization) but also for the
 definition of the prediction task (classification, regression, ordered regression). Depending
@@ -64,7 +64,7 @@ concentrations are used as target variable for the prediction
 (raw fraction numbers are possible too).
 
 
-## input format
+### input format
 | short name         | explicit column name | description                                                                    | Example     |
 |--------------------|----------------------|--------------------------------------------------------------------------------|-------------|
 | peptide sequence 1 | Peptide1             | Alpha peptide sequence for crosslinks                                        | PEPRTIDER   |
@@ -83,15 +83,25 @@ The fifth column ("CSMID") is a unique(!) integer that can be used as to retriev
 depending on the number retention time domains that should to be learned/predicted the RT columns 
 need to be present. The column names need to match the configuration in the network parameter yaml.
 
-## CLI interface
-[under construction]
-## network config
-## xiRT config
+### CLI interface
+The command line interface (CLI) requires three inputs:
+1) input CSM file
+2) a [YAML](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html) file to configure the neural network architecture
+3) another YAML file to configure the general training / prediction behaviour, called setup-config
+
+
+#### xiRT config
+#### Setup config
 
 ### Contributors
 - Sven Giese
 
 
-### Citation
-If you consider xiRT helpful for your work please consider citing our manuscript. Currently, only
-available on bioarchive "xiRT: Retention Time Prediction using Neural Networks increases Identifications in Crosslinking Mass Spectrometry".
+## Citation
+If you consider xiRT helpful for your work please cite our manuscript. Currently, only
+available on bioRxiv.org "xiRT: Retention Time Prediction using Neural Networks increases 
+Identifications in Crosslinking Mass Spectrometry".
+
+## RappsilberLab
+The Rappsilber applies and developes crosslinking chemistry methods, workflows and software.
+Visit the lab page to learn more about the developed [software](https://www.rappsilberlab.org/software/).

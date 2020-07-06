@@ -59,12 +59,12 @@ def prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"]):
 def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], max_length=-1):
     """Generate a featureized version of sequences from a data frame.
 
-    The featureization is done
-    via by retrieving all modifications, the relevant alphabet of amino acids and then
-    applying label encoding do the amino acid sequences.
+    The featureization is done via by retrieving all modifications, the relevant alphabet of amino
+    acids and then applying label encoding do the amino acid sequences.
 
     :param psms_df: df, dataframe with identifications
     :param seq_cols: list, list with column names
+    :param max_legnth: int, maximal length for peptides to be included as feature
     :return:
     """
     # transform a list of amino acids to a feature dataframe
@@ -79,8 +79,8 @@ def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], 
 
     # get amino acid alphabet
     if len(seq_cols) > 1:
-        alphabet = np.intersect1d(f(psms_df[seq_cols[0]].str.join(sep="").drop_duplicates()),
-                                  f(psms_df[seq_cols[1]].str.join(sep="").drop_duplicates()))
+        alphabet = np.union1d(f(psms_df[seq_cols[0]].str.join(sep="").drop_duplicates()),
+                              f(psms_df[seq_cols[1]].str.join(sep="").drop_duplicates()))
     else:
         alphabet = f(psms_df[seq_cols[0]].str.join(sep="").drop_duplicates())
 
@@ -113,16 +113,19 @@ def generate_padded_df(encoded_ar, index):
     return seqs_padded
 
 
-def fraction_encoding(psms_df, rt_methods=["SCX", "hSAX"]):
-    """Add the necessary fraction columns.
+def fraction_encoding(psms_df, rt_methods):
+    """
+    Add the necessary fraction columns.
 
     Following columns are added: prefix_0based, Actual_prefix and prefix_1hot, where
     prefix is taken from the rt_methods argument.
 
-    :param psms_df:
-    :param run_column:
-    :param rt_methods:
-    :return:
+    Parameters:
+        psms_df: df, dataframe with peptide identifications and fraction columns
+        rt_methods: ar-like, list of columns that have the fraction encoding.
+
+    Return:
+        None
     """
     for col in rt_methods:
         # encode the classes for the fractions 0-based
@@ -148,15 +151,15 @@ def fraction_encoding(psms_df, rt_methods=["SCX", "hSAX"]):
 
 
 def transform_RT(retention_times):
-    """Return RT in minutes.
+    """
+    Return RT in minutes.
 
     Args:
-        retention_times:
+        retention_times: ar-like, observed RT data
 
     Returns:
         ar-like, transformed retention times in minutes
     """
-
     if (retention_times > 720).sum() > 0:
         retention_times = retention_times / 60.
     return retention_times

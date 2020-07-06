@@ -83,6 +83,16 @@ output:
 siamese:
   use: True
   merge_type: add
+callbacks:
+  check_point: True
+  log_csv: True
+  early_stopping: True
+  early_stopping_patience: 15
+  tensor_board: False
+  progressbar: True
+  reduce_lr: True
+  reduce_lr_factor: 0.5
+  reduce_lr_patience: 15
 predictions:
   continues:
     - RP

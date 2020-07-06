@@ -30,6 +30,7 @@ class ModelData:
         self.train_idx = []
         self.predict_idx = []
         self.cv_idx = []
+        self.shuffled = False
         # init prediction df
         self.prediction_df = pd.DataFrame(index=psms_df.index)
 
@@ -42,14 +43,14 @@ class ModelData:
             str_filter: str, a string filter to include psms only if containg the given string
 
         Returns:
-
+            None
         """
         if str_filter == "":
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & self.psms["isTT"]
         else:
-            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) & (
-                self.psms["Fasta1"].str.contains("_ECOLI")) & (
-                           self.psms["Fasta2"].str.contains("_ECOLI"))
+            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) \
+                & (self.psms["Fasta1"].str.contains("_ECOLI")) \
+                & (self.psms["Fasta2"].str.contains("_ECOLI"))
         self.psms["fdr_mask"] = fdr_mask
 
     def set_unique_shuffled_sampled_training_idx(self, sample_frac=1, random_state=42):
@@ -67,24 +68,38 @@ class ModelData:
             None
         """
         psms_train_idx = self.psms[
-            (self.psms["fdr_mask"]) & (self.psms["Duplicate"] == False)].sample(
+            (self.psms["fdr_mask"]) & (~self.psms["Duplicate"].astype(bool))].sample(
             frac=sample_frac, random_state=random_state).index
         self.train_idx = psms_train_idx
         self.predict_idx = self.psms.index.difference(psms_train_idx)
         self.shuffled = True
 
     def iter_splits(self, n_splits, test_size):
+        """
+        Return iterator indicies for training, testing, validation based on the training data.
+
+        The returned indices belong to the training data, validation data and prediction data.
+        The prediction fold is used in xiRT to predict RTs without using the observations during
+        training.
+
+        Args:
+            n_splits: int, number of crossvalidation splits
+            test_size: float, percentage of validation data to use
+
+        Returns:
+            iterator, (train_idx, val_idx, pred_idx)
+        """
+        if not self.shuffled:
+            raise ValueError("Data must be shuffled to avoid undesired bias in the splits.")
+
+        if test_size <= 0:
+            raise ValueError('Test split value must be > 0. Please set test_size to min 0.1 (10%).')
+
         # note: code with *loc indicates 0 based locations. code with idx indicates pandas index
         # used for train/validation splits
         cv_folds_ar = np.arange(n_splits) + 1
         cv_pattern = ["t"] * (cv_folds_ar[-1] - 1) + ["v"]
         train_df_idx = self.train_idx.values
-
-        if test_size <= 0:
-            raise ValueError('Test split value must be > 0. Please set test_size to min 0.1 (10%).')
-
-        if not self.shuffled:
-            raise ValueError("Data must be shuffled to avoid undesired bias in the splits.")
 
         if len(cv_pattern) == 1:
             # train on entire data set - a fraction for testing/validation is mandatory!
@@ -151,7 +166,6 @@ class ModelData:
         Returns:
             df, feature dataframe
         """
-
         if meta:
             # TODO
             xfeatures = None
@@ -233,13 +247,21 @@ class ModelData:
         if len(suf) > 0:
             suf = "-" + suf
 
-        for task_i, pred_ar in zip(xirtnetwork.tasks, [predictions]):
+        # make sure list is iterable per task
+        if len(xirtnetwork.tasks) == 1:
+            predictions = [predictions]
+
+        for task_i, pred_ar in zip(xirtnetwork.tasks, predictions):
+            # get activation type because linear, sigmoid, softmax all require different encoding/
+            pred_type = xirtnetwork.output_p[task_i + "-activation"]
+
             # only init once
             if task_i + "-prediction" + suf not in self.prediction_df.columns:
                 self.prediction_df[task_i + "-prediction" + suf] = -1000000
-            # get activation type because linear, sigmoid, softmax all require different encoding/
-            # processing
-            pred_type = xirtnetwork.output_p[task_i + "-activation"]
+
+                # softmax also gets probabilities
+                if pred_type == "softmax":
+                    self.prediction_df[task_i + "-probability" + suf] = -1000000
 
             if pred_type == "linear":
                 # easiest, just ravel to 1d ar
@@ -251,14 +273,44 @@ class ModelData:
                 self.prediction_df[task_i + "-prediction" + suf].at[store_idx] = \
                     np.argmax(pred_ar, axis=1) + 1
                 self.prediction_df[task_i + "-probability" + suf].at[store_idx] = \
-                    pred_ar[np.argmax(pred_ar, axis=1)]
+                    np.max(pred_ar, axis=1)
 
             elif pred_type == "sigmoid":
-                # TODO
-                pass
+                self.prediction_df[task_i + "-prediction" + suf].at[store_idx] = \
+                    sigmoid_to_class(pred_ar) + 1
 
             else:
                 raise ValueError("{} not supported, only linear/softmax/sigmoid".format(pred_type))
+
+
+def sigmoid_to_class(predictions, t=0.5):
+    """
+    Transform an array of sigmoid activations to a class prediction.
+
+    The class prediction will be done to the first entry that has a lower probability than t or
+    the last value in the array if no value is smaller than t.
+
+    Args:
+        predictions: ar-like, predictions from for ordinal regression task
+        t: float, score cutoff to determine prediction.
+
+    Returns:
+        ar-like, predictions
+    """
+    # init output
+    pred_hats = np.zeros(len(predictions), dtype=np.intp)
+
+    # iterate over prediction df
+    for ii, predi in enumerate(predictions):
+        tval = np.where(predi <= t)[0]
+        # if all values > t, use last class as predicted label
+        if len(tval) == 0:
+            pred_hats[ii] = len(predi) - 1
+        else:
+            # use the first entry smaller t
+            pred_hats[ii] = tval[0]
+
+    return pred_hats
 
 
 def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=True,
@@ -316,6 +368,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     if cl_residue:
         xs.modify_cl_residues(matches_df, seq_in=seq_in)
 
+    # TODO remove longer peptide
     features_rnn_seq1, features_rnn_seq2, le = \
         xp.featurize_sequences(matches_df, seq_cols=seq_proc, max_length=max_length)
 

@@ -7,10 +7,12 @@ import yaml
 from xirt import predictor as xr
 from xirt import xirtnet
 
+fixtures_loc = os.path.join(os.path.dirname(__file__), 'fixtures')
+
 
 def test_xirt_class():
-    current_dir = os.path.dirname(__file__)
-    xiRTconfig = yaml.load(open(current_dir + r"\fixtures\xirt_params.yaml"),
+    # simple test to check if the parameter files were parsed
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
     assert xirtnetwork.model is None
@@ -25,8 +27,7 @@ def test_xirt_class():
 
 
 def test_xirt_normal_model():
-    current_dir = os.path.dirname(__file__)
-    xiRTconfig = yaml.load(open(current_dir + r"\fixtures\xirt_params.yaml"),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
 
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
@@ -36,8 +37,7 @@ def test_xirt_normal_model():
 
 
 def test_xirt_siamese_model():
-    current_dir = os.path.dirname(__file__)
-    xiRTconfig = yaml.load(open(current_dir + r"\fixtures\xirt_params.yaml"),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
 
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
@@ -47,19 +47,18 @@ def test_xirt_siamese_model():
 
 
 def test_xirt_visualization():
-    current_dir = os.path.dirname(__file__)
-    xiRTconfig = yaml.load(open(current_dir + r"\fixtures\xirt_params.yaml"),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
 
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
     xirtnetwork.build_model(siamese=True)
     # xirtnetwork.export_model_visualization("model_figure_siamese")
+    # todo remove pdf
     assert True
 
 
 def test_xirt_compilation():
-    current_dir = os.path.dirname(__file__)
-    xiRTconfig = yaml.load(open(current_dir + r"\fixtures\xirt_params.yaml"),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
     xirtnetwork.build_model(siamese=True)
@@ -67,47 +66,48 @@ def test_xirt_compilation():
     assert xirtnetwork.model._is_compiled is True
 
 
-def test_xirt_train():
-    test_size = 0.1
-    n_splits = 3
-    # current_dir = os.path.dirname(__file__)
-    # matches_df = pd.read_csv(current_dir + r"\fixtures\50pCSMFDR_universal_final.csv")
-    matches_df = pd.read_csv(
-        r"C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\\50pCSMFDR_universal_final.csv")
-    matches_df = matches_df.sample(frac=0.5)
+def test_xirt_compilation_siameseoptions():
+    # test the usage of different combination layers
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+                           Loader=yaml.FullLoader)
 
-    # xiRTconfig = yaml.load(open(current_dir + r"\fixtures\xirt_params.yaml"),
-    # Loader=yaml.FullLoader)
-    xiRTconfig = yaml.load(
-        open(r"C:\\Users\\Hanjo\\Documents\\xiRT\\tests\\fixtures\xirt_params.yaml"),
-        Loader=yaml.FullLoader)
-
-    # preprocess training data
-    training_data = xr.preprocess(matches_df, "crosslink", max_length=-1, cl_residue=False,
-                                  fraction_cols=["xirt_SCX", "xirt_hSAX"])
-    training_data.set_fdr_mask(fdr_cutoff=0.05)
-    training_data.set_unique_shuffled_sampled_training_idx()
-    training_data.psms["xirt_RP"] = training_data.psms["xirt_RP"] / 60.0
-
-    cv_counter = 1
-    for train_idx, val_idx, pred_idx in training_data.iter_splits(n_splits=n_splits,
-                                                                  test_size=test_size):
-        break
-        xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=training_data.features2.shape[1])
+    merge_options = ["add", "multiply", "average", "concatenate", "maximum"]
+    for merge_opt in merge_options:
+        xiRTconfig["siamese"]["merge_type"] = merge_opt
+        xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
         xirtnetwork.build_model(siamese=True)
         xirtnetwork.compile()
+        assert xirtnetwork.model._is_compiled
 
-        # assemble training data
-        X = (training_data.features1.filter(regex="rnn").loc[train_idx],
-             training_data.features2.filter(regex="rnn").loc[train_idx])
-        y = [reshapey(training_data.psms["xirt_hSAX_ordinal"].loc[train_idx].values),
-             reshapey(training_data.psms["xirt_SCX_ordinal"].loc[train_idx].values),
-             training_data.psms["xirt_RP"].loc[train_idx].values]
 
-        history = xirtnetwork.model.fit(X, y, epochs=50, batch_size=256, verbose=2)
-        df_history = pd.DataFrame(history.history)
-        df_history["CV"] = cv_counter
-        cv_counter += 1
+def test_xirt_compilation_lstm_options():
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+                           Loader=yaml.FullLoader)
+    rnn_options = ["LSTM", "GRU"]  # "CuDNNGRU", "CuDNNLSTM"
+    for rnn_type in rnn_options:
+        xiRTconfig["LSTM"]["type"] = rnn_type
+        xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+        xirtnetwork.build_model(siamese=True)
+        xirtnetwork.compile()
+        assert xirtnetwork.model._is_compiled
+
+
+def test_xirt_train():
+    # read data
+    matches_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv"), nrows=100)
+    matches_df = matches_df.sample(frac=0.5)
+
+    # standard processing before training
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+                           Loader=yaml.FullLoader)
+    training_data = xr.preprocess(matches_df, "crosslink", max_length=-1, cl_residue=False,
+                                  fraction_cols=["SCX", "hSAX"])
+    training_data.set_fdr_mask(fdr_cutoff=0.05)
+    training_data.set_unique_shuffled_sampled_training_idx()
+    training_data.psms["RP"] = training_data.psms["RP"] / 60.0
+    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=training_data.features2.shape[1])
+    # TODO train network
+    assert True
 
 
 def reshapey(values):
