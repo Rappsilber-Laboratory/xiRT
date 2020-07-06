@@ -67,10 +67,10 @@ concentrations are used as target variable for the prediction
 ### input format
 | short name         | explicit column name | description                                                                    | Example     |
 |--------------------|----------------------|--------------------------------------------------------------------------------|-------------|
-| peptide sequence 1 | Peptide1             | Alpha peptide sequence for crosslinks                                        | PEPRTIDER   |
-| peptide sequence 2 | Peptide2             | Beta peptide sequence for crosslinks, or empty                                 | ELRVIS      |
-| link site 1        | LinkPos1             | Crosslink position in the peptide (0-based)                                    | 3           |
-| link site 2        | LinkPos2             | Crosslink position in the beta peptide (0-based                                | 2           |
+| peptide sequence 1 | Peptide1             | First peptide sequence for crosslinks                                        | PEPRTIDER   |
+| peptide sequence 2 | Peptide2             | Second peptide sequence for crosslinks, or empty                                 | ELRVIS      |
+| link site 1        | LinkPos1             | Crosslink position in the first peptide (0-based)                                    | 3           |
+| link site 2        | LinkPos2             | Crosslink position in the second peptide (0-based                                | 2           |
 | precursor charge   | Charge               | Precursor charge of the crosslinked peptide                                    | 3           |
 | score              | Score                | Single score from the search engine                                            | 17.12       |
 | unique id          | CSMID                | A unique index for each entry in the result table                              | 0           |
