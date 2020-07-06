@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import yaml
+import pytest
 
 from xirt import predictor as xr
 from xirt import xirtnet
@@ -110,13 +111,55 @@ def test_xirt_train():
     assert True
 
 
-def reshapey(values):
-    """Flattens the arrays that were stored in a single data frame cell, such
-    that the shape is again usable for the neural network input.
+def test_init_regularizer_l1():
+    reg_tmp = xirtnet.xiRTNET._init_regularizer("l1", 0.1)
+    assert np.allclose([reg_tmp.get_config()["l1"]], [0.1], 0.001)
 
-    :param values:
-    :return:
-    """
-    nrows = len(values)
-    ncols = values[0].size
-    return np.array([y for x in values for y in x]).reshape(nrows, ncols)
+
+def test_init_regularizer_l2():
+    reg_tmp = xirtnet.xiRTNET._init_regularizer("l2", 0.1)
+    assert np.allclose([reg_tmp.get_config()["l2"]], [0.1], 0.001)
+
+
+def test_init_regularizer_l1l2():
+    reg_tmp = xirtnet.xiRTNET._init_regularizer("l1l2", 0.1)
+    assert np.allclose([reg_tmp.get_config()["l1"]], [0.1], 0.001)
+    assert np.allclose([reg_tmp.get_config()["l2"]], [0.1], 0.001)
+
+
+def test_init_regularizer_l3():
+    with pytest.raises(KeyError):
+        xirtnet.xiRTNET._init_regularizer("l3", 0.1)
+
+
+def test_print_layers(capsys):
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+                           Loader=yaml.FullLoader)
+    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=10)
+    xirtnetwork.build_model(siamese=True)
+    xirtnetwork.print_layers()
+    captured = capsys.readouterr()
+    assert "rp" in captured.out
+    assert "siamese" in captured.out
+    assert "input_1" in captured.out
+    assert "input_2" in captured.out
+
+
+def test_print_layers(capsys):
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+                           Loader=yaml.FullLoader)
+    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=10)
+    xirtnetwork.build_model(siamese=True)
+    xirtnetwork.get_param_overview()
+    captured = capsys.readouterr()
+    assert "Total params:" in captured.out
+    assert "Trainable params:" in captured.out
+    assert "Non-trainable params:" in captured.out
+
+
+def test_params_to_df(tmpdir):
+    p = tmpdir.mkdir("tmp").join("params.csv")
+    params_df = xirtnet.params_to_df(os.path.join(fixtures_loc, "xirt_params.yaml"), p)
+    assert os.path.isfile(p)
+    assert not params_df.empty
+    os.remove(p)

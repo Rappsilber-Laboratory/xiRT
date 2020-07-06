@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import yaml
 from tensorflow.keras import backend as K
 from tensorflow.keras import losses
 from tensorflow.keras import regularizers, optimizers
@@ -18,8 +19,7 @@ from tensorflow.python.keras.layers import CuDNNGRU, CuDNNLSTM
 from tqdm.keras import TqdmCallback
 
 
-# pragma: not covered
-def loss_ordered(y_true, y_pred):
+def loss_ordered(y_true, y_pred):  # pragma: not covered
     """
     Compute the loss for ordered logistic regression for neural networks.
 
@@ -418,6 +418,7 @@ class xiRTNET:
         callbacks = []
         prefix_path = self.callback_p["callback_path"]
 
+        # pragma: not covered
         if not os.path.exists(prefix_path):
             os.makedirs(prefix_path)
 
@@ -500,45 +501,20 @@ class xiRTNET:
         self.model.load_weights(location)
 
 
-def params_to_df(params, outpath):
+def params_to_df(yaml_file, out_file):
     """
     Give a list of parameters as dictionary entries and transform it into a dataframe.
 
     Args:
-        params: dict, parameter dictionary from yaml
-        outpath: str, file to store the parameters to
+        yaml_file: str, file to load the parameters from
+        outfile: str, file to store the parameters to
 
     Returns:
         df, parameter dictionary
     """
-    params_df = [pd.DataFrame(list(params[i].items())).transpose() for i in np.arange(len(params))]
-    params_df = pd.concat(params_df).reset_index()
-    cols = params_df.iloc[0]
-    params_df.columns = cols
-    params_df = params_df.drop(0, axis=1)
-    params_df = params_df.reset_index(drop=True)
-    params_df["paramid"] = np.arange(len(params))
-    params_df.to_csv(outpath)
-    return params_df
-
-
-def pseudo_csv_logger(cv_fold, date_prefix, df_metrics, outpath, paramid):
-    """
-    Write the results of the CV iteration to a file.
-
-    :param cv_fold: int, fold iteration
-    :param date_prefix: str, prefix to use for storing
-    :param df_metrics: df, dataframe with metric results
-    :param outpath: str, where to write the results to
-    :param paramid: int, integer indicator parameter combination
-    :return:
-    """
-    csv_pseudo_logger = open(outpath + "{}_depart-simple_results.log".format(date_prefix), "a")
-    if (paramid == 0) and (cv_fold == 0):
-        df_metrics.to_csv(csv_pseudo_logger, header=True)
-    else:
-        df_metrics.to_csv(csv_pseudo_logger, header=False)
-    csv_pseudo_logger.close()
+    df_params = pd.io.json.json_normalize(yaml.load(open(yaml_file))).transpose()
+    df_params.to_csv(out_file)
+    return df_params
 
 
 def reshapey(values):
