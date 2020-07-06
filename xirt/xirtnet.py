@@ -1,6 +1,5 @@
-"""Module to build the xiRT-network"""
+"""Module to build the xiRT-network."""
 import os
-import time
 
 import numpy as np
 import pandas as pd
@@ -14,14 +13,23 @@ from tensorflow.keras.layers import Embedding, GRU, BatchNormalization, \
     Input, concatenate, Dropout, Dense, LSTM, Bidirectional, Add, Maximum, Multiply, Average, \
     Concatenate
 from tensorflow.keras.models import Model
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.utils import plot_model
 from tensorflow.python.keras.layers import CuDNNGRU, CuDNNLSTM
 from tqdm.keras import TqdmCallback
 
 
+# pragma: not covered
 def loss_ordered(y_true, y_pred):
+    """
+    Compute the loss for ordered logistic regression for neural networks.
+
+    Args:
+        y_true: ar-like, observed
+        y_pred: ar-like, predictions
+
+    Returns:
+        float, loss value
+    """
     weights = K.cast(K.abs(K.argmax(y_true, axis=1) - K.argmax(y_pred, axis=1))
                      / (K.int_shape(y_pred)[1] - 1), dtype='float32')
     return (1.0 + weights) * losses.categorical_crossentropy(y_true, y_pred)
@@ -55,6 +63,16 @@ class xiRTNET:
     """
 
     def __init__(self, params, input_dim):
+        """
+        Construct the xiRTNET.
+
+        Args:
+            params: dict, parsed yaml file
+            input_dim: int, number of input dimenions for the first layer
+
+        Returns:
+            None
+        """
         self.model = None
         self.input_dim = input_dim
 
@@ -72,6 +90,18 @@ class xiRTNET:
         self.tasks = [i.lower() for i in self.tasks]
 
     def build_model(self, siamese=False):
+        """
+        Build xiRTNET.
+
+        Function can either be used to build the Siamese network, Psedolinear (concatenated cross
+        links) or a normal network with a single input for linear peptides.
+
+        Args:
+            siamese: bool, if True siamese architecture is used.
+
+        Returns:
+            None
+        """
         inlayer, net = self._build_base_network()
 
         if siamese:
@@ -159,19 +189,17 @@ class xiRTNET:
                 net = self._add_recursive_layer(net, 1, name="shared{}_".format(i))
         return inlayer, net
 
-    def _build_task_network(self, inlayer, input_meta, net, single_task):
+    def _build_task_network(self, inlayer, input_meta, net):
         """
         Build task specific, dense layers in the xiRT architecture.
 
         Parameters:
-        ----------
-        inlayer: layer, previous input layers
-        input_meta:
-        net:
-        single_task:
+            inlayer: layer, previous input layers
+            input_meta: df, meta features
+            net: keras model, network so far
 
         Returns
-        -------
+            model
 
         """
         # if desired the sequence input can be supplemented by precomputed features
@@ -182,7 +210,7 @@ class xiRTNET:
         else:
             net_meta = None
 
-        # create the individual prediction net works
+        # create the individual prediction networks
         act_conf = self.output_p
 
         tasks_ar = []
@@ -230,13 +258,16 @@ class xiRTNET:
         # set the RNN Function to be used
         if self.LSTM_p["type"] == "GRU":
             f_rnn = GRU
-            f_name = "Gru"
+            f_name = "GRU"
+
         elif self.LSTM_p["type"] == "LSTM":
             f_rnn = LSTM
             f_name = "LSTM"
+
         elif self.LSTM_p["type"] == "CuDNNGRU":
             f_rnn = CuDNNGRU
             f_name = "CuGRU"
+
         elif self.LSTM_p["type"] == "CuDNNLSTM":
             f_rnn = CuDNNLSTM
             f_name = "CuLSTM"
@@ -262,13 +293,14 @@ class xiRTNET:
 
     def _add_task_dense_layers(self, net, net_meta=None):
         """
-        Adds task specific dense layers.
+        Add task specific dense layers.
 
         If net_meta is set also adds the meta information as input for each individual layer.
 
         Parameters:
-        -----------
-        TODO
+            net, keras network model
+
+            net_meta: None or df, if df features should be stored there
         """
         task = None
         for i in np.arange(self.dense_p["nlayers"]):
@@ -286,15 +318,16 @@ class xiRTNET:
 
     def _add_dense_layer(self, idx, prev_layer):
         """
-        Adds a dense layer.
+        Add a dense layer.
 
         Parameters:
-        ----------
         idx: int,
                 integer indicating the idx'th layer that was added
         prev_layer: keras layer,
                     Functional API object from the definition of the network.
 
+        Returns:
+            layer, a densely connected layer with dropout
         """
         # add regularizer
         reg_ = self._init_regularizer(self.dense_p["kernel_regularizer"][idx],
@@ -335,13 +368,32 @@ class xiRTNET:
         return regularizer_tmp
 
     def export_model_visualization(self, fig_path):
+        """
+        Visualize model architecture in pdf.
+
+        Args:
+            fig_path: str, file location where the model should be stored.
+
+        Returns:
+            None
+        """
         try:
-            plot_model(self.model, to_file=fig_path + "Network_Model.pdf", show_shapes=True,
+            plot_model(self.model, to_file=fig_path + "xiRT_model.pdf", show_shapes=True,
                        show_layer_names=True, dpi=300, expand_nested=True)
         except ValueError as err:
             print("Encountered an ValueError, PDF is still written. ({})".format(err))
 
     def compile(self):
+        """
+        Wrappaer to compile xiRTNETwork.
+
+        Loss, Metrics, Weights are all retrieved from the parameter file together with the
+        optimizer and the network is prepared (compiled) for training using the standard
+        keras / tf procedure.
+
+        Returns:
+            None
+        """
         # set optimizer
         adam = optimizers.Adam(lr=self.learning_p["learningrate"])
 
@@ -356,15 +408,12 @@ class xiRTNET:
         """
         Create a list of callbacks to be passed to the fit function from the neural network model.
 
-
         Args:
             suffix: str, suf to use for the models / weights during callback savings
 
         Returns:
             ar-like, list of callbacks
-
         """
-
         # collect callbacks here
         callbacks = []
         prefix_path = self.callback_p["callback_path"]
@@ -384,6 +433,7 @@ class xiRTNET:
 
         if self.callback_p["early_stopping"]:
             # if the val_loss does not improve, stop
+            # also does load the best weights!
             es = EarlyStopping(monitor='val_loss', mode='min', verbose=1,
                                patience=self.callback_p["early_stopping_patience"],
                                restore_best_weights=True)
@@ -438,72 +488,43 @@ class xiRTNET:
         print('Non-trainable params: {:,}'.format(non_trainable_count))
 
     def load_weights(self, location):
+        """
+        Load weights.
+
+        Args:
+            location: str, location of weights
+
+        Returns:
+            None
+        """
         self.model.load_weights(location)
 
 
 def params_to_df(params, outpath):
-    """Give a list of parameters as dictionary entries and transform it into a
-    dataframe.
+    """
+    Give a list of parameters as dictionary entries and transform it into a dataframe.
 
-    :return:
+    Args:
+        params: dict, parameter dictionary from yaml
+        outpath: str, file to store the parameters to
+
+    Returns:
+        df, parameter dictionary
     """
     params_df = [pd.DataFrame(list(params[i].items())).transpose() for i in np.arange(len(params))]
     params_df = pd.concat(params_df).reset_index()
     cols = params_df.iloc[0]
     params_df.columns = cols
-    params_df = params_df[params_df["output_scx-weight"] != "output_scx-weight"]
     params_df = params_df.drop(0, axis=1)
     params_df = params_df.reset_index(drop=True)
     params_df["paramid"] = np.arange(len(params))
     params_df.to_csv(outpath)
-    return (params_df)
-
-
-def init_prediction_df(xifdr_df, paramid=-1, linear_cols=True):
-    """Creates a dataframe that is used for storing the predictions from the
-    network.
-
-    :param xifdr_df:
-    :param paramid:
-    :param linear_cols:
-    :return:
-    """
-    # init output dataframe
-    nrows = xifdr_df.shape[0]
-    prediction_df = pd.DataFrame()
-    prediction_df["hSAX_prediction"] = np.zeros(nrows)
-    prediction_df["SCX_prediction"] = np.zeros(nrows)
-    prediction_df["RP_prediction"] = np.zeros(nrows)
-
-    prediction_df["hSAX_probability"] = np.zeros(nrows)
-    prediction_df["SCX_probability"] = np.zeros(nrows)
-    prediction_df["hSAX_prob_ar"] = np.zeros(nrows)
-    prediction_df["SCX_prob_ar"] = np.zeros(nrows)
-    prediction_df.index = xifdr_df.index
-
-    prediction_df["Actual_RP"] = -1
-    prediction_df["Actual_SCX0based"] = -1
-    prediction_df["Actual_hSAX0based"] = -1
-    prediction_df["CV_FOLD"] = -1
-    prediction_df["paramid"] = -1
-
-    if linear_cols:
-        prediction_df["hSAX_prediction_pepseq1"] = np.zeros(nrows)
-        prediction_df["SCX_prediction_pepseq1"] = np.zeros(nrows)
-        prediction_df["RP_prediction_pepseq1"] = np.zeros(nrows)
-        prediction_df["hSAX_probability_pepseq1"] = np.zeros(nrows)
-        prediction_df["SCX_probability_pepseq1"] = np.zeros(nrows)
-
-        prediction_df["hSAX_prediction_pepseq2"] = np.zeros(nrows)
-        prediction_df["SCX_prediction_pepseq2"] = np.zeros(nrows)
-        prediction_df["RP_prediction_pepseq2"] = np.zeros(nrows)
-        prediction_df["hSAX_probability_pepseq2"] = np.zeros(nrows)
-        prediction_df["SCX_probability_pepseq2"] = np.zeros(nrows)
-    return (prediction_df)
+    return params_df
 
 
 def pseudo_csv_logger(cv_fold, date_prefix, df_metrics, outpath, paramid):
-    """Writes the results of the CV iteration to a file.
+    """
+    Write the results of the CV iteration to a file.
 
     :param cv_fold: int, fold iteration
     :param date_prefix: str, prefix to use for storing
@@ -512,29 +533,12 @@ def pseudo_csv_logger(cv_fold, date_prefix, df_metrics, outpath, paramid):
     :param paramid: int, integer indicator parameter combination
     :return:
     """
-    csv_pseudo_logger = open(outpath + "{}_depart-simple_results.log".format(date_prefix),
-                             "a")
+    csv_pseudo_logger = open(outpath + "{}_depart-simple_results.log".format(date_prefix), "a")
     if (paramid == 0) and (cv_fold == 0):
         df_metrics.to_csv(csv_pseudo_logger, header=True)
     else:
         df_metrics.to_csv(csv_pseudo_logger, header=False)
     csv_pseudo_logger.close()
-
-
-def load_model_time(logging, model_path):
-    """Loads the best performing neural network model over time. Model was
-    saved over callbacks.
-
-    :param logging: logging obj, used for system logging
-    :param model_path: str, the path to the file that should be loaded
-    :return:
-    """
-    acv = time.time()
-    model = load_model(model_path)
-    bcv = time.time()
-    logging.info("Loaded model and weights together. (took {:.2f} minutes.)".format(
-        (bcv - acv) / 60.))
-    return model
 
 
 def reshapey(values):

@@ -36,6 +36,7 @@ def test_create_all_features():
 
 
 def test_create_all_features_mods():
+    # format for mods is here Xmod
     df = pd.DataFrame()
     df["Sequence"] = ["ELVIS", "LIVES"]
     df["Modified sequence"] = ["axELVoxIS", "LIVES"]
@@ -44,11 +45,11 @@ def test_create_all_features_mods():
     exp_columns = sorted(
         ["estimated_charge", "loglength", "cterm", "nterm", "netcharge", "nterm_res",
          "turnP", "turn", "helix", "sheet", "pi", "aromaticity", "hydrophobicity"])
-    exp_columns.extend(["E", "L", "V", "I", "S"])
+    exp_columns.extend(["E", "L", "V", "I", "S", "axE", "oxV", "ax"])
     exp_columns.sort()
     exp_shape = (2, len(exp_columns))
 
-    assert sorted(ff_df.columns.tolist()) == exp_columns
+    assert sorted(ff_df.columns.tolist()) == sorted(exp_columns)
     assert ff_df.shape == exp_shape
 
 
@@ -279,3 +280,47 @@ def test_get_AA_matrix_custom_position_short_pep():
     exp_results = pd.DataFrame([1, 0, 0, 0, 0, 1, 0, 0, 0, 0]).transpose()
     exp_results.columns = columns
     assert np.all(AA_counts[columns].values == exp_results.values)
+
+
+def test_compute_prediction_errors_single():
+    tasks = ["rp"]
+    obs_df = pd.DataFrame([1, 2, 3, 4, 5])
+    obs_df.columns = tasks
+
+    preds_df = pd.DataFrame(index=obs_df.index)
+    preds_df["rp-prediction"] = 3
+
+    features.compute_prediction_errors(obs_df, preds_df, tasks, single_predictions=False)
+
+    exp_errors = obs_df["rp"] - 3
+    assert np.all(preds_df["rp-error"] == exp_errors)
+
+
+def test_compute_prediction_errors_multi():
+    tasks = ["rp"]
+    obs_df = pd.DataFrame([1, 2, 3, 4, 5])
+    obs_df.columns = tasks
+
+    preds_df = pd.DataFrame(index=obs_df.index)
+    preds_df["rp-prediction"] = 3
+    preds_df["rp-prediction-peptide1"] = 1
+    preds_df["rp-prediction-peptide2"] = 2
+
+    features.compute_prediction_errors(obs_df, preds_df, tasks, single_predictions=True)
+
+    exp_errors = obs_df["rp"] - 3
+    exp_errors_p1 = obs_df["rp"] - 1
+    exp_errors_p2 = obs_df["rp"] - 2
+    assert np.all(preds_df["rp-error"] == exp_errors)
+    assert np.all(preds_df["rp-error-peptide1"] == exp_errors_p1)
+    assert np.all(preds_df["rp-error-peptide2"] == exp_errors_p2)
+
+
+def test_add_interactions():
+    df1 = pd.DataFrame()
+    df1["feature1"] = [2, 2, 2]
+    df1["feature2"] = [1, 2, 3]
+    df1_feat = features.add_interactions(df1, degree=2, interactions_only=True)
+
+    exp_feats = [2.0, 4, 6.0]
+    assert np.all(df1_feat["feature1 feature2"] == exp_feats)
