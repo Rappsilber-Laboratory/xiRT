@@ -27,35 +27,32 @@ def test_xirt_class():
     assert xirtnetwork.siamese_p == xiRTconfig["siamese"]
 
 
-def test_xirt_normal_model():
+def test_xirt_normal_model(tmpdir):
+    p = tmpdir.mkdir("tmp")
+
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
-
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
     xirtnetwork.build_model(siamese=False)
-    xirtnetwork.export_model_visualization("model_figure_normal")
-    assert True
+
+    # create the image
+    xirtnetwork.export_model_visualization(os.path.join(os.path.abspath(p), "model_figure_normal_"))
+    assert os.path.isfile(os.path.join(os.path.abspath(p), "model_figure_normal_xiRT_model.pdf"))
+    os.remove(os.path.join(os.path.abspath(p), "model_figure_normal_xiRT_model.pdf"))
 
 
-def test_xirt_siamese_model():
+def test_xirt_siamese_model(tmpdir):
+    p = tmpdir.mkdir("tmp")
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
 
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
     xirtnetwork.build_model(siamese=True)
-    xirtnetwork.export_model_visualization("model_figure_siamese")
-    assert True
 
-
-def test_xirt_visualization():
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
-                           Loader=yaml.FullLoader)
-
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
-    xirtnetwork.build_model(siamese=True)
-    # xirtnetwork.export_model_visualization("model_figure_siamese")
-    # todo remove pdf
-    assert True
+    # create the image
+    xirtnetwork.export_model_visualization(os.path.join(os.path.abspath(p), "siamese_"))
+    assert os.path.isfile(os.path.join(os.path.abspath(p), "siamese_xiRT_model.pdf"))
+    os.remove(os.path.join(os.path.abspath(p), "siamese_xiRT_model.pdf"))
 
 
 def test_xirt_compilation():
@@ -82,6 +79,7 @@ def test_xirt_compilation_siameseoptions():
 
 
 def test_xirt_compilation_lstm_options():
+    # test if compilaton works for all options (gpu not added ...)
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
     rnn_options = ["LSTM", "GRU"]  # "CuDNNGRU", "CuDNNLSTM"
@@ -128,11 +126,13 @@ def test_init_regularizer_l1l2():
 
 
 def test_init_regularizer_l3():
+    # test raising error for l3 (doesnt exist)
     with pytest.raises(KeyError):
         xirtnet.xiRTNET._init_regularizer("l3", 0.1)
 
 
 def test_print_layers(capsys):
+    # simple test that checks if key info is contained in the printed output
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=10)
@@ -141,11 +141,10 @@ def test_print_layers(capsys):
     captured = capsys.readouterr()
     assert "rp" in captured.out
     assert "siamese" in captured.out
-    assert "input_1" in captured.out
-    assert "input_2" in captured.out
 
 
-def test_print_layers(capsys):
+def test_print_parameters(capsys):
+    # simple test that checks if key info is contained in the printed output
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=10)
@@ -158,6 +157,7 @@ def test_print_layers(capsys):
 
 
 def test_params_to_df(tmpdir):
+    # take yaml file and test to df function
     p = tmpdir.mkdir("tmp").join("params.csv")
     params_df = xirtnet.params_to_df(os.path.join(fixtures_loc, "xirt_params.yaml"), p)
     assert os.path.isfile(p)
