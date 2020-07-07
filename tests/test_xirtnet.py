@@ -1,11 +1,9 @@
 import os
 
 import numpy as np
-import pandas as pd
-import yaml
 import pytest
+import yaml
 
-from xirt import predictor as xr
 from xirt import xirtnet
 
 fixtures_loc = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -91,22 +89,33 @@ def test_xirt_compilation_lstm_options():
         assert xirtnetwork.model._is_compiled
 
 
-def test_xirt_train():
-    # read data
-    matches_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv"), nrows=100)
-    matches_df = matches_df.sample(frac=0.5)
+# def test_xirt_train():
+#     # read data
+#     matches_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv"),
+#     nrows=100)
+#     matches_df = matches_df.sample(frac=0.5)
+#
+#     # standard processing before training
+#     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+#                            Loader=yaml.FullLoader)
+#     training_data = xr.preprocess(matches_df, "crosslink", max_length=-1, cl_residue=False,
+#                                   fraction_cols=["SCX", "hSAX"])
+#     training_data.set_fdr_mask(fdr_cutoff=0.05)
+#     training_data.set_unique_shuffled_sampled_training_idx()
+#     training_data.psms["RP"] = training_data.psms["RP"] / 60.0
+#     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=training_data.features2.shape[1])
+#     # TODO train network
+#     assert True
 
-    # standard processing before training
+
+def test_get_callbacks(tmpdir):
+    # test currently excludes tensorboard, all other callbacks sum up to 6 (2x ModelCheckpoint)
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
                            Loader=yaml.FullLoader)
-    training_data = xr.preprocess(matches_df, "crosslink", max_length=-1, cl_residue=False,
-                                  fraction_cols=["SCX", "hSAX"])
-    training_data.set_fdr_mask(fdr_cutoff=0.05)
-    training_data.set_unique_shuffled_sampled_training_idx()
-    training_data.psms["RP"] = training_data.psms["RP"] / 60.0
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=training_data.features2.shape[1])
-    # TODO train network
-    assert True
+    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork.callback_p["callback_path"] = os.path.abspath(tmpdir.mkdir("tmp"))
+    callbacks = xirtnetwork.get_callbacks("test")
+    assert len(callbacks) == 6
 
 
 def test_init_regularizer_l1():
