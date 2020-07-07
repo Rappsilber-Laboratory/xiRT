@@ -6,28 +6,28 @@
 
 import io
 import os
-# import sys
-# from shutil import rmtree
+import sys
+from shutil import rmtree
 
 from setuptools import find_packages, setup
 
 # Package meta-data.
-NAME = 'xirt'
+NAME = 'xiRT'
 DESCRIPTION = 'xiRT: Multi-dimensional Retention Time Prediction for Linear and Cross-Linked Peptides.'
 URL = 'rappsilberlab.org'
 EMAIL = 'sven.giese@hpi.de'
 AUTHOR = 'Sven Giese @ RappsilberLab'
 REQUIRES_PYTHON = '>=3.6.0'
+KEYWORDS = ["xiRT", "Proteomics", "Crosslinking", "machine learning", "Retention Time Prediction",
+            "Chromatography", "Peptides"]
 
 # What packages are required for this module to be executed?
-REQUIRED = [
-    # 'requests', 'maya', 'records',
-]
+REQUIRED = ['numpy', 'pandas', 'tensorflow', 'seaborn', 'xlwt', 'graphviz', 'pydot', 'pyyaml',
+            'pyteomics', 'sklearn', 'tqdm', 'biopython', 'pydot']
 
 # What packages are optional?
-EXTRAS = {
-    # 'fancy feature': ['django'],
-}
+# 'fancy feature': ['django'],}
+EXTRAS = {}
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
@@ -50,41 +50,41 @@ project_slug = NAME.lower().replace("-", "_").replace(" ", "_")
 with open(os.path.join(here, project_slug, '__version__.py')) as f:
     exec(f.read(), about)
 
-# class UploadCommand(Command):
-#     """Support setup.py upload."""
-#
-#     description = 'Build and publish the package.'
-#     user_options = []
-#
-#     @staticmethod
-#     def status(s):
-#         """Prints things in bold."""
-#         print('\033[1m{0}\033[0m'.format(s))
-#
-#     def initialize_options(self):
-#         pass
-#
-#     def finalize_options(self):
-#         pass
-#
-#     def run(self):
-#         try:
-#             self.status('Removing previous builds…')
-#             rmtree(os.path.join(here, 'dist'))
-#         except OSError:
-#             pass
-#
-#         self.status('Building Source and Wheel (universal) distribution…')
-#         os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
-#
-#         self.status('Uploading the package to PyPI via Twine…')
-#         os.system('twine upload dist/*')
-#
-#         self.status('Pushing git tags…')
-#         os.system('git tag v{0}'.format(about['__version__']))
-#         os.system('git push --tags')
-#
-#         sys.exit()
+class UploadCommand(Command):
+    """Support setup.py upload."""
+
+    description = 'Build and publish the package.'
+    user_options = []
+
+    @staticmethod
+    def status(s):
+        """Prints things in bold."""
+        print('\033[1m{0}\033[0m'.format(s))
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        try:
+            self.status('Removing previous builds…')
+            rmtree(os.path.join(here, 'dist'))
+        except OSError:
+            pass
+
+        self.status('Building Source and Wheel (universal) distribution…')
+        os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
+
+        self.status('Uploading the package to PyPI via Twine…')
+        os.system('twine upload dist/*')
+
+        self.status('Pushing git tags…')
+        os.system('git tag v{0}'.format(about['__version__']))
+        os.system('git push --tags')
+
+        sys.exit()
 
 
 # Where the magic happens:
@@ -103,13 +103,13 @@ setup(
     # py_modules=['mypackage'],
 
     # 'mycli=mymodule:cli'
-    entry_points={
-        'console_scripts': ["xirt=xirt.__main__:xirt_runner"],
-    },
+    entry_points={'console_scripts': ["xirt=xirt.__main__:xirt_runner"],
+                  },
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
     license='Apache License 2.0',
+    keywords=KEYWORDS,
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -120,7 +120,7 @@ setup(
         'Programming Language :: Python :: Implementation :: PyPy'
     ],
     # $ setup.py publish support.
-    # cmdclass={
-    #     'upload': UploadCommand,
-    # },
+    cmdclass={
+        'upload': UploadCommand,
+    },
 )
