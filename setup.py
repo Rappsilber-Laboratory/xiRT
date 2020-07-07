@@ -14,7 +14,7 @@ from setuptools import find_packages, setup, Command
 # Package meta-data.
 NAME = 'xiRT'
 DESCRIPTION = 'xiRT: Multi-dimensional Retention Time Prediction for Linear and Cross-Linked Peptides.'
-URL = 'rappsilberlab.org'
+URL = 'https://www.rappsilberlab.org/'
 EMAIL = 'sven.giese@hpi.de'
 AUTHOR = 'Sven Giese @ RappsilberLab'
 REQUIRES_PYTHON = '>=3.6.0'
