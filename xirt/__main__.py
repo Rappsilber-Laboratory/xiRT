@@ -13,12 +13,9 @@ from xirt import predictor as xr
 from xirt import xirtnet
 
 
-def arg_parser(arg_list):    # pragma: not covered
+def arg_parser():    # pragma: not covered
     """
     Parse the arguments from the CLI.
-
-    Args:
-        arg_list: ar-like, parameters as list from CLI input
 
     Returns:
         arguments, from parse_args
@@ -45,7 +42,7 @@ def arg_parser(arg_list):    # pragma: not covered
                         help="YAML parameter file to control training and testing splits and data.",
                         required=True, action="store", dest="learning_params")
 
-    return parser.parse_args(arg_list)
+    return parser
 
 
 def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
@@ -205,11 +202,19 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     print(df_history_all)
     print("Done.")
 
+def main():
+    print("Parsing Arguments")
+    parser = arg_parser()
+    try:
+        args = parser.parse_args(sys.argv[1:])
+    except TypeError:
+        parser.print_usage()
 
-if __name__ == "__main__":   # pragma: no cover
-    # parse arguments
-    args = arg_parser(sys.argv[1:])
-
+    print("Calling xiRT")
     # call function
     xirt_runner(args.in_peptides, args.out_dir,
                 args.xirt_params, args.learning_params)
+
+
+if __name__ == "__main__":   # pragma: no cover
+    main()

@@ -112,7 +112,7 @@ setup(
     # py_modules=['mypackage'],
 
     # 'mycli=mymodule:cli'
-    entry_points={'console_scripts': ["xirt=xirt.__main__:xirt_runner"],
+    entry_points={'console_scripts': ["xirt=xirt.__main__:main"],
                   },
     install_requires=REQUIRED,
     extras_require=EXTRAS,
