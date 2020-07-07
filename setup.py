@@ -16,11 +16,11 @@ NAME = 'xiRT'
 DESCRIPTION = 'xiRT: Multi-dimensional Retention Time Prediction for Linear and Cross-Linked Peptides.'
 URL = 'https://www.rappsilberlab.org/'
 EMAIL = 'sven.giese@hpi.de'
-AUTHOR = 'Sven Giese @ RappsilberLab'
+AUTHOR = 'Sven Giese'
 REQUIRES_PYTHON = '>=3.6.0'
 KEYWORDS = ["xiRT", "Proteomics", "Crosslinking", "machine learning", "Retention Time Prediction",
             "Chromatography", "Peptides"]
-
+RAPPSILBER_SOFTWARE = "https://www.rappsilberlab.org/software/"
 # What packages are required for this module to be executed?
 REQUIRED = ['numpy', 'pandas', 'tensorflow', 'seaborn', 'xlwt', 'graphviz', 'pydot', 'pyyaml',
             'pyteomics', 'sklearn', 'tqdm', 'biopython', 'pydot']
@@ -97,7 +97,11 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
-    url=URL,
+    project_urls={
+        "Bug Tracker": "https://github.com/gieses/xiRT/issues",
+        "Source Code": "https://github.com/gieses/xiRT",
+        "Homepage": URL,
+        "Related Software": RAPPSILBER_SOFTWARE},
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
