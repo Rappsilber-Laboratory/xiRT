@@ -11,7 +11,7 @@ fixtures_loc = os.path.join(os.path.dirname(__file__), 'fixtures')
 
 def test_xirt_class():
     # simple test to check if the parameter files were parsed
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
     assert xirtnetwork.model is None
@@ -28,7 +28,7 @@ def test_xirt_class():
 def test_xirt_normal_model(tmpdir):
     p = tmpdir.mkdir("tmp")
 
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
     xirtnetwork.build_model(siamese=False)
@@ -41,7 +41,7 @@ def test_xirt_normal_model(tmpdir):
 
 def test_xirt_siamese_model(tmpdir):
     p = tmpdir.mkdir("tmp")
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
 
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
@@ -54,7 +54,7 @@ def test_xirt_siamese_model(tmpdir):
 
 
 def test_xirt_compilation():
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
     xirtnetwork.build_model(siamese=True)
@@ -64,7 +64,7 @@ def test_xirt_compilation():
 
 def test_xirt_compilation_siameseoptions():
     # test the usage of different combination layers
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
 
     merge_options = ["add", "multiply", "average", "concatenate", "maximum"]
@@ -78,7 +78,7 @@ def test_xirt_compilation_siameseoptions():
 
 def test_xirt_compilation_lstm_options():
     # test if compilaton works for all options (gpu not added ...)
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     rnn_options = ["LSTM", "GRU"]  # "CuDNNGRU", "CuDNNLSTM"
     for rnn_type in rnn_options:
@@ -96,7 +96,7 @@ def test_xirt_compilation_lstm_options():
 #     matches_df = matches_df.sample(frac=0.5)
 #
 #     # standard processing before training
-#     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+#     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
 #                            Loader=yaml.FullLoader)
 #     training_data = xr.preprocess(matches_df, "crosslink", max_length=-1, cl_residue=False,
 #                                   fraction_cols=["SCX", "hSAX"])
@@ -110,7 +110,7 @@ def test_xirt_compilation_lstm_options():
 
 def test_get_callbacks(tmpdir):
     # test currently excludes tensorboard, all other callbacks sum up to 6 (2x ModelCheckpoint)
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
     xirtnetwork.callback_p["callback_path"] = os.path.abspath(tmpdir.mkdir("tmp"))
@@ -142,7 +142,7 @@ def test_init_regularizer_l3():
 
 def test_print_layers(capsys):
     # simple test that checks if key info is contained in the printed output
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=10)
     xirtnetwork.build_model(siamese=True)
@@ -154,7 +154,7 @@ def test_print_layers(capsys):
 
 def test_print_parameters(capsys):
     # simple test that checks if key info is contained in the printed output
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=10)
     xirtnetwork.build_model(siamese=True)
@@ -168,7 +168,7 @@ def test_print_parameters(capsys):
 def test_params_to_df(tmpdir):
     # take yaml file and test to df function
     p = tmpdir.mkdir("tmp").join("params.csv")
-    params_df = xirtnet.params_to_df(os.path.join(fixtures_loc, "xirt_params.yaml"), p)
+    params_df = xirtnet.params_to_df(os.path.join(fixtures_loc, "xirt_params_3RT.yaml"), p)
     assert os.path.isfile(p)
     assert not params_df.empty
     os.remove(p)

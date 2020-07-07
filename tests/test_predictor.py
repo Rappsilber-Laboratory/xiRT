@@ -156,7 +156,7 @@ def test_store_predictions():
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False,
                                   fraction_cols=["SCX"])
 
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params.yaml")),
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     xirtnetwork = xnet.xiRTNET(xiRTconfig, input_dim=100)
 
