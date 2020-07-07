@@ -9,18 +9,18 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup
+from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = 'xiRT'
 DESCRIPTION = 'xiRT: Multi-dimensional Retention Time Prediction for Linear and Cross-Linked Peptides.'
-URL = 'rappsilberlab.org'
+URL = 'https://www.rappsilberlab.org/'
 EMAIL = 'sven.giese@hpi.de'
-AUTHOR = 'Sven Giese @ RappsilberLab'
+AUTHOR = 'Sven Giese'
 REQUIRES_PYTHON = '>=3.6.0'
 KEYWORDS = ["xiRT", "Proteomics", "Crosslinking", "machine learning", "Retention Time Prediction",
             "Chromatography", "Peptides"]
-
+RAPPSILBER_SOFTWARE = "https://www.rappsilberlab.org/software/"
 # What packages are required for this module to be executed?
 REQUIRED = ['numpy', 'pandas', 'tensorflow', 'seaborn', 'xlwt', 'graphviz', 'pydot', 'pyyaml',
             'pyteomics', 'sklearn', 'tqdm', 'biopython', 'pydot']
@@ -97,7 +97,11 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
-    url=URL,
+    project_urls={
+        "Bug Tracker": "https://github.com/gieses/xiRT/issues",
+        "Source Code": "https://github.com/gieses/xiRT",
+        "Homepage": URL,
+        "Related Software": RAPPSILBER_SOFTWARE},
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
@@ -113,7 +117,6 @@ setup(
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        'License :: OSI Approved :: Apache License 2.0',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
