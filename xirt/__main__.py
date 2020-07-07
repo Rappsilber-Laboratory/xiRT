@@ -2,19 +2,23 @@
 
 import argparse
 import os
+import sys
 
 import numpy as np
 import pandas as pd
 import yaml
 
+from xirt import features as xf
 from xirt import predictor as xr
 from xirt import xirtnet
-from xirt import features as xf
 
 
-def arg_parser():  # pragma: not covered
+def arg_parser(arg_list):  # pragma: not covered
     """
     Parse the arguments from the CLI.
+
+    Args:
+        arg_list: ar-like, parameters as list from CLI input
 
     Returns:
         arguments, from parse_args
@@ -25,39 +29,49 @@ def arg_parser():  # pragma: not covered
     #TODO
     """
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("-p", "--xirt_params", "xirt_params", meta_var="xirt_params",
+    parser.add_argument("-i", "--in_peptides",
+                        help="Input peptide table to learn (and predict) the retention times.",
+                        required=True, action="store", dest="in_peptides")
+
+    parser.add_argument("-o", "--out_dir",
+                        help="Directory to store the results",
+                        required=True, action="store", dest="out_dir")
+
+    parser.add_argument("-p", "--xirt_params",
                         help="YAML parameter file to control xiRT's deep learning architecture.",
                         required=True, action="store", dest="xirt_params")
 
-    parser.add_argument("-c", "--learning_params", "learning_params", meta_var="learning_params",
+    parser.add_argument("-c", "--learning_params",
                         help="YAML parameter file to control training and testing splits and data.",
                         required=True, action="store", dest="learning_params")
 
-    args = parser.parse_args()
+    args = parser.parse_args(arg_list)
     return args
 
 
-def xirt_runner(peptides_file, xirt_loc, setup_loc):
+def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     """
     Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
 
     Args:
         peptides_file: str, location of the input psm/csm file
+        out_dir: str, folder to store the results to
         xirt_loc: str, location of the yaml file for xirt
         setup_loc: str, location of the setup yaml
         single_pep_predictions:
+        nrows: int, number of rows to sample (for quicker testing purposes only)
 
     Returns:
         None
     """
     xirt_params = yaml.load(open(xirt_loc), Loader=yaml.FullLoader)
     learning_params = yaml.load(open(setup_loc), Loader=yaml.FullLoader)
-    matches_df = pd.read_csv(peptides_file)
+    matches_df = pd.read_csv(peptides_file, nrows=nrows)
 
     # convenience short cuts
     n_splits = learning_params["train"]["ncv"]
     test_size = learning_params["train"]["test_frac"]
-    outpath = learning_params["global"]["outpath"]
+    outpath = os.path.abspath(out_dir)
     xirt_params["callbacks"]["callback_path"] = os.path.join(outpath, "callbacks")
 
     # preprocess training data
@@ -195,8 +209,9 @@ def xirt_runner(peptides_file, xirt_loc, setup_loc):
 
 if __name__ == "__main__":   # pragma: no cover
     # parse arguments
-    args = arg_parser()
+    args = arg_parser(sys.argv[1:])
 
     # call function
-    xirt_runner(args.peptides_file, args.xirt_params, args.learning_params,
+    xirt_runner(args.in_peptides, args.out_dir,
+                args.xirt_params, args.learning_params,
                 n_splits=3, test_size=0.1)

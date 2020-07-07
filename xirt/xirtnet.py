@@ -19,6 +19,7 @@ from tensorflow.python.keras.layers import CuDNNGRU, CuDNNLSTM
 from tqdm.keras import TqdmCallback
 
 
+# pragma: no cover
 def loss_ordered(y_true, y_pred):  # pragma: not covered
     """
     Compute the loss for ordered logistic regression for neural networks.
@@ -31,18 +32,18 @@ def loss_ordered(y_true, y_pred):  # pragma: not covered
         float, loss value
     """
     weights = K.cast(K.abs(K.argmax(y_true, axis=1) - K.argmax(y_pred, axis=1))
-                     / (K.int_shape(y_pred)[1] - 1), dtype='float32')
-    return (1.0 + weights) * losses.categorical_crossentropy(y_true, y_pred)
+                     / (K.int_shape(y_pred)[1] - 1), dtype='float32')  # pragma: no cover
+    return (1.0 + weights) * losses.categorical_crossentropy(y_true, y_pred)  # pragma: no cover
 
 
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
+gpus = tf.config.experimental.list_physical_devices('GPU')  # pragma: no cover
+if gpus:  # pragma: no cover
     # Currently, memory growth needs to be the same across GPUs
-    try:
-        for gpu in gpus:
+    try:  # pragma: no cover
+        for gpu in gpus:  # pragma: no cover
             tf.config.experimental.set_memory_growth(gpu, True)
-    except RuntimeError as e:
-        print(e)
+    except RuntimeError as e:  # pragma: no cover
+        print(e)  # pragma: no cover
 
 
 class xiRTNET:
@@ -264,13 +265,13 @@ class xiRTNET:
             f_rnn = LSTM
             f_name = "LSTM"
 
-        elif self.LSTM_p["type"] == "CuDNNGRU":
-            f_rnn = CuDNNGRU
-            f_name = "CuGRU"
+        elif self.LSTM_p["type"] == "CuDNNGRU":  # pragma: no cover
+            f_rnn = CuDNNGRU  # pragma: no cover
+            f_name = "CuGRU"  # pragma: no cover
 
-        elif self.LSTM_p["type"] == "CuDNNLSTM":
-            f_rnn = CuDNNLSTM
-            f_name = "CuLSTM"
+        elif self.LSTM_p["type"] == "CuDNNLSTM":  # pragma: no cover
+            f_rnn = CuDNNLSTM  # pragma: no cover
+            f_name = "CuLSTM"  # pragma: no cover
         else:
             raise KeyError("Recurrent type option not found ({})".format(
                 self.LSTM_p["activity_regularization"]))
