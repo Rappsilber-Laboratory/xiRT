@@ -5,10 +5,6 @@ name = "pypi"
 
 [develop]
 ipython = "*"
-
-[packages]
-xirt = {editable = true, path = "."}
-numpy = "*"
 pytest = "==3.6.4"
 pytest-pep8 = "*"
 pytest-sugar = "*"
@@ -16,12 +12,16 @@ flake8 = "==3.7.7"
 pytest-flake8 = "*"
 pytest-cov = "*"
 pytest-pydocstyle = "*"
-pandsa = "*"
+autopep8 = "*"
+docformatter = "*"
+
+[packages]
+xirt = {editable = true, path = "."}
+numpy = "*"
+pandas = "*"
 pyteomics = "*"
 sklearn = "*"
 tensorflow = "*"
-autopep8 = "*"
-docformatter = "*"
 tqdm = "*"
 pyyaml = "*"
 seaborn = "*"

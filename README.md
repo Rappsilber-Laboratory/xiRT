@@ -2,7 +2,7 @@
 
 [![GitHub](https://flat.badgen.net/github/license/compomics/ms2pip_c)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Twitter](https://flat.badgen.net/twitter/follow/rappsilberlab?icon=twitter)](https://twitter.com/compomics)
-[![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
 ![coverage](./documentation/coverage.svg)  
 
 A python package for multi-dimensional retention time prediction for linear and crosslinked 
@@ -67,10 +67,10 @@ concentrations are used as target variable for the prediction
 ### input format
 | short name         | explicit column name | description                                                                    | Example     |
 |--------------------|----------------------|--------------------------------------------------------------------------------|-------------|
-| peptide sequence 1 | Peptide1             | Alpha peptide sequence for crosslinks                                        | PEPRTIDER   |
-| peptide sequence 2 | Peptide2             | Beta peptide sequence for crosslinks, or empty                                 | ELRVIS      |
-| link site 1        | LinkPos1             | Crosslink position in the peptide (0-based)                                    | 3           |
-| link site 2        | LinkPos2             | Crosslink position in the beta peptide (0-based                                | 2           |
+| peptide sequence 1 | Peptide1             | First peptide sequence for crosslinks                                        | PEPRTIDER   |
+| peptide sequence 2 | Peptide2             | Second peptide sequence for crosslinks, or empty                                 | ELRVIS      |
+| link site 1        | LinkPos1             | Crosslink position in the first peptide (0-based)                                    | 3           |
+| link site 2        | LinkPos2             | Crosslink position in the second peptide (0-based                                | 2           |
 | precursor charge   | Charge               | Precursor charge of the crosslinked peptide                                    | 3           |
 | score              | Score                | Single score from the search engine                                            | 17.12       |
 | unique id          | CSMID                | A unique index for each entry in the result table                              | 0           |
