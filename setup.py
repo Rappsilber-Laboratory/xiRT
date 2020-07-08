@@ -13,7 +13,8 @@ from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = 'xiRT'
-DESCRIPTION = 'xiRT: Multi-dimensional Retention Time Prediction for Linear and Cross-Linked Peptides.'
+DESCRIPTION = \
+    'xiRT: Multi-dimensional Retention Time Prediction for Linear and Crosslinked Peptides.'
 URL = 'https://www.rappsilberlab.org/'
 EMAIL = 'sven.giese@hpi.de'
 AUTHOR = 'Sven Giese'
@@ -50,6 +51,7 @@ project_slug = NAME.lower().replace("-", "_").replace(" ", "_")
 with open(os.path.join(here, project_slug, '__version__.py')) as f:
     exec(f.read(), about)
 
+
 class UploadCommand(Command):
     """Support setup.py upload."""
 
@@ -58,16 +60,19 @@ class UploadCommand(Command):
 
     @staticmethod
     def status(s):
-        """Prints things in bold."""
+        """Print things in bold."""
         print('\033[1m{0}\033[0m'.format(s))
 
     def initialize_options(self):
+        """Init options."""
         pass
 
     def finalize_options(self):
+        """Finalize method."""
         pass
 
     def run(self):
+        """Run method."""
         try:
             self.status('Removing previous builds…')
             rmtree(os.path.join(here, 'dist'))
