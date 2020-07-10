@@ -39,13 +39,12 @@ in the training process. Requires the training of several models during CV
 
 Note: all modes can be supplemented by using a pretrained model ("transfer learning").
 
-## Usage
+### Installation and Usage
 
 xiRT is a python package that comes with a executable python file. To run xiRT follow the steps 
 below.
 
-
-### Installation and Usage
+#### Installation
 To install xiRT simply run the command below. We recommend to use an isolated python environment,
 for example by using pipenv or conda. 
 Using pipenv:
@@ -61,7 +60,7 @@ the CUDA libraries and other dependencies.
 >
 > conda install tensorflow-gpu
 
-
+#### Usage
 The command line interface (CLI) requires three inputs:
 1) input PSM/CSM file
 2) a [YAML](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html) file to configure the neural network architecture
