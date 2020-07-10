@@ -9,14 +9,6 @@ LSTM:
   nlayers: 1
   type: GRU
   units: 50
-conv:
-  activation: -1
-  conv_bn: -1
-  kernel_size: -1
-  nfilter: -1
-  nlayers: 0
-  pool_size: -1
-  pooling: -1
 dense:
   activation:
   - relu
