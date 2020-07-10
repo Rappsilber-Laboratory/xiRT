@@ -12,7 +12,9 @@ __pycache__/
 pipenv
 build/
 results/
-internal_data/
+tests/results/
+intern_data/
+intern_data/
 develop-eggs/
 dist/
 downloads/

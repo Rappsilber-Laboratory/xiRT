@@ -1,3 +1,3 @@
 include README.md LICENSE
 recursive-include documentation
-exclude tests/sample_data
+exclude tests/sample_data sample_data
