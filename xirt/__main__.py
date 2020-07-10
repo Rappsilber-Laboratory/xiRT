@@ -34,11 +34,11 @@ def arg_parser():    # pragma: not covered
                         help="Directory to store the results",
                         required=True, action="store", dest="out_dir")
 
-    parser.add_argument("-p", "--xirt_params",
+    parser.add_argument("-x", "--xirt_params",
                         help="YAML parameter file to control xiRT's deep learning architecture.",
                         required=True, action="store", dest="xirt_params")
 
-    parser.add_argument("-c", "--learning_params",
+    parser.add_argument("-l", "--learning_params",
                         help="YAML parameter file to control training and testing splits and data.",
                         required=True, action="store", dest="learning_params")
 

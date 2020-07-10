@@ -13,7 +13,8 @@ pipenv
 build/
 results/
 tests/results/
-internal_data/
+intern_data/
+intern_data/
 develop-eggs/
 dist/
 downloads/

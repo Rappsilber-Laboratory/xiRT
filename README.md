@@ -41,30 +41,44 @@ Note: all modes can be supplemented by using a pretrained model ("transfer learn
 
 ## Usage
 
-xiRT is a python package that comes with a exectuable python file. To run xiRT follow the steps 
+xiRT is a python package that comes with a executable python file. To run xiRT follow the steps 
 below.
 
 
-### Installation 
-To install xiRT a pip package is under development. Future release can be installed via:
+### Installation and Usage
+To install xiRT simply run the command below. We recommend to use an isolated python environment,
+for example by using pipenv or conda. 
+Using pipenv:
+>pipenv shell
+>
 >pip install xirt
 
-To enable CUDA support, the specific libraries need to be installed manually. The python 
-dependencies are covered via the pip installation.
+To enable CUDA support, the easiest thing is to create a conda environment. Conda will take care of 
+the CUDA libraries and other dependencies.
+> conda create --name xirt_env python=3.7
+>
+> pip install xirt
+>
+> conda install tensorflow-gpu
 
-To use xiRT a simple command line script gets installed with pip. To run the predictions ...
 
-### config file
+The command line interface (CLI) requires three inputs:
+1) input PSM/CSM file
+2) a [YAML](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html) file to configure the neural network architecture
+3) another YAML file to configure the general training / prediction behaviour, called setup-config
+
+To use xiRT these options are put together as shown below:
+> xirt(.exe) -i peptides.csv -o out_dir -x xirt_params -l learning_params
+
 To adapt the xiRT parameters a yaml config file needs to be prepared. The configuration file
 is used to determine network parameters (number of neurons, layers, regularization) but also for the
 definition of the prediction task (classification, regression, ordered regression). Depending
 on the decoding of the target variable the output layers need to be adapted. For standard RP 
-prediction, regression is essentially the only viable option. For SCX/hSAX (general classification)
-the prediction task can be formulated as classification, regression or ordered regression.
-For the usage of regression for fractionation it is recommended that the estimated salt 
-concentrations are used as target variable for the prediction 
-(raw fraction numbers are possible too).
-
+prediction, regression is essentially the only viable option. For SCX/hSAX (general classification
+from fractionation sexperiments) the prediction task can be formulated as classification, 
+regression or ordered regression. For the usage of regression for fractionation it is recommended 
+that the estimated salt concentrations are used as target variable for the prediction  (raw 
+fraction numbers are possible too).
 
 ### input format
 | short name         | explicit column name | description                                                                    | Example     |
@@ -80,28 +94,23 @@ concentrations are used as target variable for the prediction
 | fdr                | fdr                  | Estimated false discovery rate                                                 | 0.01        |
 | fdr level          | fdrGroup             | String identifier for heteromeric and self links (splitted FDR)                | heteromeric |
 
-The first four columns should be self explanatory, if not check the sample input *#TODO*. 
+The first four columns should be self explanatory, if not check the [sample input](https://github.com/gieses/xiRT/tree/master/sample_data). 
 The fifth column ("CSMID") is a unique(!) integer that can be used as to retrieve CSMs. In addition, 
 depending on the number retention time domains that should to be learned/predicted the RT columns 
 need to be present. The column names need to match the configuration in the network parameter yaml.
 
-### CLI interface
-The command line interface (CLI) requires three inputs:
-1) input CSM file
-2) a [YAML](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html) file to configure the neural network architecture
-3) another YAML file to configure the general training / prediction behaviour, called setup-config
-
-
 #### xiRT config
+This file determines the network architecture and training behaviour used in xiRT.
+
 #### Setup config
+This file determines the input data to be used and gives some training procedure options.
 
 ### Contributors
 - Sven Giese
 
-
 ## Citation
-If you consider xiRT helpful for your work please cite our manuscript. Currently, only
-available on bioRxiv.org "xiRT: Retention Time Prediction using Neural Networks increases 
+If you consider xiRT helpful for your work please cite our manuscript. Currently, in preparation
+on soon on bioRxiv.org "xiRT: Retention Time Prediction using Neural Networks increases 
 Identifications in Crosslinking Mass Spectrometry".
 
 ## RappsilberLab
