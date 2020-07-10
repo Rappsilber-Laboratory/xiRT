@@ -154,8 +154,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     model_summary_df["Split"] = np.tile(["Train", "Validation", "Prediction"], 3)
 
     # CV training done, now deal with the data not used for training
-    refit = False
-    if refit:
+    if learning_params["train"]["refit"]:
         callbacks = xirtnetwork.get_callbacks(suffix="full")
         xrefit = training_data.get_features(training_data.train_idx)
         yrefit = training_data.get_classes(training_data.train_idx, frac_cols=frac_cols,
@@ -199,10 +198,11 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     features_exhaustive = xf.add_interactions(training_data.prediction_df.filter(regex="error"),
                                               degree=len(xirtnetwork.tasks))
     df_history_all.to_excel(os.path.join(outpath, "epoch_history.xls"))
-    training_data.prediction_df.to_excel(os.path.join(outpath, "Prediction.xls"))
-    features_exhaustive.prediction_df.to_excel(os.path.join(outpath, "error_interactions.xls"))
+    training_data.prediction_df.to_excel(os.path.join(outpath, "prediction.xls"))
+    features_exhaustive.to_excel(os.path.join(outpath, "error_interactions.xls"))
     training_data.prediction_df.filter(regex="error").to_excel(os.path.join(outpath, "errors.xls"))
     print("Done.")
+
 
 def main():
     """Run xiRT main functio."""

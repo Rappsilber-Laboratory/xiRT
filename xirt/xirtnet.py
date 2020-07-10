@@ -78,7 +78,6 @@ class xiRTNET:
         self.input_dim = input_dim
 
         self.LSTM_p = params["LSTM"]
-        self.conv_p = params["conv"]
         self.dense_p = params["dense"]
         self.embedding_p = params["embedding"]
         self.learning_p = params["learning"]

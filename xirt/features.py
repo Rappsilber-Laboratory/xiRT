@@ -569,7 +569,8 @@ def compute_prediction_errors(obs_df, preds_df, tasks, frac_cols=[], single_pred
                 # we need to take take of the class mapping, because fractions are not equal to cls
                 if task_i in class_columns:
                     preds_df["{}-error{}".format(task_i, suffix)] = \
-                        obs_df[task_i+"_0based"] - preds_df["{}-prediction{}".format(task_i, suffix)]
+                        obs_df[task_i+"_0based"] - \
+                        preds_df["{}-prediction{}".format(task_i, suffix)]
                 else:
                     # continously measured RT dont have a constraint
                     preds_df["{}-error{}".format(task_i, suffix)] = \

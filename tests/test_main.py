@@ -43,10 +43,5 @@ def test_xirt_pseudolinear():
 
 def test_arg_parser():
     print("test")
-    params = '-i peptides.csv -o C:\\temp\\outdir\\ -p xirnet_conf.yaml -c setup_conf.yaml'.split()
-    parameters = __main__.arg_parser(params)
-    print(parameters)
-    assert parameters.learning_params == "setup_conf.yaml"
-    assert parameters.xirt_params == "xirnet_conf.yaml"
-    assert parameters.in_peptides == "peptides.csv"
-    assert os.path.abspath(parameters.out_dir) == os.path.abspath("C:\\temp\\outdir\\")
+    parser = __main__.arg_parser()
+    assert len(parser.description) > 1

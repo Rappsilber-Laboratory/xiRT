@@ -17,7 +17,6 @@ def test_xirt_class():
     assert xirtnetwork.model is None
     assert xirtnetwork.input_dim == 100
     assert xirtnetwork.LSTM_p == xiRTconfig["LSTM"]
-    assert xirtnetwork.conv_p == xiRTconfig["conv"]
     assert xirtnetwork.dense_p == xiRTconfig["dense"]
     assert xirtnetwork.embedding_p == xiRTconfig["embedding"]
     assert xirtnetwork.learning_p == xiRTconfig["learning"]
