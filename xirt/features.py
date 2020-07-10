@@ -546,7 +546,7 @@ def simply_alphabet(seq):
     return seq.replace("U", "C")
 
 
-def compute_prediction_errors(obs_df, preds_df, tasks, single_predictions=False):
+def compute_prediction_errors(obs_df, preds_df, tasks, frac_cols=[], single_predictions=False):
     """
     Compute the errors of the observed and predicted RT.
 
@@ -554,18 +554,26 @@ def compute_prediction_errors(obs_df, preds_df, tasks, single_predictions=False)
         obs_df: df, with observed RT
         preds_df: df, with predicted RT
         tasks: ar-like, list of strings that match the observed RT columns
+        frac_cols: ar-like, list of classification columns, or empty if all continous
         single_predictions: bool, if single peptide predictions are used
 
     Returns:
         None
     """
+    class_columns = [i.split("_")[0].lower() for i in frac_cols]
     # only generate single error feature; viable for crosslinks and linears
     if single_predictions:
         # generate 3x error features; only viable for crosslinks
         for suffix in ["", "-peptide1", "-peptide2"]:
             for task_i in tasks:
-                preds_df["{}-error{}".format(task_i, suffix)] = \
-                    obs_df[task_i] - preds_df["{}-prediction{}".format(task_i, suffix)]
+                # we need to take take of the class mapping, because fractions are not equal to cls
+                if task_i in class_columns:
+                    preds_df["{}-error{}".format(task_i, suffix)] = \
+                        obs_df[task_i+"_0based"] - preds_df["{}-prediction{}".format(task_i, suffix)]
+                else:
+                    # continously measured RT dont have a constraint
+                    preds_df["{}-error{}".format(task_i, suffix)] = \
+                        obs_df[task_i] - preds_df["{}-prediction{}".format(task_i, suffix)]
     else:
         for task_i in tasks:
             preds_df["{}-error".format(task_i)] = obs_df[task_i] - preds_df[task_i+"-prediction"]

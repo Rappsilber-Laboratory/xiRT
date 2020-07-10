@@ -85,17 +85,18 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
         random_state=learning_params["train"]["sample_state"])
 
     # adjust RT if necessary to guarantee smooth learning TODO remove!
-    training_data.psms["rp"] = training_data.psms["RP"] / 60.0
+    if training_data.psms["rp"].max() > 3000:
+        training_data.psms["rp"] = training_data.psms["rp"] / 60.0
 
     # init neural network structure
     xirtnetwork = xirtnet.xiRTNET(xirt_params, input_dim=training_data.features2.shape[1])
 
     # get the columns where the RT information is stored
-    frac_cols = [xirtnetwork.output_p[tt.lower() + "-column"] for tt in
-                 xirt_params["predictions"]["fractions"]]
+    frac_cols = sorted([xirtnetwork.output_p[tt.lower() + "-column"] for tt in
+                        xirt_params["predictions"]["fractions"]])
 
-    cont_cols = [xirtnetwork.output_p[tt.lower() + "-column"] for tt in
-                 xirt_params["predictions"]["continues"]]
+    cont_cols = sorted([xirtnetwork.output_p[tt.lower() + "-column"] for tt in
+                        xirt_params["predictions"]["continues"]])
 
     # init data structures for results
     histories = []
@@ -191,18 +192,20 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
 
     # compute features
     xf.compute_prediction_errors(training_data.psms, training_data.prediction_df,
-                                 xirtnetwork.tasks, xirtnetwork.siamese_p["single_predictions"])
-
-    # create more features?
+                                 xirtnetwork.tasks, frac_cols,
+                                 xirtnetwork.siamese_p["single_predictions"])
 
     # store results
-    df_history_all.to_excel(os.path.join(outpath, "temporary_test.xls"))
-    training_data.prediction_df.to_excel(os.path.join(outpath, "temporary_predictions.xls"))
-
-    print(df_history_all)
+    features_exhaustive = xf.add_interactions(training_data.prediction_df.filter(regex="error"),
+                                              degree=len(xirtnetwork.tasks))
+    df_history_all.to_excel(os.path.join(outpath, "epoch_history.xls"))
+    training_data.prediction_df.to_excel(os.path.join(outpath, "Prediction.xls"))
+    features_exhaustive.prediction_df.to_excel(os.path.join(outpath, "error_interactions.xls"))
+    training_data.prediction_df.filter(regex="error").to_excel(os.path.join(outpath, "errors.xls"))
     print("Done.")
 
 def main():
+    """Run xiRT main functio."""
     print("Parsing Arguments")
     parser = arg_parser()
     try:

@@ -192,8 +192,9 @@ class ModelData:
         if len(cont_cols) == 0:
             return [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
 
-        return [[xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols],
-                [self.psms[ccol].loc[idx].values for ccol in cont_cols]]
+        y_var = [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
+        y_var.extend([self.psms[ccol].loc[idx].values for ccol in cont_cols])
+        return y_var
 
     def predict_and_store(self, xirtnetwork, xdata, store_idx):
         """

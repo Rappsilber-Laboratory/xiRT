@@ -83,6 +83,7 @@ output:
 siamese:
   use: True
   merge_type: add
+  single_predictions: True
 callbacks:
   check_point: True
   log_csv: True
@@ -95,7 +96,7 @@ callbacks:
   reduce_lr_patience: 15
 predictions:
   continues:
-    - RP
+    - rp
   fractions: # simply write fractions: [] if no fraction prediction is desired
-    - SCX
-    - hSAX
+    - scx
+    - hsax
