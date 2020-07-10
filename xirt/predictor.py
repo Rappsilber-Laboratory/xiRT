@@ -192,8 +192,9 @@ class ModelData:
         if len(cont_cols) == 0:
             return [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
 
-        return [[xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols],
-                [self.psms[ccol].loc[idx].values for ccol in cont_cols]]
+        y_var = [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
+        y_var.extend([self.psms[ccol].loc[idx].values for ccol in cont_cols])
+        return y_var
 
     def predict_and_store(self, xirtnetwork, xdata, store_idx):
         """
@@ -304,12 +305,7 @@ def sigmoid_to_class(predictions, t=0.5):
     for ii, predi in enumerate(predictions):
         tval = np.where(predi <= t)[0]
         # if all values > t, use last class as predicted label
-        if len(tval) == 0:
-            pred_hats[ii] = len(predi) - 1
-        else:
-            # use the first entry smaller t
-            pred_hats[ii] = tval[0]
-
+        pred_hats[ii] = len(predi) - 1 if len(tval) == 0 else tval[0]
     return pred_hats
 
 
@@ -378,5 +374,4 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         xp.fraction_encoding(matches_df, rt_methods=fraction_cols)
 
     # keep all data together in a data class
-    training_data = ModelData(matches_df, features_rnn_seq1, features_rnn_seq2, le=le)
-    return training_data
+    return ModelData(matches_df, features_rnn_seq1, features_rnn_seq2, le=le)

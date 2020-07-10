@@ -9,14 +9,6 @@ LSTM:
   nlayers: 1
   type: GRU
   units: 50
-conv:
-  activation: -1
-  conv_bn: -1
-  kernel_size: -1
-  nfilter: -1
-  nlayers: 0
-  pool_size: -1
-  pooling: -1
 dense:
   activation:
   - relu
@@ -83,6 +75,7 @@ output:
 siamese:
   use: True
   merge_type: add
+  single_predictions: True
 callbacks:
   check_point: True
   log_csv: True
@@ -95,7 +88,7 @@ callbacks:
   reduce_lr_patience: 15
 predictions:
   continues:
-    - RP
+    - rp
   fractions: # simply write fractions: [] if no fraction prediction is desired
-    - SCX
-    - hSAX
+    - scx
+    - hsax

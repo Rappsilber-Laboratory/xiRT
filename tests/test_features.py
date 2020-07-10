@@ -290,7 +290,8 @@ def test_compute_prediction_errors_single():
     preds_df = pd.DataFrame(index=obs_df.index)
     preds_df["rp-prediction"] = 3
 
-    features.compute_prediction_errors(obs_df, preds_df, tasks, single_predictions=False)
+    features.compute_prediction_errors(obs_df, preds_df, tasks, frac_cols=[],
+                                       single_predictions=False)
 
     exp_errors = obs_df["rp"] - 3
     assert np.all(preds_df["rp-error"] == exp_errors)

@@ -241,18 +241,12 @@ def add_shortest_distance(orig_sequence, opt="cterm"):
         sequence = orig_sequence[::-1]
         match = re.search(targets, sequence)
 
-    # define shortest distance of targets to nterm
-    if opt == "nterm":
+    elif opt == "nterm":
         targets = "|".join(["K", "R"])
         sequence = orig_sequence
         match = re.search(targets, sequence)
 
-    # if there is a amino acid found...
-    if match:
-        pos = match.start() + 1
-    else:
-        pos = 0
-    return pos
+    return match.start() + 1 if match else 0
 
 
 def extract_nterm_mods(seq):
@@ -272,9 +266,7 @@ def extract_nterm_mods(seq):
     for ii, seqi in enumerate(seq):
         nterm_match = re.findall(nterm_pattern, seqi)
         # nterminal acetylation
-        if len(nterm_match) == 0:
-            pass
-        else:
+        if len(nterm_match) != 0:
             mods.append([nterm_match[0][0]])
     return mods
 
@@ -311,8 +303,7 @@ def get_patches(seq, aa_set1=["D", "E"], aa_set2=None, counts_only=True):
     else:
         ac_combs = ["".join(i) for i in
                     list(itertools.product(aa_set1, aa_set2))]
-        ac_combs = ac_combs + ["".join(reversed(i)) for i in
-                               list(itertools.product(aa_set1, aa_set2))]
+        ac_combs += ["".join(reversed(i)) for i in list(itertools.product(aa_set1, aa_set2))]
         p1 = "|".join(aa_set1)
         p2 = "|".join(aa_set2)
         pattern = re.compile("([{}]+[{}]+)|[{}]+[{}]+".format(p1, p2, p2, p1))
@@ -363,7 +354,7 @@ def get_structure_perc(seq, structure="helix"):
     else:
         aa_structure = "EMAL"
 
-    return sum([seq.count(i) for i in aa_structure]) / len(seq)
+    return sum(seq.count(i) for i in aa_structure) / len(seq)
 
 
 def get_gravy(seq):
@@ -418,10 +409,9 @@ def get_turn_indicator(seq):
     """
     starts = [i.start() for i in re.finditer("P", seq)]
     # no prolines
-    if len(starts) == 0:
+    if not starts:
         return 0.0
 
-    # one proline
     elif len(starts) == 1:
         return starts[0] / (len(seq) * 1.)
 
@@ -490,8 +480,13 @@ def get_AA_matrix(sequences, pos_specific=False, ntermini=5, lcp=1,
         nfeatures = (2 * ntermini - 1) * len(residues)
         # init dic with counts
         # ini dataframe with same row index as df, to overwrite counts
-        count_dic = {j + res + str(i): 0 for res in residues for i in
-                     range(0, ntermini) for j in ["N"]}
+        count_dic = {
+            j + res + str(i): 0
+            for res in residues
+            for i in range(ntermini)
+            for j in ["N"]
+        }
+
         count_dic.update({j + res + str(i): 0 for res in residues for i in
                           range(1, ntermini) for j in ["C"]})
 
@@ -506,13 +501,9 @@ def get_AA_matrix(sequences, pos_specific=False, ntermini=5, lcp=1,
             # counts when neceessary
             seq = rowi["Sequence"]
             n = len(seq)
-            if (n - 2 * ntermini) < 0:
-                tmp_ntermini = np.floor(n / 2.)
-            else:
-                tmp_ntermini = ntermini
-
+            tmp_ntermini = np.floor(n / 2.) if (n - 2 * ntermini) < 0 else ntermini
             # iterate over number of termini, add count if desired (residues)
-            for i in range(0, int(tmp_ntermini)):
+            for i in range(int(tmp_ntermini)):
                 if seq[i] in residues_hash:
                     nterm = "N" + seq[i] + str(i)
                     count_df.at[ii, nterm] = count_df.loc[ii][nterm] + 1
@@ -555,7 +546,7 @@ def simply_alphabet(seq):
     return seq.replace("U", "C")
 
 
-def compute_prediction_errors(obs_df, preds_df, tasks, single_predictions=False):
+def compute_prediction_errors(obs_df, preds_df, tasks, frac_cols=[], single_predictions=False):
     """
     Compute the errors of the observed and predicted RT.
 
@@ -563,18 +554,27 @@ def compute_prediction_errors(obs_df, preds_df, tasks, single_predictions=False)
         obs_df: df, with observed RT
         preds_df: df, with predicted RT
         tasks: ar-like, list of strings that match the observed RT columns
+        frac_cols: ar-like, list of classification columns, or empty if all continous
         single_predictions: bool, if single peptide predictions are used
 
     Returns:
         None
     """
+    class_columns = [i.split("_")[0].lower() for i in frac_cols]
     # only generate single error feature; viable for crosslinks and linears
     if single_predictions:
         # generate 3x error features; only viable for crosslinks
         for suffix in ["", "-peptide1", "-peptide2"]:
             for task_i in tasks:
-                preds_df["{}-error{}".format(task_i, suffix)] = \
-                    obs_df[task_i] - preds_df["{}-prediction{}".format(task_i, suffix)]
+                # we need to take take of the class mapping, because fractions are not equal to cls
+                if task_i in class_columns:
+                    preds_df["{}-error{}".format(task_i, suffix)] = \
+                        obs_df[task_i+"_0based"] - \
+                        preds_df["{}-prediction{}".format(task_i, suffix)]
+                else:
+                    # continously measured RT dont have a constraint
+                    preds_df["{}-error{}".format(task_i, suffix)] = \
+                        obs_df[task_i] - preds_df["{}-prediction{}".format(task_i, suffix)]
     else:
         for task_i in tasks:
             preds_df["{}-error".format(task_i)] = obs_df[task_i] - preds_df[task_i+"-prediction"]

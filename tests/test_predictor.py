@@ -122,39 +122,39 @@ def test_get_classes_cont():
     psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv")).head(100)
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False)
     idx = training_data.psms.index[0:10]
-    rp = training_data.get_classes(idx, frac_cols=[], cont_cols=["RP"])
+    rp = training_data.get_classes(idx, frac_cols=[], cont_cols=["rp"])
     assert len(rp) == 1
     assert rp[0].shape == (10,)
 
 
 def test_get_classes_frac():
     psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv")).head(100)
-    psms_df["SCX"] = np.repeat([1, 1, 2, 2, 3, 3, 4, 4, 5, 5], 10)
+    psms_df["scx"] = np.repeat([1, 1, 2, 2, 3, 3, 4, 4, 5, 5], 10)
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False,
-                                  fraction_cols=["SCX"])
+                                  fraction_cols=["scx"])
     idx = training_data.psms.index
-    SCX = training_data.get_classes(idx, frac_cols=["SCX_ordinal"], cont_cols=[])
+    SCX = training_data.get_classes(idx, frac_cols=["scx_ordinal"], cont_cols=[])
     assert len(SCX) == 1
     assert SCX[0].shape == (100, 5)
 
 
 def test_get_classes_cont_frac():
     psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv")).head(100)
-    psms_df["SCX"] = np.repeat([1, 1, 2, 2, 3, 3, 4, 4, 5, 5], 10)
+    psms_df["scx"] = np.repeat([1, 1, 2, 2, 3, 3, 4, 4, 5, 5], 10)
 
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False,
-                                  fraction_cols=["SCX"])
+                                  fraction_cols=["scx"])
     idx = training_data.psms.index
-    rts = training_data.get_classes(idx, frac_cols=["SCX_ordinal"], cont_cols=["RP"])
+    rts = training_data.get_classes(idx, frac_cols=["scx_ordinal"], cont_cols=["rp"])
     assert len(rts) == 2
-    assert rts[0][0].shape == (100, 5)
-    assert rts[1][0].shape == (100, )
+    assert rts[0].shape == (100, 5)
+    assert rts[1].shape == (100, )
 
 
 def test_store_predictions():
     psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv")).head(3)
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False,
-                                  fraction_cols=["SCX"])
+                                  fraction_cols=["scx"])
 
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)

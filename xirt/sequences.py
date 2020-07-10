@@ -130,9 +130,9 @@ def reorder_sequences(matches_df):
                          " is a number in the end of the name.")
 
     # order logic, last comparison checks lexigographically
-    order_long = (matches_df["Peptide1"].apply(len) > matches_df["Peptide2"].apply(len)).values
-    order_short = (matches_df["Peptide1"].apply(len) < matches_df["Peptide2"].apply(len)).values
-    order_lex = (matches_df["Peptide1"] > matches_df["Peptide2"]).values
+    is_longer = (matches_df["Peptide1"].apply(len) > matches_df["Peptide2"].apply(len)).values
+    is_shorter = (matches_df["Peptide1"].apply(len) < matches_df["Peptide2"].apply(len)).values
+    is_greater = (matches_df["Peptide1"] > matches_df["Peptide2"]).values
 
     # create a copy of the dataframe
     swapping_df = matches_df.copy()
@@ -141,24 +141,12 @@ def reorder_sequences(matches_df):
     # z_idx for 0-based index
     # df_idx for pandas
     for z_idx, df_idx in enumerate(matches_df.index):
-        if order_long[z_idx]:
-            # easy, longer peptide goes first, no swapping required
+        if not is_shorter[z_idx] and is_greater[z_idx] or is_longer[z_idx]:
+            # for example: AC - AA, higher first, no swapping required
             swapped[z_idx] = False
-
-        elif order_short[z_idx]:
-            # easy, shorter peptide goes last
-            swapped[z_idx] = True
-
         else:
-            # equal length
-            if order_lex[z_idx]:
-                # for example: AC - AA
-                # higher first, no swapping required
-                swapped[z_idx] = False
-            else:
-                # for example: AA > AC
-                # other case, swap
-                swapped[z_idx] = True
+            # for example: AA > AC, other case, swap
+            swapped[z_idx] = True
 
         if swapped[z_idx]:
             for col in pairs_noidx:
@@ -201,9 +189,7 @@ def get_mods(sequences):
     -------
     List with modification strings.
     """
-    # get a list of all modifications (cm, ox, bs3ohX, etc) in the data
-    mods = np.unique(re.findall("-OH|H-|[a-z0-9]+[A-Z]", " ".join(sequences)))
-    return (mods)
+    return np.unique(re.findall("-OH|H-|[a-z0-9]+[A-Z]", " ".join(sequences)))
 
 
 def get_alphabet(sequences):
@@ -218,8 +204,9 @@ def get_alphabet(sequences):
     -------
     List with modification strings.
     """
-    alphabet = np.unique(re.findall("-OH|H-|[a-z0-9]+[A-Z]|[A-Z]", " ".join(sequences)))
-    return alphabet
+    return np.unique(
+        re.findall("-OH|H-|[a-z0-9]+[A-Z]|[A-Z]", " ".join(sequences))
+    )
 
 
 def label_encoding(sequences, max_sequence_length, alphabet=[], le=None):

@@ -13,12 +13,9 @@ from xirt import predictor as xr
 from xirt import xirtnet
 
 
-def arg_parser(arg_list):  # pragma: not covered
+def arg_parser():    # pragma: not covered
     """
     Parse the arguments from the CLI.
-
-    Args:
-        arg_list: ar-like, parameters as list from CLI input
 
     Returns:
         arguments, from parse_args
@@ -45,8 +42,7 @@ def arg_parser(arg_list):  # pragma: not covered
                         help="YAML parameter file to control training and testing splits and data.",
                         required=True, action="store", dest="learning_params")
 
-    args = parser.parse_args(arg_list)
-    return args
+    return parser
 
 
 def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
@@ -89,17 +85,18 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
         random_state=learning_params["train"]["sample_state"])
 
     # adjust RT if necessary to guarantee smooth learning TODO remove!
-    training_data.psms["rp"] = training_data.psms["RP"] / 60.0
+    if training_data.psms["rp"].max() > 3000:
+        training_data.psms["rp"] = training_data.psms["rp"] / 60.0
 
     # init neural network structure
     xirtnetwork = xirtnet.xiRTNET(xirt_params, input_dim=training_data.features2.shape[1])
 
     # get the columns where the RT information is stored
-    frac_cols = [xirtnetwork.output_p[tt.lower() + "-column"] for tt in
-                 xirt_params["predictions"]["fractions"]]
+    frac_cols = sorted([xirtnetwork.output_p[tt.lower() + "-column"] for tt in
+                        xirt_params["predictions"]["fractions"]])
 
-    cont_cols = [xirtnetwork.output_p[tt.lower() + "-column"] for tt in
-                 xirt_params["predictions"]["continues"]]
+    cont_cols = sorted([xirtnetwork.output_p[tt.lower() + "-column"] for tt in
+                        xirt_params["predictions"]["continues"]])
 
     # init data structures for results
     histories = []
@@ -157,8 +154,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     model_summary_df["Split"] = np.tile(["Train", "Validation", "Prediction"], 3)
 
     # CV training done, now deal with the data not used for training
-    refit = False
-    if refit:
+    if learning_params["train"]["refit"]:
         callbacks = xirtnetwork.get_callbacks(suffix="full")
         xrefit = training_data.get_features(training_data.train_idx)
         yrefit = training_data.get_classes(training_data.train_idx, frac_cols=frac_cols,
@@ -195,23 +191,33 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
 
     # compute features
     xf.compute_prediction_errors(training_data.psms, training_data.prediction_df,
-                                 xirtnetwork.tasks, xirtnetwork.siamese_p["single_predictions"])
-
-    # create more features?
+                                 xirtnetwork.tasks, frac_cols,
+                                 xirtnetwork.siamese_p["single_predictions"])
 
     # store results
-    df_history_all.to_excel(os.path.join(outpath, "temporary_test.xls"))
-    training_data.prediction_df.to_excel(os.path.join(outpath, "temporary_predictions.xls"))
-
-    print(df_history_all)
+    features_exhaustive = xf.add_interactions(training_data.prediction_df.filter(regex="error"),
+                                              degree=len(xirtnetwork.tasks))
+    df_history_all.to_excel(os.path.join(outpath, "epoch_history.xls"))
+    training_data.prediction_df.to_excel(os.path.join(outpath, "prediction.xls"))
+    features_exhaustive.to_excel(os.path.join(outpath, "error_interactions.xls"))
+    training_data.prediction_df.filter(regex="error").to_excel(os.path.join(outpath, "errors.xls"))
     print("Done.")
 
 
-if __name__ == "__main__":   # pragma: no cover
-    # parse arguments
-    args = arg_parser(sys.argv[1:])
+def main():
+    """Run xiRT main functio."""
+    print("Parsing Arguments")
+    parser = arg_parser()
+    try:
+        args = parser.parse_args(sys.argv[1:])
+    except TypeError:
+        parser.print_usage()
 
+    print("Calling xiRT")
     # call function
     xirt_runner(args.in_peptides, args.out_dir,
-                args.xirt_params, args.learning_params,
-                n_splits=3, test_size=0.1)
+                args.xirt_params, args.learning_params)
+
+
+if __name__ == "__main__":   # pragma: no cover
+    main()

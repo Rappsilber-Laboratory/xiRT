@@ -78,7 +78,6 @@ class xiRTNET:
         self.input_dim = input_dim
 
         self.LSTM_p = params["LSTM"]
-        self.conv_p = params["conv"]
         self.dense_p = params["dense"]
         self.embedding_p = params["embedding"]
         self.learning_p = params["learning"]
@@ -86,8 +85,8 @@ class xiRTNET:
         self.siamese_p = params["siamese"]
         self.callback_p = params["callbacks"]
 
-        self.tasks = np.concatenate([params["predictions"]["continues"],
-                                     params["predictions"]["fractions"]])
+        self.tasks = np.concatenate([sorted(params["predictions"]["fractions"]),
+                                     sorted(params["predictions"]["continues"])])
         self.tasks = [i.lower() for i in self.tasks]
 
     def build_model(self, siamese=False):
@@ -277,13 +276,13 @@ class xiRTNET:
                 self.LSTM_p["activity_regularization"]))
 
         if self.LSTM_p["bidirectional"]:
-            lstm = Bidirectional(f_rnn(self.LSTM_p["units"], activation=self.LSTM_p["activation"],
-                                       activity_regularizer=reg_act,
+            # GRU implementations do not support activiation
+            # activation = self.LSTM_p["activation"], disabled fo rnow
+            lstm = Bidirectional(f_rnn(self.LSTM_p["units"], activity_regularizer=reg_act,
                                        kernel_regularizer=reg_kernel, return_sequences=return_seqs),
                                  name=name + "Bi" + f_name)(prev_layer)
         else:
             lstm = f_rnn(self.LSTM_p["units"], activation=self.LSTM_p["activation"],
-                         activity_regularizer=reg_act,
                          kernel_regularizer=reg_kernel, return_sequences=return_seqs,
                          name=name + "Bi" + f_name)(prev_layer)
 
