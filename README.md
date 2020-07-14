@@ -18,11 +18,14 @@ peptides using a (siamese) deep neural network architecture.
 ---
 ## overview
 
-xiRT is a deep learning tool to predict the RT of linear and cross-linked peptides from multiple
-fractionation dimensions including RP (typically coupled to the mass spectrometer). xiRT requires the
-columns shown in the table below. Importantly, the xiRT framework requires that CSM are sorted
-such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically larger one for
-crosslinked RT predictions.
+xiRT is a deep learning tool to predict the retention times(s) of linear and crosslinked peptides 
+from multiple fractionation dimensions including RP (typically coupled to the mass spectrometer). 
+xiRT was developed with a combination of SCX / hSAX / RP chromatography. However, xiRT supports
+all available chromatography methods.
+
+xiRT requires the columns shown in the table below. Importantly, the xiRT framework requires that 
+CSM are sorted such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically 
+larger one for crosslinked RT predictions.
 
 ![xiRT Architecture](documentation/xiRT.PNG)
 
@@ -55,6 +58,8 @@ Using pipenv:
 To enable CUDA support, the easiest thing is to create a conda environment. Conda will take care of 
 the CUDA libraries and other dependencies.
 > conda create --name xirt_env python=3.7
+>
+>conda activate xirt_env
 >
 > pip install xirt
 >
