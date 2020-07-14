@@ -18,11 +18,14 @@ peptides using a (siamese) deep neural network architecture.
 ---
 ## overview
 
-xiRT is a deep learning tool to predict the RT of linear and cross-linked peptides from multiple
-fractionation dimensions including RP (typically coupled to the mass spectrometer). xiRT requires the
-columns shown in the table below. Importantly, the xiRT framework requires that CSM are sorted
-such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically larger one for
-crosslinked RT predictions.
+xiRT is a deep learning tool to predict the retention times(s) of linear and crosslinked peptides 
+from multiple fractionation dimensions including RP (typically coupled to the mass spectrometer). 
+xiRT was developed with a combination of SCX / hSAX / RP chromatography. However, xiRT supports
+all available chromatography methods.
+
+xiRT requires the columns shown in the table below. Importantly, the xiRT framework requires that 
+CSM are sorted such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically 
+larger one for crosslinked RT predictions.
 
 ![xiRT Architecture](documentation/xiRT.PNG)
 
@@ -39,13 +42,12 @@ in the training process. Requires the training of several models during CV
 
 Note: all modes can be supplemented by using a pretrained model ("transfer learning").
 
-## Usage
+### Installation and Usage
 
 xiRT is a python package that comes with a executable python file. To run xiRT follow the steps 
 below.
 
-
-### Installation and Usage
+#### Installation
 To install xiRT simply run the command below. We recommend to use an isolated python environment,
 for example by using pipenv or conda. 
 Using pipenv:
@@ -57,11 +59,13 @@ To enable CUDA support, the easiest thing is to create a conda environment. Cond
 the CUDA libraries and other dependencies.
 > conda create --name xirt_env python=3.7
 >
+>conda activate xirt_env
+>
 > pip install xirt
 >
 > conda install tensorflow-gpu
 
-
+#### Usage
 The command line interface (CLI) requires three inputs:
 1) input PSM/CSM file
 2) a [YAML](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html) file to configure the neural network architecture
