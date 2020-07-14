@@ -1,7 +1,7 @@
 ![logo](./documentation/xiRT_logo.png) 
 
-![release](https://flat.badgen.net/github/tag/gieses/xirt)
-[![GitHub](https://flat.badgen.net/github/license/gieses/xirt)](https://www.apache.org/licenses/LICENSE-2.0)
+![release](https://flat.badgen.net/github/tag/Rappsilber-Laboratory/xirt)
+[![GitHub](https://flat.badgen.net/github/license/Rappsilber-Laboratory/xirt)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Twitter](https://flat.badgen.net/twitter/follow/rappsilberlab?icon=twitter)](https://twitter.com/compomics)
 [![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
 ![PyPI version](https://flat.badgen.net/pypi/v/xiRT)
@@ -98,7 +98,7 @@ fraction numbers are possible too).
 | fdr                | fdr                  | Estimated false discovery rate                                                 | 0.01        |
 | fdr level          | fdrGroup             | String identifier for heteromeric and self links (splitted FDR)                | heteromeric |
 
-The first four columns should be self explanatory, if not check the [sample input](https://github.com/gieses/xiRT/tree/master/sample_data). 
+The first four columns should be self explanatory, if not check the [sample input](https://github.com/Rappsilber-Laboratory/xiRT/tree/master/sample_data). 
 The fifth column ("CSMID") is a unique(!) integer that can be used as to retrieve CSMs. In addition, 
 depending on the number retention time domains that should to be learned/predicted the RT columns 
 need to be present. The column names need to match the configuration in the network parameter yaml.
