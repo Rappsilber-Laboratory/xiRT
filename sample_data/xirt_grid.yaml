@@ -1,89 +1,85 @@
-LSTM:
-  activation: tanh
-  activity_regularization: l2
-  activityregularizer_value: 0.001
-  bidirectional: true
-  kernel_regularization: l2
-  kernelregularizer_value: 0.001
-  lstm_bn: true
-  nlayers: 1
-  type: GRU
-  units: 50
-dense:
-  activation:
-  - relu
-  - relu
-  - relu
-  dense_bn:
-  - true
-  - true
-  - true
-  dropout:
-  - 0.1
-  - 0.1
-  - 0.1
-  kernel_regularizer:
-  - l2
-  - l2
-  - l2
-  neurons:
-  - 50
-  - 25
-  - 10
-  nlayers: 3
-  regularization:
-  - true
-  - true
-  - true
-  regularizer_value:
-  - 0.001
-  - 0.001
-  - 0.001
-embedding:
-  length: 50
-learning:
-  batch_size: 128
-  epochs: 5
-  learningrate: 0.001
-  patience: 15
-  verbose: 1
-output:
-  callback-path: data/results/callbacks/
-  hsax-activation: sigmoid
-  hsax-column: hsax_ordinal
-  hsax-dimension: 10
-  hsax-loss: binary_crossentropy
-  hsax-metrics: mse
-  hsax-weight: 50
-  rp-activation: linear
-  rp-column: rp
-  rp-dimension: 1
-  rp-loss: mse
-  rp-metrics: mse
-  rp-weight: 1
-  scx-activation: sigmoid
-  scx-column: scx_ordinal
-  scx-dimension: 9
-  scx-loss: binary_crossentropy
-  scx-metrics: mse
-  scx-weight: 50
-siamese:
-  use: True
-  merge_type: add
-  single_predictions: True
-callbacks:
-  check_point: True
-  log_csv: True
-  early_stopping: True
-  early_stopping_patience: 15
-  tensor_board: False
-  progressbar: True
-  reduce_lr: True
-  reduce_lr_factor: 0.5
-  reduce_lr_patience: 15
-predictions:
-  continues:
-    - rp
-  fractions: # simply write fractions: [] if no fraction prediction is desired
-    - scx
-    - hsax
+# fitting parameters
+grid_parameters:
+    LSTM:
+        nlayers: [1]
+        type : ["GRU", "LSTM"] # "GRU" / "CuDNNGRU" / "CuDNNLSTM" / "LSTM"
+        units : [25, 75]
+        bidirectional : [True]
+        lstm_bn : [True, False]
+        activation : ["tanh"]
+
+        # l2 = regularize the magnitude of the parameters
+        # the higher the number the higher the penalty for the loss
+        kernel_regularization: ["l2"]
+        kernelregularizer_value : [0.0, 0.001] # 0
+
+        activity_regularization: ["l2"]
+        activityregularizer_value : [0.0, 0.001] # 0
+        #l2_reg = [0.01, 0.001, 0.005, 0.0001]
+    dense:
+        nlayers : [3]
+        neurons : [[300, 150, 75]]
+        dense_bn : [[True, True, True]]
+        regularization : [[True, True, True]]
+        kernel_regularizer : [["l2", "l2", "l2"]]
+        regularizer_value : [[0.001,  0.001, 0.001]]
+        dropout :   [[0.2, 0.2, 0.2], [0.1, 0.1, 0.1]]
+        activation : [["relu", "relu", "relu"], ["swish", "swish", "swish"]]
+
+    embedding:
+        length: [50, 75]
+
+    learning:
+        epochs : [25, 50] # 100
+        batch_size : [256] # 256
+        patience : [15]
+        learningrate : [0.001] # 0.005
+        verbose: [1]
+
+    siamese:
+        use: [True]
+        merge_type: ["add"]
+        single_predictions: [True]
+
+    output:
+        # only in multi task case
+        scx-activation : ["sigmoid"]
+        scx-loss: ["binary_crossentropy"]
+        scx-metrics: ["mse"]
+        scx-column: ["scx_ordinal"]
+        scx-dimension : [9] # 9
+
+        hsax-activation : ["sigmoid"]
+        hsax-loss: ["binary_crossentropy"]
+        hsax-metrics: ["mse"]
+        hsax-column: ["hsax_ordinal"]
+        hsax-dimension : [10] # 10
+
+        rp-activation : ["linear"]
+        rp-loss: ["mse"]
+        rp-metrics: ["mse"]
+        rp-dimension : [1]
+        rp-column: ["rp"]
+
+        # weights
+        rp-weight: [1]
+        scx-weight: [50] #50
+        hsax-weight: [50]
+
+        #callback stuff
+        callback-path: ["data/results/callbacks/"]
+
+    callbacks:
+        check_point: [True]
+        log_csv: [True]
+        early_stopping: [True]
+        early_stopping_patience: [15]
+        tensor_board: [False]
+        progressbar: [True]
+        reduce_lr: [True]
+        reduce_lr_factor: [0.5]
+        reduce_lr_patience: [15]
+
+    predictions:
+        continues: [[rp]]
+        fractions: [[scx, hsax]]

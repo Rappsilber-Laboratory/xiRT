@@ -29,7 +29,7 @@ dense:
   neurons:
   - 300
   - 150
-  - 50
+  - 75
   nlayers: 3
   regularization:
   - true
@@ -42,8 +42,8 @@ dense:
 embedding:
   length: 50
 learning:
-  batch_size: 512
-  epochs: 25
+  batch_size: 128
+  epochs: 75
   learningrate: 0.001
   patience: 15
   verbose: 1

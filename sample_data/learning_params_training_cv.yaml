@@ -6,7 +6,7 @@
 # cl_residue: bool, if True crosslinked residues are decoded as Kcl or in modX format clK
 preprocessing:
     le: None
-    max_length: -1 # -1
+    max_length: -1
     cl_residue: True
 
 # train and transfer share the same options that are necessary to run xiML, here is a brief rundown:

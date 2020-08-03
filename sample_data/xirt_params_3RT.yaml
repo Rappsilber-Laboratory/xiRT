@@ -8,7 +8,7 @@ LSTM:
   lstm_bn: true
   nlayers: 1
   type: GRU
-  units: 15
+  units: 50
 dense:
   activation:
   - relu
@@ -27,9 +27,9 @@ dense:
   - l2
   - l2
   neurons:
+  - 300
+  - 150
   - 50
-  - 25
-  - 10
   nlayers: 3
   regularization:
   - true
@@ -42,18 +42,13 @@ dense:
 embedding:
   length: 50
 learning:
-  batch_size: 128
-  epochs: 5
+  batch_size: 512
+  epochs: 25
   learningrate: 0.001
   patience: 15
   verbose: 1
 output:
-  activation: linear
   callback-path: data/results/callbacks/
-  class-weight: 200
-  dimension: 1
-  loss: mse
-  metric: mse
   hsax-activation: sigmoid
   hsax-column: hsax_ordinal
   hsax-dimension: 10
