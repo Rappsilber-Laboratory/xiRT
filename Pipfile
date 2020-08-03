@@ -16,6 +16,7 @@ biopython = "*"
 pydot = "*"
 graphviz = "*"
 xlwt = "*"
+xlrd = "*"
 
 [dev-packages]
 twine = "*"
@@ -30,3 +31,4 @@ pytest-pydocstyle = "*"
 autopep8 = "*"
 docformatter = "*"
 coverage-badge = "*"
+sphinx = "*"

@@ -1,11 +1,11 @@
-![logo](./documentation/xiRT_logo.png) 
+![logo](documentation/imgs/xiRT_logo.png) 
 
 ![release](https://flat.badgen.net/github/tag/Rappsilber-Laboratory/xirt)
 [![GitHub](https://flat.badgen.net/github/license/Rappsilber-Laboratory/xirt)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Twitter](https://flat.badgen.net/twitter/follow/rappsilberlab?icon=twitter)](https://twitter.com/compomics)
 [![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
 ![PyPI version](https://flat.badgen.net/pypi/v/xiRT)
-![coverage](./documentation/coverage.svg)
+![coverage](documentation/imgs/coverage.svg)
 
 A python package for multi-dimensional retention time prediction for linear and crosslinked 
 peptides using a (siamese) deep neural network architecture.
@@ -27,7 +27,7 @@ xiRT requires the columns shown in the table below. Importantly, the xiRT framew
 CSM are sorted such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically 
 larger one for crosslinked RT predictions.
 
-![xiRT Architecture](documentation/xiRT.PNG)
+![xiRT Architecture](documentation/imgs/xiRT.PNG)
 
 ## Description
 xiRT is meant to be used to generate additional information about CSMs for machine learning-based
