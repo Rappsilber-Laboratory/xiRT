@@ -65,6 +65,7 @@ the CUDA libraries and other dependencies.
 >
 > conda install tensorflow-gpu
 
+
 #### Usage
 The command line interface (CLI) requires three inputs:
 1) input PSM/CSM file

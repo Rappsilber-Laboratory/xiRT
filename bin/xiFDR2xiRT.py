@@ -56,4 +56,4 @@ def annotate_fraction(name, prefix="SCX"):
 #
 # df_csms["xirt_SCX"] = df_csms["Run"].apply(annotate_fraction, args=("SCX",))
 # df_csms["xirt_hSAX"] = df_csms["Run"].apply(annotate_fraction, args=("hSAX",))
-# df_csms.to_csv(r"50pCSMFDR_universal_final.csv")
+# df_csms.to_csv(r"DSS_xisearch_fdr_CSM50percent.csv")

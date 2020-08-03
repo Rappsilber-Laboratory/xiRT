@@ -90,7 +90,7 @@ def test_xirt_compilation_lstm_options():
 
 # def test_xirt_train():
 #     # read data
-#     matches_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv"),
+#     matches_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv"),
 #     nrows=100)
 #     matches_df = matches_df.sample(frac=0.5)
 #

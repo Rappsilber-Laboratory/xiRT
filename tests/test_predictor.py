@@ -12,7 +12,7 @@ fixtures_loc = os.path.join(os.path.dirname(__file__), 'fixtures')
 
 
 def test_preprocessing_crosslinks():
-    psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv")).head(100)
+    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv")).head(100)
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False)
 
     assert len(training_data.features1) == 100
@@ -21,7 +21,7 @@ def test_preprocessing_crosslinks():
 
 
 def test_preprocessing_linear():
-    psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv")).head(100)
+    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv")).head(100)
     training_data = xr.preprocess(psms_df, "linear", max_length=-1, cl_residue=False)
     assert len(training_data.features1) == 100
     assert len(training_data.features2) == 0
@@ -80,7 +80,7 @@ def test_model_data_shuffle():
 
 
 def test_iter_splits():
-    psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv"),
+    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv"),
                           nrows=10)
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False)
     training_data.set_fdr_mask(0.4)
@@ -119,7 +119,7 @@ def test_get_train_psms():
 
 
 def test_get_classes_cont():
-    psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv")).head(100)
+    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv")).head(100)
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False)
     idx = training_data.psms.index[0:10]
     rp = training_data.get_classes(idx, frac_cols=[], cont_cols=["rp"])
@@ -128,7 +128,7 @@ def test_get_classes_cont():
 
 
 def test_get_classes_frac():
-    psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv")).head(100)
+    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv")).head(100)
     psms_df["scx"] = np.repeat([1, 1, 2, 2, 3, 3, 4, 4, 5, 5], 10)
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False,
                                   fraction_cols=["scx"])
@@ -139,7 +139,7 @@ def test_get_classes_frac():
 
 
 def test_get_classes_cont_frac():
-    psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv")).head(100)
+    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv")).head(100)
     psms_df["scx"] = np.repeat([1, 1, 2, 2, 3, 3, 4, 4, 5, 5], 10)
 
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False,
@@ -152,7 +152,7 @@ def test_get_classes_cont_frac():
 
 
 def test_store_predictions():
-    psms_df = pd.read_csv(os.path.join(fixtures_loc, "50pCSMFDR_universal_final.csv")).head(3)
+    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv")).head(3)
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False,
                                   fraction_cols=["scx"])
 
