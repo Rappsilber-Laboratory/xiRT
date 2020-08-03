@@ -1,11 +1,11 @@
-![logo](./documentation/xiRT_logo.png) 
+![logo](documentation/imgs/xiRT_logo.png) 
 
 ![release](https://flat.badgen.net/github/tag/Rappsilber-Laboratory/xirt)
 [![GitHub](https://flat.badgen.net/github/license/Rappsilber-Laboratory/xirt)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Twitter](https://flat.badgen.net/twitter/follow/rappsilberlab?icon=twitter)](https://twitter.com/compomics)
 [![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
 ![PyPI version](https://flat.badgen.net/pypi/v/xiRT)
-![coverage](./documentation/coverage.svg)
+![coverage](documentation/imgs/coverage.svg)
 
 A python package for multi-dimensional retention time prediction for linear and crosslinked 
 peptides using a (siamese) deep neural network architecture.
@@ -27,13 +27,13 @@ xiRT requires the columns shown in the table below. Importantly, the xiRT framew
 CSM are sorted such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically 
 larger one for crosslinked RT predictions.
 
-![xiRT Architecture](documentation/xiRT.PNG)
+![xiRT Architecture](documentation/imgs/xiRT.PNG)
 
 ## Description
 xiRT is meant to be used to generate additional information about CSMs for machine learning-based
 rescoring frameworks (similar to percolator). However, xiRT also delivers RT prediction for various 
 scenarios. Therefore xiRT offers several training / prediction  modes that need to be configured 
-depending on the use case. At the moment training, prediction, crossvalidation are the supporte
+depending on the use case. At the moment training, prediction, crossvalidation are the supported
 modes.
 - *training*: trains xiRT on the input CSMs (using 10% for validation) and stores a trained model
 - *prediction*: use a pretrained model and predict RTs for the input CSMs
@@ -65,6 +65,11 @@ the CUDA libraries and other dependencies.
 >
 > conda install tensorflow-gpu
 
+Hint:
+pydot and graphviz sometimes make trouble when they are installed via pip. If on linux,
+simply use *sudo apt-get install graphviz*, on windows download latest graphviz package from 
+[here](https://www2.graphviz.org/Packages/stable/windows/), unzip the content of the file and the
+*bin* directory path to the windows PATH variable.
 
 #### Usage
 The command line interface (CLI) requires three inputs:
@@ -80,7 +85,7 @@ is used to determine network parameters (number of neurons, layers, regularizati
 definition of the prediction task (classification, regression, ordered regression). Depending
 on the decoding of the target variable the output layers need to be adapted. For standard RP 
 prediction, regression is essentially the only viable option. For SCX/hSAX (general classification
-from fractionation sexperiments) the prediction task can be formulated as classification, 
+from fractionation experiments) the prediction task can be formulated as classification, 
 regression or ordered regression. For the usage of regression for fractionation it is recommended 
 that the estimated salt concentrations are used as target variable for the prediction  (raw 
 fraction numbers are possible too).
@@ -114,10 +119,14 @@ This file determines the input data to be used and gives some training procedure
 - Sven Giese
 
 ## Citation
-If you consider xiRT helpful for your work please cite our manuscript. Currently, in preparation
-on soon on bioRxiv.org "xiRT: Retention Time Prediction using Neural Networks increases 
-Identifications in Crosslinking Mass Spectrometry".
+If you consider xiRT helpful for your work please cite our manuscript. *Currently, in preparation.*
 
 ## RappsilberLab
 The Rappsilber applies and developes crosslinking chemistry methods, workflows and software.
 Visit the lab page to learn more about the developed [software](https://www.rappsilberlab.org/software/).
+
+## xiSUITE
+1) xiVIEW: Graham, M. J.; Combe, C.; Kolbowski, L.; Rappsilber, J. bioRxiv 2019.
+2) xiNET: Combe, C. W.; Fischer, L.; Rappsilber, J. Mol. Cell. Proteomics 2015.
+3) xiSPEC: Kolbowski, L.; Combe, C.; Rappsilber, J. Nucleic Acids Res. 2018, 46 (W1), W473–W478.
+4) xiSEARCH: Mendes, M. L.; Fischer, L.; Chen, Z. A.; Barbon, M.; O’Reilly, F. J.; Giese, S. H.; Bohlke‐Schneider, M.; Belsom, A.; Dau, T.; Combe, C. W.; Graham, M.; Eisele, M. R.; Baumeister, W.; Speck, C.; Rappsilber, J. Mol. Syst. Biol. 2019, 15 (9), e8994.
