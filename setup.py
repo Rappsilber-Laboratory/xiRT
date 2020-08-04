@@ -15,7 +15,10 @@ from setuptools import find_packages, setup, Command
 NAME = 'xiRT'
 DESCRIPTION = \
     'xiRT: Multi-dimensional Retention Time Prediction for Linear and Crosslinked Peptides.'
-URL = 'https://www.rappsilberlab.org/'
+URL = 'https://rappsilber-laboratory.github.io/xiRT/'
+URL_DOKU = "https://xirt.readthedocs.io/en/latest/"
+URL_GITHUB = "https://github.com/gieses/xiRT"
+URL_ISSUES = "https://github.com/gieses/xiRT/issues"
 EMAIL = 'sven.giese@hpi.de'
 AUTHOR = 'Sven Giese'
 REQUIRES_PYTHON = '>=3.6.0'
@@ -103,8 +106,9 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     project_urls={
-        "Bug Tracker": "https://github.com/gieses/xiRT/issues",
-        "Source Code": "https://github.com/gieses/xiRT",
+        "Bug Tracker": URL_ISSUES,
+        "Source Code": URL_GITHUB,
+        "Documentation": URL_DOKU,
         "Homepage": URL,
         "Related Software": RAPPSILBER_SOFTWARE},
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
