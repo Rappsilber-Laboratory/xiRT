@@ -1,5 +1,7 @@
+.. _linking-parameters:
+
 Parameters
-===============
+==========
 
 xiRT needs to two set of parameter files that are supplied via YAML files. The *xiRT parameters*
 contain the settings that define the network architecture and learning tasks. With different / new
@@ -11,7 +13,12 @@ behaviour. For instance, loading pretrained models and crossvalidation settings 
 xiRT-Parameters
 ***************
 The xiRT-Parameters can be divided into several categories that either reflect the individual
-layers of the network or some higher level parameters.
+layers of the network or some higher level parameters. Since the input file structure is very
+dynamic the xiRT configuration needs to be done with care. For example, the RT information
+in the input data is encoded in the *predictions* section. Here the column names of the RT
+data needs to be passed. Accordingly, the learning options in the *output* section must be
+adapted. Each prediction task needs the parameters x-activation, x-column, x-dimension,
+x-loss, x-metrics and x-weight, where x is the RT column.
 
 Here is an example YAML file with comments (form xiRT v. 1.0.32)::
 

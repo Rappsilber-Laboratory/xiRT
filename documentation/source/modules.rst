@@ -1,5 +1,5 @@
-xirt
-====
+xiRT-Modules
+============
 
 .. toctree::
    :maxdepth: 4
