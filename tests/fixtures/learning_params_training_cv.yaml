@@ -1,7 +1,5 @@
 # preprocessing options:
 # le: str, label encoder location. Only needed for transfer learning, or usage of pretrained
-# weights. Note that all modifications from the new input file must also be present in the trained
-# le.
 # max_length: float, max length of sequences
 # cl_residue: bool, if True crosslinked residues are decoded as Kcl or in modX format clK
 preprocessing:
@@ -9,10 +7,11 @@ preprocessing:
     max_length: -1 # -1
     cl_residue: True
 
-# train and transfer share the same options that are necessary to run xiML, here is a brief rundown:
+
 # fdr: float, a FDR cutoff for peptide matches to be included in the training process
 # ncv: int, number of CV folds to perform to avoid training/prediction on the same data
 # mode: str, must be one of train, crossvalidation, predict
+# train and transfer share the same options that are necessary to run xiML, here is a brief rundown:
 # augment: bool, if data augmentation should be performed
 # sequence_type: str, must be linear, crosslink, pseudolinear. crosslink uses the siamese network
 # pretrained_weights: "None", str location of neural network weights. Only embedding/RNN weights

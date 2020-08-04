@@ -1,5 +1,7 @@
+.. _linking-parameters:
+
 Parameters
-===============
+==========
 
 xiRT needs to two set of parameter files that are supplied via YAML files. The *xiRT parameters*
 contain the settings that define the network architecture and learning tasks. With different / new
@@ -11,7 +13,12 @@ behaviour. For instance, loading pretrained models and crossvalidation settings 
 xiRT-Parameters
 ***************
 The xiRT-Parameters can be divided into several categories that either reflect the individual
-layers of the network or some higher level parameters.
+layers of the network or some higher level parameters. Since the input file structure is very
+dynamic the xiRT configuration needs to be done with care. For example, the RT information
+in the input data is encoded in the *predictions* section. Here the column names of the RT
+data needs to be passed. Accordingly, the learning options in the *output* section must be
+adapted. Each prediction task needs the parameters x-activation, x-column, x-dimension,
+x-loss, x-metrics and x-weight, where x is the RT column.
 
 Here is an example YAML file with comments (form xiRT v. 1.0.32)::
 
@@ -119,3 +126,60 @@ Learning-Parameters
 *******************
 
 Parameters that govern the separation of training and testing data for the learning.
+
+Here is an example YAML file with comments (form xiRT v. 1.0.32)::
+
+    # preprocessing options:
+    # le: str, label encoder location. Only needed for transfer learning, or usage of pretrained
+    # max_length: float, max length of sequences
+    # cl_residue: bool, if True crosslinked residues are decoded as Kcl or in modX format clK
+    preprocessing:
+        le: None
+        max_length: -1 # -1
+        cl_residue: True
+
+
+    # fdr: float, a FDR cutoff for peptide matches to be included in the training process
+    # ncv: int, number of CV folds to perform to avoid training/prediction on the same data
+    # mode: str, must be one of train, crossvalidation, predict
+    # train and transfer share the same options that are necessary to run xiML, here is a brief rundown:
+    # augment: bool, if data augmentation should be performed
+    # sequence_type: str, must be linear, crosslink, pseudolinear. crosslink uses the siamese network
+    # pretrained_weights: "None", str location of neural network weights. Only embedding/RNN weights
+    #   are loaded. pretrained weights can be used with all modes, essentially resembling a transfer
+    #   learning set-up
+    # sample_frac: float, (0, 1) used for downsampling the input data (e.g. for learning curves).
+    #   Usually, left to 1 if all data should be used for training
+    # sample_state: int, random state to be used for shuffling the data. Important for recreating
+    #   results.
+    # refit: bool, if True the classifier is refit on all the data below the FDR cutoff to predict
+    # the RT times for all peptide matches above the FDR cutoff. If false, the already trained CV
+    # classifier with the lowest validation loss is chosen
+    train:
+      fdr: 0.01
+      ncv: 3
+      mode: "crossvalidation" # other modes are: train / crossvalidation / predict
+      augment: False
+      sequence_type: "crosslink"
+      pretrained_weights: "None"
+      test_frac: 0.10
+      sample_frac: 1
+      sample_state: 21
+      refit: False
+
+Generally, it is better to supply more high-quality data than more data. Sometimes considerable
+drops in performance can be observed when 5% instead of 1% input data is used. However, there is
+no general rule of thumb and this needs to be optimized per run / experiment.
+
+Hyperparameter-Optimization
+***************************
+
+Neural Networks are very sensitive to their hyperparameters. To automate the daunting task
+of finding the right hyperparameters two
+`utils <https://github.com/Rappsilber-Laboratory/xiRT/tree/master/utils>`_ are shipped with xiRT.
+1) a convenience function that generates YAML files from a *grid YAML* file. 2) a snakemake workflow
+that can be used to run xiRT with each parameter combination.
+
+The grid will be generated based on all entries where not a single value is passed but a list of
+values. This can lead to an enormous search space, so step-wise optimization is sometimes the
+only viable option.

@@ -39,6 +39,7 @@ methods are supported as well as a standard reversed phase RT prediction.
    installation
    usage
    parameters
+   modules
 
 
 Indices and tables
