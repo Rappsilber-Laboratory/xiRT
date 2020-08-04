@@ -1,6 +1,7 @@
 ![logo](documentation/imgs/xiRT_logo.png) 
 
-![release](https://flat.badgen.net/github/tag/Rappsilber-Laboratory/xirt)
+![release](https://flat.badgen.net/github/release/Rappsilber-Laboratory/xirt)
+![tag](https://flat.badgen.net/github/tag/Rappsilber-Laboratory/xirt)
 [![GitHub](https://flat.badgen.net/github/license/Rappsilber-Laboratory/xirt)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Twitter](https://flat.badgen.net/twitter/follow/rappsilberlab?icon=twitter)](https://twitter.com/compomics)
 [![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
@@ -42,6 +43,9 @@ modes.
 in the training process. Requires the training of several models during CV
 
 Note: all modes can be supplemented by using a pretrained model ("transfer learning").
+
+This readme only gives a brief overview about xiRTs functions and parameters. Please refere
+to the [documentation](https://xirt.readthedocs.io/en/latest/) for more details and examples.
 
 ### Installation and Usage
 
