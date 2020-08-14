@@ -14,7 +14,7 @@ build/
 results/
 tests/results/
 intern_data/
-intern_data/
+HILIC/
 develop-eggs/
 dist/
 downloads/
