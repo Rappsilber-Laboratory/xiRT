@@ -194,8 +194,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     # compute features
     xf.compute_prediction_errors(training_data.psms, training_data.prediction_df,
                                  xirtnetwork.tasks, frac_cols,
-                                 (xirtnetwork.siamese_p["single_predictions"] &
-                                  xirtnetwork.siamese_p["use"]))
+                                 (xirtnetwork.siamese_p["single_predictions"]
+                                  & xirtnetwork.siamese_p["use"]))
 
     # store results
     features_exhaustive = xf.add_interactions(training_data.prediction_df.filter(regex="error"),
@@ -206,12 +206,14 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
 
         training_data.prediction_df.to_excel(os.path.join(outpath, "prediction.xls"))
         features_exhaustive.to_excel(os.path.join(outpath, "error_interactions.xls"))
-        training_data.prediction_df.filter(regex="error").to_excel(os.path.join(outpath, "errors.xls"))
+        training_data.prediction_df.filter(regex="error").to_excel(
+            os.path.join(outpath, "errors.xls"))
     except ValueError as err:
         print("Excel writing failed ({})".format(err))
         training_data.prediction_df.to_csv(os.path.join(outpath, "prediction.csv"))
         features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
-        training_data.prediction_df.filter(regex="error").to_csv(os.path.join(outpath, "errors.csv"))
+        training_data.prediction_df.filter(regex="error").to_csv(
+            os.path.join(outpath, "errors.csv"))
     print("Done.")
 
 
