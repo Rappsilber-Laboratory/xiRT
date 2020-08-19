@@ -271,18 +271,18 @@ class ModelData:
 
             if (pred_type == "linear") or (pred_type == "relu"):
                 # easiest, just ravel to 1d ar
-                self.prediction_df[task_i + "-prediction" + suf].at[store_idx] = np.ravel(
+                self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = np.ravel(
                     pred_ar)
 
             elif pred_type == "softmax":
                 # classification, take maximum probability as class value
-                self.prediction_df[task_i + "-prediction" + suf].at[store_idx] = \
+                self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
                     np.argmax(pred_ar, axis=1) + 1
-                self.prediction_df[task_i + "-probability" + suf].at[store_idx] = \
+                self.prediction_df[task_i + "-probability" + suf].loc[store_idx] = \
                     np.max(pred_ar, axis=1)
 
             elif pred_type == "sigmoid":
-                self.prediction_df[task_i + "-prediction" + suf].at[store_idx] = \
+                self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
                     sigmoid_to_class(pred_ar) + 1
 
             else:
