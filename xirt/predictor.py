@@ -201,7 +201,7 @@ class ModelData:
         y_var.extend([self.psms[ccol].loc[idx].values for ccol in cont_cols])
         return y_var
 
-    def predict_and_store(self, xirtnetwork, xdata, store_idx):
+    def predict_and_store(self, xirtnetwork, xdata, store_idx, cv=0):
         """
         Generate and store predictions for the observations from store_idx.
 
@@ -213,13 +213,14 @@ class ModelData:
             xirtnetwork: xirnetwork, class object xirt
             xdata: tuple of dataframes, corresponding on the RNN / features of the one/two peptides
             store_idx: ar-like, indices to be used for the prediction process.
+            cv: int, cv-index of current iteration
 
         Returns:
             None
         """
         # store crosslink predictions
         predictions = xirtnetwork.model.predict(xdata)
-        self.store_predictions(xirtnetwork, predictions, store_idx, suf="")
+        self.store_predictions(xirtnetwork, predictions, store_idx, cv=cv, suf="")
 
         # if single predictions should be included in the df.Not meaningful for linear peptides.
         # For crosslinked peptides, the raw RT time of the two peptides are added.
@@ -227,12 +228,12 @@ class ModelData:
             # create dummy input with all zeroes as second peptide
             dummy = np.zeros_like(xdata[0])
             pep1_predictions = xirtnetwork.model.predict((xdata[0], dummy))
-            self.store_predictions(xirtnetwork, pep1_predictions, store_idx, suf="peptide1")
+            self.store_predictions(xirtnetwork, pep1_predictions, store_idx, cv=cv, suf="peptide1")
 
             pep2_predictions = xirtnetwork.model.predict((xdata[1], dummy))
-            self.store_predictions(xirtnetwork, pep2_predictions, store_idx, suf="peptide2")
+            self.store_predictions(xirtnetwork, pep2_predictions, store_idx, cv=cv, suf="peptide2")
 
-    def store_predictions(self, xirtnetwork, predictions, store_idx, suf=""):
+    def store_predictions(self, xirtnetwork, predictions, store_idx, cv=0, suf=""):
         """
         Format predictions to store them in a prediction dataframe.
 
@@ -245,6 +246,7 @@ class ModelData:
             xirtnetwork:    tf obj, trained network model
             predictions: ar-like, array with predictions
             store_idx: ar-like, index belonging to the predictions to the predictions
+            cv: int, cv iteration if crossvalidaton was performed
             suf: str, suffix to append to the default column names for the predictions
         Returns:
             None
@@ -256,6 +258,10 @@ class ModelData:
         # make sure list is iterable per task
         if len(xirtnetwork.tasks) == 1:
             predictions = [predictions]
+
+        # store cv value, only needed once
+        self.prediction_df["cv"] = 0
+        self.prediction_df["cv"].loc[store_idx] = cv
 
         for task_i, pred_ar in zip(xirtnetwork.tasks, predictions):
             # get activation type because linear, sigmoid, softmax all require different encoding/

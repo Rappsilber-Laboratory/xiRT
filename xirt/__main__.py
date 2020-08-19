@@ -139,7 +139,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
         model_summary.append(xirtnetwork.model.evaluate(xp_cv, yp_cv, batch_size=512))
 
         # use the training
-        training_data.predict_and_store(xirtnetwork, xp_cv, pred_idx)
+        training_data.predict_and_store(xirtnetwork, xp_cv, pred_idx, cv=cv_counter)
 
         # store metrics
         # store model? / callback
@@ -181,7 +181,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     xu = training_data.get_features(training_data.predict_idx)
     yu = training_data.get_classes(training_data.predict_idx, frac_cols=frac_cols,
                                    cont_cols=cont_cols)
-    training_data.predict_and_store(xirtnetwork, xu, training_data.predict_idx)
+    training_data.predict_and_store(xirtnetwork, xu, training_data.predict_idx, cv=-1)
     eval_unvalidation = xirtnetwork.model.evaluate(xu, yu, batch_size=512)
     eval_unvalidation.extend([-1, "Unvalidation"])
     model_summary_df.loc[len(model_summary_df)] = eval_unvalidation
@@ -203,13 +203,14 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
 
     df_history_all.to_excel(os.path.join(outpath, "epoch_history.xls"))
     try:
-
+        model_summary_df.to_excel(os.path.join(outpath, "model_summary.xls"))
         training_data.prediction_df.to_excel(os.path.join(outpath, "prediction.xls"))
         features_exhaustive.to_excel(os.path.join(outpath, "error_interactions.xls"))
         training_data.prediction_df.filter(regex="error").to_excel(
             os.path.join(outpath, "errors.xls"))
     except ValueError as err:
         print("Excel writing failed ({})".format(err))
+        model_summary_df.to_excel(os.path.join(outpath, "model_summary.csv"))
         training_data.prediction_df.to_csv(os.path.join(outpath, "prediction.csv"))
         features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
         training_data.prediction_df.filter(regex="error").to_csv(

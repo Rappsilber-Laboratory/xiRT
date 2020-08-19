@@ -168,9 +168,9 @@ def test_store_predictions():
     predictions = [np.array([[0, 0.1, 0.9], [0.5, 0.4, 0.3], [0.2, 0.8, 0.2]]),
                    [1, 2, 3],
                    np.array([[0.4, 0.24, 0.1], [0.6, 0.24, 0.1], [0.9, 0.6, 0.5]])]
+    cv = 1
 
-    training_data.store_predictions(xirtnetwork, predictions, store_idx)
-
+    training_data.store_predictions(xirtnetwork, predictions, store_idx, cv=cv)
     exp_idx = psms_df.index
     exp_scx = [3, 1, 2]
     exp_rp = [1, 2, 3]
@@ -178,6 +178,7 @@ def test_store_predictions():
     assert np.all(training_data.prediction_df.loc[exp_idx]["scx-prediction"] == exp_scx)
     assert np.all(training_data.prediction_df.loc[exp_idx]["rp-prediction"] == exp_rp)
     assert np.all(training_data.prediction_df.loc[exp_idx]["hsax-prediction"] == exp_hsax)
+    assert np.all(training_data.prediction_df.loc[exp_idx]["cv"] == 1)
 
 
 def test_sigmoid_to_class():
