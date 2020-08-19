@@ -49,8 +49,8 @@ class ModelData:
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & self.psms["isTT"]
         else:
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) \
-                & (self.psms["Fasta1"].str.contains("_ECOLI")) \
-                & (self.psms["Fasta2"].str.contains("_ECOLI"))
+                       & (self.psms["Fasta1"].str.contains("_ECOLI")) \
+                       & (self.psms["Fasta2"].str.contains("_ECOLI"))
         self.psms["fdr_mask"] = fdr_mask
 
     def set_unique_shuffled_sampled_training_idx(self, sample_frac=1, random_state=42):
@@ -92,8 +92,9 @@ class ModelData:
         if not self.shuffled:
             raise ValueError("Data must be shuffled to avoid undesired bias in the splits.")
 
-        if test_size <= 0:
-            raise ValueError('Test split value must be > 0. Please set test_size to min 0.1 (10%).')
+        if test_size < 0.1:
+            raise ValueError(
+                'Test split value must be > 0.1. Please set test_size to min 0.1 (10%).')
 
         # note: code with *loc indicates 0 based locations. code with idx indicates pandas index
         # used for train/validation splits
@@ -170,8 +171,12 @@ class ModelData:
             # TODO
             xfeatures = None
         else:
-            xfeatures = (self.features1.filter(regex="rnn").loc[idx],
-                         self.features2.filter(regex="rnn").loc[idx])
+            # if lienar peptides are used features 2 are empty
+            if self.features2.empty:
+                xfeatures = self.features1.filter(regex="rnn").loc[idx]
+            else:
+                xfeatures = (self.features1.filter(regex="rnn").loc[idx],
+                             self.features2.filter(regex="rnn").loc[idx])
         return xfeatures
 
     def get_classes(self, idx, frac_cols, cont_cols):
@@ -218,7 +223,7 @@ class ModelData:
 
         # if single predictions should be included in the df.Not meaningful for linear peptides.
         # For crosslinked peptides, the raw RT time of the two peptides are added.
-        if xirtnetwork.siamese_p["single_predictions"]:
+        if (xirtnetwork.siamese_p["single_predictions"]) & (xirtnetwork.siamese_p["use"]):
             # create dummy input with all zeroes as second peptide
             dummy = np.zeros_like(xdata[0])
             pep1_predictions = xirtnetwork.model.predict((xdata[0], dummy))
@@ -264,7 +269,7 @@ class ModelData:
                 if pred_type == "softmax":
                     self.prediction_df[task_i + "-probability" + suf] = -1000000
 
-            if pred_type == "linear":
+            if (pred_type == "linear") or (pred_type == "relu"):
                 # easiest, just ravel to 1d ar
                 self.prediction_df[task_i + "-prediction" + suf].at[store_idx] = np.ravel(
                     pred_ar)
@@ -345,6 +350,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         sys.exit("Sorry, not yet implemented ):. (crosslink, pseudolinears, linear)")
 
     elif sequence_type == "linear":
+        matches_df["Peptide2"] = ""
         seq_in = ["Peptide1"]
     else:
         sys.exit("sequence type not supported. Must be one of (crosslink, pseudolinears, linear)")

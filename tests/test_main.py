@@ -15,12 +15,12 @@ def test_xirt_runner_rp_crosslinks_cv(tmpdir):
 
 
 def test_xirt_runner_rp_crosslinks_train(tmpdir):
-    # test xurt with RP, crosslinks in the training mode
+    # test xirt with RP, crosslinks in the training mode
     pass
 
 
 def test_xirt_runner_rp_crosslinks_predict(tmpdir):
-    # test xurt with RP, crosslinks in the predict mode, (requires trained weights)
+    # test xirt with RP, crosslinks in the predict mode, (requires trained weights)
     pass
 
 
