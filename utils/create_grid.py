@@ -1,9 +1,8 @@
-"""
-Auxiliary script to generate several grid yaml files based from a single one with multiple options.
+"""Auxiliary script to generate several grid yaml files based from a single one
+with multiple options.
 
-
-The script is meant to be used with snakemake, such that snakemake runs one parameter combination
-for each file.
+The script is meant to be used with snakemake, such that snakemake runs
+one parameter combination for each file.
 """
 import hashlib
 import os
@@ -16,8 +15,7 @@ import argparse
 
 
 def prepare_params_yaml(param_dic):
-    """
-    This function takes a single parameter dictionary and transforms it for
+    """This function takes a single parameter dictionary and transforms it for
     the standard use in the network model.
 
     Parameters:
@@ -38,8 +36,7 @@ def prepare_params_yaml(param_dic):
 
 
 def is_valid_file(parser, arg):
-    """
-    Check if file exists.
+    """Check if file exists.
 
     Args:
         parser: parse obj
@@ -55,8 +52,7 @@ def is_valid_file(parser, arg):
 
 
 def transform_parameter_dic(params):
-    """
-    Extracts the grid parameters from the yaml file and saves them in a new
+    """Extracts the grid parameters from the yaml file and saves them in a new
     dictionary without the other parameters.
 
     Parameters:
@@ -73,8 +69,7 @@ def transform_parameter_dic(params):
 
 
 def get_hash(in_str):
-    """
-    Generate a hash string from the input parameters.
+    """Generate a hash string from the input parameters.
 
     Parameters
     ----------
@@ -82,7 +77,6 @@ def get_hash(in_str):
 
     Returns
     -------
-
     """
     hash_object = hashlib.md5(bytes(in_str, encoding='utf-8'))
     return hash_object.hexdigest()
@@ -101,7 +95,7 @@ args = parser.parse_args()
 
 outdir = args.outdir
 infile = args.infile
-#%%
+# %%
 infile = r"C:\\Users\\hanjo\\PycharmProjects\\xiRT\\sample_data\\xirt_grid.yaml"
 outdir = "results/parameters/"
 

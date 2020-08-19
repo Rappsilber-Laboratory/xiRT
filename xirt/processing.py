@@ -53,7 +53,7 @@ def prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"]):
         sequences = sequences.apply(xs.rewrite_modsequences)
         sequences = sequences.apply(parser.parse, show_unmodified_termini=True)
         psms_df["Seqar_" + seq_col] = sequences
-    return(psms_df)
+    return psms_df
 
 
 def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], max_length=-1):
@@ -95,7 +95,7 @@ def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], 
     else:
         seq2_padded = pd.DataFrame()
 
-    return(seq1_padded, seq2_padded, le)
+    return seq1_padded, seq2_padded, le
 
 
 def generate_padded_df(encoded_ar, index):

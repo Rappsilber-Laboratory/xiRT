@@ -74,8 +74,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     training_data = xr.preprocess(matches_df,
                                   sequence_type=learning_params["train"]["sequence_type"],
                                   max_length=learning_params["preprocessing"]["max_length"],
-                                  cl_residue=False,
-                                  # learning_params["preprocessing"]["cl_residue"]
+                                  cl_residue=learning_params["preprocessing"]["cl_residue"],
                                   fraction_cols=xirt_params["predictions"]["fractions"])
 
     # set training index by FDR and duplicates
@@ -84,12 +83,14 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
         sample_frac=learning_params["train"]["sample_frac"],
         random_state=learning_params["train"]["sample_state"])
 
-    # adjust RT if necessary to guarantee smooth learning TODO remove!
-    if training_data.psms["rp"].max() > 3000:
-        training_data.psms["rp"] = training_data.psms["rp"] / 60.0
+    # adjust RT if necessary to guarantee smooth learning
+    # gradient length > 30 minutes (1500 seconds)
+    for cont_col in xirt_params["predictions"]["continues"]:
+        if training_data.psms[cont_col].max() > 1500:
+            training_data.psms[cont_col] = training_data.psms[cont_col] / 60.0
 
     # init neural network structure
-    xirtnetwork = xirtnet.xiRTNET(xirt_params, input_dim=training_data.features2.shape[1])
+    xirtnetwork = xirtnet.xiRTNET(xirt_params, input_dim=training_data.features1.shape[1])
 
     # get the columns where the RT information is stored
     frac_cols = sorted([xirtnetwork.output_p[tt.lower() + "-column"] for tt in
@@ -144,6 +145,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
         # store model? / callback
         df_history = pd.DataFrame(history.history)
         df_history["CV"] = cv_counter
+        df_history["epoch"] = np.arange(1, len(df_history) + 1)
         cv_counter += 1
         histories.append(df_history)
 
@@ -192,15 +194,26 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     # compute features
     xf.compute_prediction_errors(training_data.psms, training_data.prediction_df,
                                  xirtnetwork.tasks, frac_cols,
-                                 xirtnetwork.siamese_p["single_predictions"])
+                                 (xirtnetwork.siamese_p["single_predictions"]
+                                  & xirtnetwork.siamese_p["use"]))
 
     # store results
     features_exhaustive = xf.add_interactions(training_data.prediction_df.filter(regex="error"),
                                               degree=len(xirtnetwork.tasks))
+
     df_history_all.to_excel(os.path.join(outpath, "epoch_history.xls"))
-    training_data.prediction_df.to_excel(os.path.join(outpath, "prediction.xls"))
-    features_exhaustive.to_excel(os.path.join(outpath, "error_interactions.xls"))
-    training_data.prediction_df.filter(regex="error").to_excel(os.path.join(outpath, "errors.xls"))
+    try:
+
+        training_data.prediction_df.to_excel(os.path.join(outpath, "prediction.xls"))
+        features_exhaustive.to_excel(os.path.join(outpath, "error_interactions.xls"))
+        training_data.prediction_df.filter(regex="error").to_excel(
+            os.path.join(outpath, "errors.xls"))
+    except ValueError as err:
+        print("Excel writing failed ({})".format(err))
+        training_data.prediction_df.to_csv(os.path.join(outpath, "prediction.csv"))
+        features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
+        training_data.prediction_df.filter(regex="error").to_csv(
+            os.path.join(outpath, "errors.csv"))
     print("Done.")
 
 

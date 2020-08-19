@@ -69,6 +69,6 @@ callbacks:
   reduce_lr_patience: 15
 predictions:
   continues:
-    - RP
+    - rp
   # simply write fractions: [] if no fraction prediction is desired
   fractions: []

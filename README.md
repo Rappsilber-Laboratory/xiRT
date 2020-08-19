@@ -4,7 +4,7 @@
 ![tag](https://flat.badgen.net/github/tag/Rappsilber-Laboratory/xirt)
 [![GitHub](https://flat.badgen.net/github/license/Rappsilber-Laboratory/xirt)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Twitter](https://flat.badgen.net/twitter/follow/rappsilberlab?icon=twitter)](https://twitter.com/RappsilberLab/)
-[![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
+[![Python 3.8.3](https://img.shields.io/badge/python-3.8.3-blue.svg)](https://www.python.org/downloads/release/python-370/)
 ![PyPI version](https://flat.badgen.net/pypi/v/xiRT)
 ![coverage](documentation/imgs/coverage.svg)
 [![Documentation Status](https://readthedocs.org/projects/xirt/badge/?version=latest)](https://xirt.readthedocs.io/en/latest/?badge=latest)
