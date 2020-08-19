@@ -1,7 +1,8 @@
 xiRT - development
 ===================
 
-This section covers some guidelines for the development of xiRT.
+This section covers some guidelines for the development of xiRT. Especially, how to generate
+a new release.
 
 Preparing a new release
 ***********************
