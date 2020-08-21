@@ -81,25 +81,34 @@ def add_heatmap(y, yhat, task, ax, colormap, dims):  # pragma: no cover
         axes, matplotlib axes object
     """
     # prepare confusion matrix
-    cm_scx = pd.DataFrame(np.flip(confusion_matrix(y, yhat, labels=dims), axis=0))
+
+    cm_scx = pd.DataFrame(np.flip(confusion_matrix(y, yhat), axis=0))
     cm_scx.columns = cm_scx.columns
     cm_scx.index = np.flip(cm_scx.columns)
-
     # mask for not writing zeroes into the plot
-    mask = cm_scx == 0
-
+    mask = cm_scx <= 0
+    cm_scx[mask] = np.nan
     # annotation
     metric_str = """r2: {:.2f} f1: {:.2f} acc: {:.2f} racc: {:.2f}""".format(
         custom_r2(y, yhat), f1_score(y, yhat, average="macro"),
         accuracy_score(y, yhat), relaxed_accuracy(y.values, yhat.values))
 
-    ax = sns.heatmap(cm_scx, cmap=colormap, annot=True, ax=ax, annot_kws={"size": 12},
-                     fmt='d', mask=mask, cbar=True)
+    ax = sns.heatmap(cm_scx, cmap=colormap, annot=True, annot_kws={"size": 12},
+                     fmt='.0f', cbar=True, mask=mask, ax=ax)
+    ax.axhline(y=dims[-1], color='k')
+    ax.axvline(x=0, color='k')
     ax.set(ylim=(cm_scx.shape[0], 0), xlabel="Observed {}\n".format(task),
            title="""{}\n{}""".format(task, metric_str), ylabel="Predicted {}".format(task))
     sns.despine()
     return ax
 
+# cm  = confusion_matrix(temp_in_df[frac_task + "_0based"], temp_cv_df[frac_task + "-prediction"])
+# cm = np.flip(cm, axis=1)
+# cm_df = pd.DataFrame(cm, columns=np.arange(1, 10), index=np.arange(1, 10)[::-1])
+# mask = cm_df == 0
+# sns.heatmap(cm_df,  fmt='d', mask=mask, annot=True,)
+# plt.tight_layout()
+# plt.show()
 
 def add_scatter(y, yhat, task, ax, color):  # pragma: no cover
     """Generate a scatter plot to visualize prediction results and return plot to given axes.
@@ -121,7 +130,7 @@ def add_scatter(y, yhat, task, ax, color):  # pragma: no cover
     ax.scatter(y, yhat, facecolor="none", edgecolor=color)
     ax.set(title="""{}\nr2: {}""".format(task, custom_r2(y, yhat)),
            xlabel="Observed {}".format(task.upper()), ylabel="Predicted {}".format(task),
-           aspect="equal")
+           xlim=(xmin, xmax), ylim=(xmin, xmax))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
     sns.despine()
     return ax
@@ -137,9 +146,9 @@ def save_fig(fig, path, outname):  # pragma: no cover
     Returns:
         None
     """
-    fig.savefig(os.path.join(path, outname + ".png"), box_inches="tight", dpi=600)
-    fig.savefig(os.path.join(path, outname + ".pdf"), box_inches="tight", dpi=600)
-    fig.savefig(os.path.join(path, outname + ".svg"), box_inches="tight", dpi=600)
+    fig.savefig(os.path.join(path, outname + ".png"), dpi=600)
+    fig.savefig(os.path.join(path, outname + ".pdf"), dpi=600)
+    fig.savefig(os.path.join(path, outname + ".svg"), dpi=600)
 
 
 def custom_r2(y, yhat):
@@ -305,6 +314,8 @@ def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath):  # pr
 
     Returns:
         None
+    df_predictions, input_psms = training_data.prediction_df, training_data.psms
+                               xirt_params, outpath=xirt_params, outpath
     """
     # %%
     for i in df_predictions["cv"].drop_duplicates():
@@ -323,7 +334,7 @@ def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath):  # pr
         for frac_task in fracs:
             dims = np.arange(1, xirt_params["output"][frac_task + "-dimension"] + 1)
             axes[idx] = add_heatmap(temp_in_df[frac_task + "_0based"],
-                                    temp_cv_df[frac_task + "-prediction"] - 1,
+                                    temp_cv_df[frac_task + "-prediction"],
                                     task=frac_task, ax=axes[idx], colormap=colormaps[idx],
                                     dims=dims)
             idx += 1
