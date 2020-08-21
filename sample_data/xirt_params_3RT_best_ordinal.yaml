@@ -43,7 +43,7 @@ embedding:
   length: 50
 learning:
   batch_size: 256
-  epochs: 50
+  epochs: 100
   learningrate: 0.001
   verbose: 1
 output:
