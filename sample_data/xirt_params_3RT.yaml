@@ -47,6 +47,7 @@ learning:
   learningrate: 0.001
   patience: 15
   verbose: 1
+  optimizer: adam
 output:
   callback-path: data/results/callbacks/
   hsax-activation: sigmoid

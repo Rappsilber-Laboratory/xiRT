@@ -47,6 +47,7 @@ learning:
   learningrate: 0.001
   patience: 15
   vebose: 1
+  optimizer: adam
 output:
   activation: linear
   callback-path: data/results/callbacks/

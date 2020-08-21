@@ -46,6 +46,7 @@ learning:
   epochs: 10
   learningrate: 0.001
   verbose: 1
+  optimizer: adam
 output:
   rp-activation: linear
   rp-column: rp

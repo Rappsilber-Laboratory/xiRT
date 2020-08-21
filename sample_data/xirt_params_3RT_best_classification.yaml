@@ -46,6 +46,7 @@ learning:
   epochs: 150
   learningrate: 0.001
   verbose: 0
+  optimizer: adam
 output:
   callback-path: data/results/callbacks/
   hsax-activation: softmax
