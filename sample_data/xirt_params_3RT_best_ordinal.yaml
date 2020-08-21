@@ -46,6 +46,7 @@ learning:
   epochs: 100
   learningrate: 0.001
   verbose: 1
+  optimizer: sgd
 output:
   callback-path: data/results/callbacks/
   hsax-activation: sigmoid

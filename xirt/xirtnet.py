@@ -395,14 +395,21 @@ class xiRTNET:
             None
         """
         # set optimizer
-        adam = optimizers.Adam(lr=self.learning_p["learningrate"])
+        if self.learning_p["optimizer"] == "adam":
+            opt = optimizers.Adam(lr=self.learning_p["learningrate"])
+
+        if self.learning_p["optimizer"].lower() == "sgd":
+            lr_schedule = optimizers.schedules.ExponentialDecay(
+                initial_learning_rate=self.learning_p["learningrate"], decay_steps=10000,
+                decay_rate=0.9)
+            opt = optimizers.SGD(learning_rate=lr_schedule)
 
         # get parameters from config file
         loss = {i: self.output_p[i + "-loss"] for i in self.tasks}
         metric = {i: self.output_p[i + "-metrics"] for i in self.tasks}
         loss_weights = {i: self.output_p[i + "-weight"] for i in self.tasks}
 
-        self.model.compile(loss=loss, optimizer=adam, metrics=metric, loss_weights=loss_weights)
+        self.model.compile(loss=loss, optimizer=opt, metrics=metric, loss_weights=loss_weights)
 
     def get_callbacks(self, suffix=""):
         """

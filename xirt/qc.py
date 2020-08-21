@@ -272,6 +272,13 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
         None
     """
     # %%
+    for col in tasks:
+        if "ordinal" in xirt_params["output"][col + "-column"]:
+            # rewrite params to use accuracy
+            xirt_params["output"][col + "-metrics"] = "accuracy"
+            # store at right place
+            summary_df[col + "_accuracy"] = summary_df[col + "_ordinal-accuracy"].astype(float)
+
     metrics = [xirt_params["output"][i + "-metrics"] for i in tasks]
     for eval_method in [metrics, "losses"]:
         f, axes = plt.subplots(1, len(tasks), figsize=(5, 4))
@@ -281,15 +288,17 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
                 store_str = "loss"
             else:
                 store_str = "metric"
-
+            # points
             axes[ii] = sns.stripplot(x="Split", y="{}_{}".format(t, m), data=summary_df,
                                      ax=axes[ii], color=colors[ii])
+            # errors bars
             axes[ii] = sns.pointplot(x="Split", y="{}_{}".format(t, m), data=summary_df, join=True,
                                      color="grey", ax=axes[ii], scale=0.7)
             if m == "accuracy":
                 ylim_ax = 1
             else:
                 ylim_ax = axes[ii].get_ylim()[1] + 0.2 * axes[ii].get_ylim()[1]
+
             axes[ii].set(title=t, ylabel=m, xlabel="", ylim=(0, ylim_ax))
             sns.despine(ax=axes[ii])
 
