@@ -19,7 +19,7 @@ xlwt = "*"
 palettable = "*"
 xlrd = "*"
 statannot = "*"
-
+openpyxl = "*"
 
 [dev-packages]
 twine = "*"
