@@ -399,10 +399,8 @@ class xiRTNET:
             opt = optimizers.Adam(lr=self.learning_p["learningrate"])
 
         if self.learning_p["optimizer"].lower() == "sgd":
-            lr_schedule = optimizers.schedules.ExponentialDecay(
-                initial_learning_rate=self.learning_p["learningrate"], decay_steps=10000,
-                decay_rate=0.9)
-            opt = optimizers.SGD(learning_rate=lr_schedule)
+            opt = optimizers.SGD(learning_rate=self.learning_p["learningrate"],
+                                 momentum=0.0, nesterov=False, name='SGD')
 
         # get parameters from config file
         loss = {i: self.output_p[i + "-loss"] for i in self.tasks}
