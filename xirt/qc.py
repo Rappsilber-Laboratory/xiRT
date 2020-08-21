@@ -102,13 +102,6 @@ def add_heatmap(y, yhat, task, ax, colormap, dims):  # pragma: no cover
     sns.despine()
     return ax
 
-# cm  = confusion_matrix(temp_in_df[frac_task + "_0based"], temp_cv_df[frac_task + "-prediction"])
-# cm = np.flip(cm, axis=1)
-# cm_df = pd.DataFrame(cm, columns=np.arange(1, 10), index=np.arange(1, 10)[::-1])
-# mask = cm_df == 0
-# sns.heatmap(cm_df,  fmt='d', mask=mask, annot=True,)
-# plt.tight_layout()
-# plt.show()
 
 def add_scatter(y, yhat, task, ax, color):  # pragma: no cover
     """Generate a scatter plot to visualize prediction results and return plot to given axes.
