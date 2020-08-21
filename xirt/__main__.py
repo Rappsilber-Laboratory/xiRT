@@ -210,8 +210,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         qc.plot_summary_strip(model_summary_df, tasks=xirtnetwork.tasks, xirt_params=xirt_params,
                               outpath=outpath)
 
-        qc.plot_cv_predictions(training_data.prediction_df, training_data.psms, xirt_params=xirt_params,
-                               outpath=outpath)
+        qc.plot_cv_predictions(training_data.prediction_df, training_data.psms,
+                               xirt_params=xirt_params, outpath=outpath)
 
     df_history_all.to_excel(os.path.join(outpath, "epoch_history.xlsx"))
     try:
