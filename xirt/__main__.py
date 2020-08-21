@@ -214,9 +214,9 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
 
     if has_ordinal:
         accs_tmp = xr.compute_accuracy(xirtnetwork.model.predict(xu),
-                                    training_data.psms.loc[training_data.predict_idx],
-                                    xirtnetwork.tasks, xirtnetwork.output_p)
-        eval_unvalidation.extend(np.hstack([-1, accs_tmp, "Unvalidation"]))
+                                       training_data.psms.loc[training_data.predict_idx],
+                                       xirtnetwork.tasks, xirtnetwork.output_p)
+        eval_unvalidation.extend(np.hstack([-1, "Unvalidation", accs_tmp]))
     else:
         eval_unvalidation.extend([-1, "Unvalidation"])
     model_summary_df.loc[len(model_summary_df)] = eval_unvalidation

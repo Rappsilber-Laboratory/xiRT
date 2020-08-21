@@ -297,24 +297,24 @@ class ModelData:
 
 
 def compute_accuracy(predictions, expected, tasks, params):
-        """
-        Compute accuracy for ordinal predictions.
+    """
+    Compute accuracy for ordinal predictions.
 
-        Args:
-            predictions: ar-like, multi-task predictions from xirt
-            expected: dataframe, pandas dataframe with indices matching the predictions
-            tasks: ar-like, lists of tasks
-            params: dict, parameter
-        Returns:
-            list, accuracy values for tasks with ordinal scale
-        """
-        accuracy_tmp = []
-        # compute accuracy
-        for task_i, pred_ar in zip(tasks, predictions):
-            if "ordinal" in params[task_i + "-column"]:
-                accuracy_tmp.append(accuracy_score(sigmoid_to_class(pred_ar),
-                                                   expected[task_i + "_0based"]))
-        return np.round(accuracy_tmp, 3)
+    Args:
+        predictions: ar-like, multi-task predictions from xirt
+        expected: dataframe, pandas dataframe with indices matching the predictions
+        tasks: ar-like, lists of tasks
+        params: dict, parameter
+    Returns:
+        list, accuracy values for tasks with ordinal scale
+    """
+    accuracy_tmp = []
+    # compute accuracy
+    for task_i, pred_ar in zip(tasks, predictions):
+        if "ordinal" in params[task_i + "-column"]:
+            accuracy_tmp.append(accuracy_score(sigmoid_to_class(pred_ar),
+                                               expected[task_i + "_0based"]))
+    return np.round(accuracy_tmp, 3)
 
 
 def sigmoid_to_class(predictions, t=0.5):
