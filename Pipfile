@@ -16,6 +16,7 @@ biopython = "*"
 pydot = "*"
 graphviz = "*"
 xlwt = "*"
+palettable = "*"
 xlrd = "*"
 
 [dev-packages]
