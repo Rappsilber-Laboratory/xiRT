@@ -13,7 +13,7 @@ from xirt import predictor as xr
 from xirt import xirtnet, qc
 
 
-def arg_parser():    # pragma: not covered
+def arg_parser():  # pragma: not covered
     """
     Parse the arguments from the CLI.
 
@@ -103,6 +103,12 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     # init data structures for results
     histories = []
     model_summary = []
+    # manual accuracy for ordinal data
+    accuracies_all = []
+    if "ordinal" in ";".join([xirtnetwork.output_p[i + "-column"] for i in xirtnetwork.tasks]):
+        has_ordinal = True
+    else:
+        has_ordinal = False
 
     cv_counter = 1
     # perform crossvalidation
@@ -142,6 +148,21 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         # use the training for predicting unseen RTs
         training_data.predict_and_store(xirtnetwork, xp_cv, pred_idx, cv=cv_counter)
 
+        if has_ordinal:
+            train_preds = xirtnetwork.model.predict(xt_cv)
+            val_preds = xirtnetwork.model.predict(xv_cv)
+            pred_preds = xirtnetwork.model.predict(xp_cv)
+
+            accuracies_all.extend(xr.compute_accuracy(train_preds,
+                                                      training_data.psms.loc[train_idx],
+                                                      xirtnetwork.tasks, xirtnetwork.output_p))
+            accuracies_all.extend(xr.compute_accuracy(val_preds,
+                                                      training_data.psms.loc[val_idx],
+                                                      xirtnetwork.tasks, xirtnetwork.output_p))
+            accuracies_all.extend(xr.compute_accuracy(pred_preds,
+                                                      training_data.psms.loc[pred_idx],
+                                                      xirtnetwork.tasks, xirtnetwork.output_p))
+
         # store metrics
         # store model? / callback
         df_history = pd.DataFrame(history.history)
@@ -155,6 +176,12 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     model_summary_df = pd.DataFrame(model_summary, columns=metric_columns)
     model_summary_df["CV"] = np.repeat(np.arange(1, n_splits + 1), 3)
     model_summary_df["Split"] = np.tile(["Train", "Validation", "Prediction"], 3)
+
+    # store manual accuray for ordinal data
+    if has_ordinal:
+        for count, task_i in enumerate(xirtnetwork.tasks):
+            if "ordinal" in xirtnetwork.output_p[task_i + "-column"]:
+                model_summary_df[task_i + "_ordinal-accuracy"] = accuracies_all[count::2]
 
     # CV training done, now deal with the data not used for training
     if learning_params["train"]["refit"]:
@@ -184,7 +211,14 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                    cont_cols=cont_cols)
     training_data.predict_and_store(xirtnetwork, xu, training_data.predict_idx, cv=-1)
     eval_unvalidation = xirtnetwork.model.evaluate(xu, yu, batch_size=512)
-    eval_unvalidation.extend([-1, "Unvalidation"])
+
+    if has_ordinal:
+        accs_tmp = xr.compute_accuracy(xirtnetwork.model.predict(xu),
+                                    training_data.psms.loc[training_data.predict_idx],
+                                    xirtnetwork.tasks, xirtnetwork.output_p)
+        eval_unvalidation.extend(np.hstack([-1, accs_tmp, "Unvalidation"]))
+    else:
+        eval_unvalidation.extend([-1, "Unvalidation"])
     model_summary_df.loc[len(model_summary_df)] = eval_unvalidation
 
     # collect epoch training data
@@ -213,6 +247,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         qc.plot_cv_predictions(training_data.prediction_df, training_data.psms,
                                xirt_params=xirt_params, outpath=outpath)
 
+    print("Writing output tables:")
     df_history_all.to_excel(os.path.join(outpath, "epoch_history.xlsx"))
     try:
         training_data.psms.to_excel(os.path.join(outpath, "processed_psms.xlsx"))
@@ -223,12 +258,11 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             os.path.join(outpath, "errors.xlsx"))
     except ValueError as err:
         print("Excel writing failed ({})".format(err))
-        training_data.psms.to_excel(os.path.join(outpath, "processed_psms.csv"))
-        model_summary_df.to_excel(os.path.join(outpath, "model_summary.csv"))
+        training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
+        model_summary_df.to_csv(os.path.join(outpath, "model_summary.csv"))
         training_data.prediction_df.to_csv(os.path.join(outpath, "prediction.csv"))
         features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
-        training_data.prediction_df.filter(regex="error").to_csv(
-            os.path.join(outpath, "errors.csv"))
+        training_data.prediction_df.filter(regex="erro").to_csv(os.path.join(outpath, "errors.csv"))
     print("Done.")
 
 
@@ -247,5 +281,5 @@ def main():
                 args.xirt_params, args.learning_params)
 
 
-if __name__ == "__main__":   # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     main()

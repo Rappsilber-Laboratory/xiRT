@@ -189,3 +189,17 @@ def test_sigmoid_to_class():
     exp_preds = [0, 1, 2, 2]
     preds = xr.sigmoid_to_class(predictions, 0.5)
     assert np.all(preds == exp_preds)
+
+
+def test_compute_accuracy():
+    # ordinal predictions
+    predictions = [np.array([[0.5, 0, 0],
+                             [0.8, 0.5, 0]])]
+
+    expected = pd.DataFrame()
+    # expected classes are 0 and 1 with 0.5 as threshold
+    expected["hsax_0based"] = [0, 1]
+    tasks = ["hsax"]
+    params = {"hsax-column": "hsax_ordinal"}
+    exp_acc = np.array([1.0])
+    assert np.all(exp_acc == xr.compute_accuracy(predictions, expected, tasks, params))

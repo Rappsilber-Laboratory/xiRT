@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
+from sklearn.metrics import accuracy_score
 
 from xirt import processing as xp
 from xirt import sequences as xs
@@ -283,16 +284,37 @@ class ModelData:
             elif pred_type == "softmax":
                 # classification, take maximum probability as class value
                 self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
-                    np.argmax(pred_ar, axis=1) + 1
+                    np.argmax(pred_ar, axis=1)
                 self.prediction_df[task_i + "-probability" + suf].loc[store_idx] = \
                     np.max(pred_ar, axis=1)
 
             elif pred_type == "sigmoid":
                 self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
-                    sigmoid_to_class(pred_ar) + 1
+                    sigmoid_to_class(pred_ar)
 
             else:
                 raise ValueError("{} not supported, only linear/softmax/sigmoid".format(pred_type))
+
+
+def compute_accuracy(predictions, expected, tasks, params):
+        """
+        Compute accuracy for ordinal predictions.
+
+        Args:
+            predictions: ar-like, multi-task predictions from xirt
+            expected: dataframe, pandas dataframe with indices matching the predictions
+            tasks: ar-like, lists of tasks
+            params: dict, parameter
+        Returns:
+            list, accuracy values for tasks with ordinal scale
+        """
+        accuracy_tmp = []
+        # compute accuracy
+        for task_i, pred_ar in zip(tasks, predictions):
+            if "ordinal" in params[task_i + "-column"]:
+                accuracy_tmp.append(accuracy_score(sigmoid_to_class(pred_ar),
+                                                   expected[task_i + "_0based"]))
+        return np.round(accuracy_tmp, 3)
 
 
 def sigmoid_to_class(predictions, t=0.5):
