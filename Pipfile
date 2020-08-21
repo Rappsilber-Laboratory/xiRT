@@ -18,6 +18,8 @@ graphviz = "*"
 xlwt = "*"
 palettable = "*"
 xlrd = "*"
+statannot = "*"
+
 
 [dev-packages]
 twine = "*"
