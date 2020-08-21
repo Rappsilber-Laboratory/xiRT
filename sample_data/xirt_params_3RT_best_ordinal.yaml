@@ -7,7 +7,7 @@ LSTM:
   kernelregularizer_value: 0.001
   lstm_bn: true
   nlayers: 1
-  type: CuDNNGRU
+  type: GRU
   units: 50
 dense:
   activation:
@@ -43,7 +43,7 @@ embedding:
   length: 50
 learning:
   batch_size: 256
-  epochs: 100
+  epochs: 50
   learningrate: 0.001
   verbose: 1
   optimizer: adam
