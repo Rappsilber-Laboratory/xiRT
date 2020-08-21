@@ -517,7 +517,7 @@ def params_to_df(yaml_file, out_file):
     Returns:
         df, parameter dictionary
     """
-    df_params = pd.io.json.json_normalize(yaml.load(open(yaml_file))).transpose()
+    df_params = pd.json_normalize(yaml.load(open(yaml_file), Loader=yaml.FullLoader)).transpose()
     df_params.to_csv(out_file)
     return df_params
 
