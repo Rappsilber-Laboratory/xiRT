@@ -31,7 +31,7 @@ def remove_brackets_underscores(sequence):
     sequence: string,
               peptide sequences
     """
-    return re.sub("[\(\)\[\]_\-]", "", sequence)
+    return re.sub(r"[\(\)\[\]_\-]", "", sequence)
 
 
 def replace_numbers(sequence):
@@ -50,7 +50,7 @@ def replace_numbers(sequence):
            "8": "eight",
            "9": "nine",
            "0": "zero"}
-    pattern = re.compile("|".join(rep.keys()))
+    pattern = re.compile(r"|".join(rep.keys()))
     return pattern.sub(lambda m: rep[re.escape(m.group(0))], sequence)
 
 
@@ -81,7 +81,7 @@ def rewrite_modsequences(sequence):
     :param sequence: str, peptide sequence
     :return:
     """
-    return re.sub("([A-Z])([^A-Z]+)", r'\2\1', sequence)
+    return re.sub(r"([A-Z])([^A-Z]+)", r'\2\1', sequence)
 
 
 def remove_lower_letters(sequence):
@@ -90,7 +90,7 @@ def remove_lower_letters(sequence):
     :param sequence: str, peptide sequence
     :return:
     """
-    return re.sub("[a-z]", "", sequence)
+    return re.sub(r"[a-z]", "", sequence)
 
 
 def to_unmodified_sequence(sequence):
@@ -99,7 +99,7 @@ def to_unmodified_sequence(sequence):
     :param sequence: str, peptide sequence
     :return:
     """
-    return (re.sub("[^[A-Z]", "", sequence))
+    return (re.sub(r"[^[A-Z]", "", sequence))
 
 
 def reorder_sequences(matches_df):
