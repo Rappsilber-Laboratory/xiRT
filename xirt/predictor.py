@@ -33,6 +33,7 @@ class ModelData:
         self.shuffled = False
         # init prediction df
         self.prediction_df = pd.DataFrame(index=psms_df.index)
+        self.prediction_df["cv"] = 0
 
     def set_fdr_mask(self, fdr_cutoff, str_filter=""):
         """
@@ -260,7 +261,6 @@ class ModelData:
             predictions = [predictions]
 
         # store cv value, only needed once
-        self.prediction_df["cv"] = 0
         self.prediction_df["cv"].loc[store_idx] = cv
 
         for task_i, pred_ar in zip(xirtnetwork.tasks, predictions):
