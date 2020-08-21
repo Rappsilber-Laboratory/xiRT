@@ -590,7 +590,7 @@ def add_interactions(feature_df, degree=2, interactions_only=True):
         interactions_only: bool, true / false
 
     Returns:
-
+        None
     """
     # get single peptides
     feature_df_peps = feature_df.filter(regex="peptide")
