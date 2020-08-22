@@ -1,9 +1,9 @@
-"""Auxiliary script to generate several grid yaml files based from a single one
-with multiple options.
+"""Auxiliary script to generate several yaml files based from a single one with multiple options.
 
 The script is meant to be used with snakemake, such that snakemake runs
 one parameter combination for each file.
 """
+import argparse
 import hashlib
 import os
 
@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import yaml
 from sklearn.model_selection import ParameterGrid
-import argparse
 
 
 def prepare_params_yaml(param_dic):
@@ -69,14 +68,14 @@ def transform_parameter_dic(params):
 
 
 def get_hash(in_str):
-    """Generate a hash string from the input parameters.
+    """
+    Generate a hash string from the input parameters.
 
-    Parameters
-    ----------
-    in_str
+    Args:
+        in_str: str, unique parameter combination
 
-    Returns
-    -------
+    Returns:
+        str, hash
     """
     hash_object = hashlib.md5(bytes(in_str, encoding='utf-8'))
     return hash_object.hexdigest()
