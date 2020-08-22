@@ -107,7 +107,7 @@ For this experimental setup, the xiRT config could look like this::
       scx-column: scx_1hot
       scx-dimension: 15
       scx-loss: categorical_crossentropy
-      scx-metrics: mse
+      scx-metrics: accuracy
       scx-weight: 50
 
     predictions:
@@ -146,3 +146,32 @@ This set of files can now be used to perform a RP prediction on crosslink data.
 To run xiRT on the data call the main function as follows after successfull installation::
 
 > xirt(.exe) -i DSS_xisearch_fdr_CSM50percent.csv -o xirt_results/ -x xirt_params_rp.yaml -l learning_params_training_cv.yaml
+
+
+Note
+****
+It is important to follow the conventions above. Otherwise learning results can vary a lot.
+
+For **classification** always use the following setup:
+
+      scx-activation: softmax
+      scx-column: scx_1hot
+      scx-dimension: 15
+      scx-loss: categorical_crossentropy
+      scx-metrics: accuracy
+
+For **ordinal regression** always use the following setup:
+
+      scx-activation: sigmoid
+      scx-column: scx_ordinal
+      scx-dimension: 15
+      scx-loss: binary_crossentropy
+      scx-metrics: mse
+
+For **regression** always use the following setup:
+
+      scx-activation: linear
+      scx-column: scx
+      scx-dimension: 15
+      scx-loss: mse
+      scx-metrics: mse

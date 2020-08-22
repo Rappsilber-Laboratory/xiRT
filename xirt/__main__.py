@@ -10,10 +10,10 @@ import yaml
 
 from xirt import features as xf
 from xirt import predictor as xr
-from xirt import xirtnet
+from xirt import xirtnet, qc
 
 
-def arg_parser():    # pragma: not covered
+def arg_parser():  # pragma: not covered
     """
     Parse the arguments from the CLI.
 
@@ -45,7 +45,7 @@ def arg_parser():    # pragma: not covered
     return parser
 
 
-def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
+def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform_qc=True):
     """
     Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
 
@@ -56,6 +56,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
         setup_loc: str, location of the setup yaml
         single_pep_predictions:
         nrows: int, number of rows to sample (for quicker testing purposes only)
+        perform_qc: bool, indicates if qc plots should be done.
 
     Returns:
         None
@@ -102,6 +103,12 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     # init data structures for results
     histories = []
     model_summary = []
+    # manual accuracy for ordinal data
+    accuracies_all = []
+    if "ordinal" in ";".join([xirtnetwork.output_p[i + "-column"] for i in xirtnetwork.tasks]):
+        has_ordinal = True
+    else:
+        has_ordinal = False
 
     cv_counter = 1
     # perform crossvalidation
@@ -138,8 +145,23 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
         model_summary.append(xirtnetwork.model.evaluate(xv_cv, yv_cv, batch_size=512))
         model_summary.append(xirtnetwork.model.evaluate(xp_cv, yp_cv, batch_size=512))
 
-        # use the training
-        training_data.predict_and_store(xirtnetwork, xp_cv, pred_idx)
+        # use the training for predicting unseen RTs
+        training_data.predict_and_store(xirtnetwork, xp_cv, pred_idx, cv=cv_counter)
+
+        if has_ordinal:
+            train_preds = xirtnetwork.model.predict(xt_cv)
+            val_preds = xirtnetwork.model.predict(xv_cv)
+            pred_preds = xirtnetwork.model.predict(xp_cv)
+
+            accuracies_all.extend(xr.compute_accuracy(train_preds,
+                                                      training_data.psms.loc[train_idx],
+                                                      xirtnetwork.tasks, xirtnetwork.output_p))
+            accuracies_all.extend(xr.compute_accuracy(val_preds,
+                                                      training_data.psms.loc[val_idx],
+                                                      xirtnetwork.tasks, xirtnetwork.output_p))
+            accuracies_all.extend(xr.compute_accuracy(pred_preds,
+                                                      training_data.psms.loc[pred_idx],
+                                                      xirtnetwork.tasks, xirtnetwork.output_p))
 
         # store metrics
         # store model? / callback
@@ -154,6 +176,12 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     model_summary_df = pd.DataFrame(model_summary, columns=metric_columns)
     model_summary_df["CV"] = np.repeat(np.arange(1, n_splits + 1), 3)
     model_summary_df["Split"] = np.tile(["Train", "Validation", "Prediction"], 3)
+
+    # store manual accuray for ordinal data
+    if has_ordinal:
+        for count, task_i in enumerate(xirtnetwork.tasks):
+            if "ordinal" in xirtnetwork.output_p[task_i + "-column"]:
+                model_summary_df[task_i + "_ordinal-accuracy"] = accuracies_all[count::2]
 
     # CV training done, now deal with the data not used for training
     if learning_params["train"]["refit"]:
@@ -171,7 +199,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     else:
         # load the best performing model across cv from the validation split
         best_model_idx = np.argmin(
-            model_summary_df[model_summary_df["Split"] == "Validation"]["loss"])
+            model_summary_df[model_summary_df["Split"] == "Validation"]["loss"].values)
         xirtnetwork.model.load_weights(os.path.join(xirtnetwork.callback_p["callback_path"],
                                                     "xirt_weights_{}.h5".format(
                                                         str(best_model_idx + 1).zfill(2))))
@@ -181,9 +209,16 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     xu = training_data.get_features(training_data.predict_idx)
     yu = training_data.get_classes(training_data.predict_idx, frac_cols=frac_cols,
                                    cont_cols=cont_cols)
-    training_data.predict_and_store(xirtnetwork, xu, training_data.predict_idx)
+    training_data.predict_and_store(xirtnetwork, xu, training_data.predict_idx, cv=-1)
     eval_unvalidation = xirtnetwork.model.evaluate(xu, yu, batch_size=512)
-    eval_unvalidation.extend([-1, "Unvalidation"])
+
+    if has_ordinal:
+        accs_tmp = xr.compute_accuracy(xirtnetwork.model.predict(xu),
+                                       training_data.psms.loc[training_data.predict_idx],
+                                       xirtnetwork.tasks, xirtnetwork.output_p)
+        eval_unvalidation.extend(np.hstack([-1, "Unvalidation", accs_tmp]))
+    else:
+        eval_unvalidation.extend([-1, "Unvalidation"])
     model_summary_df.loc[len(model_summary_df)] = eval_unvalidation
 
     # collect epoch training data
@@ -201,19 +236,33 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None):
     features_exhaustive = xf.add_interactions(training_data.prediction_df.filter(regex="error"),
                                               degree=len(xirtnetwork.tasks))
 
-    df_history_all.to_excel(os.path.join(outpath, "epoch_history.xls"))
-    try:
+    # qc
+    if perform_qc:
+        qc.plot_epoch_cv(callback_path=xirtnetwork.callback_p["callback_path"],
+                         tasks=xirtnetwork.tasks, xirt_params=xirt_params, outpath=outpath)
 
-        training_data.prediction_df.to_excel(os.path.join(outpath, "prediction.xls"))
-        features_exhaustive.to_excel(os.path.join(outpath, "error_interactions.xls"))
+        qc.plot_summary_strip(model_summary_df, tasks=xirtnetwork.tasks, xirt_params=xirt_params,
+                              outpath=outpath)
+
+        qc.plot_cv_predictions(training_data.prediction_df, training_data.psms,
+                               xirt_params=xirt_params, outpath=outpath)
+
+    print("Writing output tables:")
+    df_history_all.to_excel(os.path.join(outpath, "epoch_history.xlsx"))
+    try:
+        training_data.psms.to_excel(os.path.join(outpath, "processed_psms.xlsx"))
+        model_summary_df.to_excel(os.path.join(outpath, "model_summary.xlsx"))
+        training_data.prediction_df.to_excel(os.path.join(outpath, "prediction.xlsx"))
+        features_exhaustive.to_excel(os.path.join(outpath, "error_interactions.xlsx"))
         training_data.prediction_df.filter(regex="error").to_excel(
-            os.path.join(outpath, "errors.xls"))
+            os.path.join(outpath, "errors.xlsx"))
     except ValueError as err:
         print("Excel writing failed ({})".format(err))
+        training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
+        model_summary_df.to_csv(os.path.join(outpath, "model_summary.csv"))
         training_data.prediction_df.to_csv(os.path.join(outpath, "prediction.csv"))
         features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
-        training_data.prediction_df.filter(regex="error").to_csv(
-            os.path.join(outpath, "errors.csv"))
+        training_data.prediction_df.filter(regex="erro").to_csv(os.path.join(outpath, "errors.csv"))
     print("Done.")
 
 
@@ -232,5 +281,5 @@ def main():
                 args.xirt_params, args.learning_params)
 
 
-if __name__ == "__main__":   # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     main()

@@ -101,11 +101,18 @@ def test_fraction_encoding():
                               np.array([0, 0, 0, 1, 0]),
                               np.array([0, 0, 0, 0, 1])])
 
-    exp_hsax_ordinal = np.array([np.array([1, 0, 0, 0, 0]),
+    # v1
+    # exp_hsax_ordinal = np.array([np.array([1, 0, 0, 0, 0]),
+    #                              np.array([1, 1, 0, 0, 0]),
+    #                              np.array([1, 1, 1, 0, 0]),
+    #                              np.array([1, 1, 1, 1, 0]),
+    #                              np.array([1, 1, 1, 1, 1])])
+    # v2
+    exp_hsax_ordinal = np.array([np.array([0, 0, 0, 0, 0]),
+                                 np.array([1, 0, 0, 0, 0]),
                                  np.array([1, 1, 0, 0, 0]),
                                  np.array([1, 1, 1, 0, 0]),
-                                 np.array([1, 1, 1, 1, 0]),
-                                 np.array([1, 1, 1, 1, 1])])
+                                 np.array([1, 1, 1, 1, 0])])
     exp_hsax_0based = np.arange(0, 5)
 
     exp_scx_1hot = np.array([np.array([1, 0, 0]),
@@ -114,11 +121,18 @@ def test_fraction_encoding():
                              np.array([1, 0, 0]),
                              np.array([0, 1, 0])])
 
-    exp_scx_ordinal = np.array([np.array([1, 0, 0]),
-                                np.array([1, 1, 0]),
-                                np.array([1, 1, 1]),
+    # v1
+    # exp_scx_ordinal = np.array([np.array([1, 0, 0]),
+    #                             np.array([1, 1, 0]),
+    #                             np.array([1, 1, 1]),
+    #                             np.array([1, 0, 0]),
+    #                             np.array([1, 1, 0])])
+    # v2
+    exp_scx_ordinal = np.array([np.array([0, 0, 0]),
                                 np.array([1, 0, 0]),
-                                np.array([1, 1, 0])])
+                                np.array([1, 1, 0]),
+                                np.array([0, 0, 0]),
+                                np.array([1, 0, 0])])
     exp_scx_0based = [0, 1, 2, 0, 1]
 
     xp.fraction_encoding(psms_df, ["xirt_hsax", "xirt_scx"])

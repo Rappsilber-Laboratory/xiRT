@@ -139,8 +139,14 @@ def fraction_encoding(psms_df, rt_methods):
         nclasses = len(frac_unique)
         classes = {}
         for class_i in np.arange(0, nclasses):
-            init_class_encoding = np.zeros(nclasses)
-            init_class_encoding[:class_i+1] = 1
+            # version 1
+            # 1, 2, 3 -> [1, 0, 0], [1, 1, 0], [1, 1, 1]
+            # init_class_encoding = np.zeros(nclasses)
+            # init_class_encoding[:class_i+1] = 1
+            # classes[class_i] = init_class_encoding
+            # version 2
+            init_class_encoding = np.ones(nclasses)
+            init_class_encoding[class_i:] = 0
             classes[class_i] = init_class_encoding
 
         # make categorical

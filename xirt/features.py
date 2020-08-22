@@ -584,26 +584,41 @@ def add_interactions(feature_df, degree=2, interactions_only=True):
     """
     Add interactions from sklearns Polynomial feature generator.
 
-    Parameters
-    ----------
-    feature_df : df
-        dataframe with feature columns
+    Args:
+        feature_df: df, dataframe with feature columns
+        degree: int, interaction degree
+        interactions_only: bool, true / false
 
-    Returns
-    -------
-    df, dataframe including polynomial features
-
+    Returns:
+        None
     """
-    # add interactions
-    feng = PolynomialFeatures(degree=degree, interaction_only=interactions_only, include_bias=False)
-    # sort dataframe properties
+    # get single peptides
+    feature_df_peps = feature_df.filter(regex="peptide")
     tmp_idx = feature_df.index
-    columns = feature_df.columns
 
-    feature_df_ia = feng.fit_transform(feature_df)
-    feature_df_ia = pd.DataFrame(feature_df_ia)
+    # if single predictions are contain to not generate interactions between single peptide
+    # and crosslinks
+    if feature_df_peps.empty:
+        df_tmp = [feature_df]
+    else:
+        # create two dataframes for individual and cl predictions
+        feature_df_peps = feature_df.filter(regex="peptide")
+        feature_df_cl = feature_df[set(feature_df.columns) - set(feature_df_peps.columns)]
+        df_tmp = [feature_df_peps, feature_df_cl]
 
-    # old row and column names
-    feature_df_ia.index = tmp_idx
-    feature_df_ia.columns = feng.get_feature_names(columns)
-    return feature_df_ia
+    dfs_feats = []
+    for df in df_tmp:
+        # create the feature generator
+        feng = PolynomialFeatures(degree=degree, interaction_only=interactions_only,
+                                  include_bias=False)
+        # store columns and get dataframe
+        columns_peps = df.columns
+        feature_df_peps = pd.DataFrame(feng.fit_transform(df))
+
+        # reassign row and column names
+        feature_df_peps.index = tmp_idx
+        feature_df_peps.columns = feng.get_feature_names(columns_peps)
+        dfs_feats.append(feature_df_peps)
+
+    # create single data frame again
+    return pd.concat(dfs_feats, axis=1)

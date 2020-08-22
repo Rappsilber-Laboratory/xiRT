@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
+from sklearn.metrics import accuracy_score
 
 from xirt import processing as xp
 from xirt import sequences as xs
@@ -33,6 +34,7 @@ class ModelData:
         self.shuffled = False
         # init prediction df
         self.prediction_df = pd.DataFrame(index=psms_df.index)
+        self.prediction_df["cv"] = 0
 
     def set_fdr_mask(self, fdr_cutoff, str_filter=""):
         """
@@ -201,7 +203,7 @@ class ModelData:
         y_var.extend([self.psms[ccol].loc[idx].values for ccol in cont_cols])
         return y_var
 
-    def predict_and_store(self, xirtnetwork, xdata, store_idx):
+    def predict_and_store(self, xirtnetwork, xdata, store_idx, cv=0):
         """
         Generate and store predictions for the observations from store_idx.
 
@@ -213,13 +215,14 @@ class ModelData:
             xirtnetwork: xirnetwork, class object xirt
             xdata: tuple of dataframes, corresponding on the RNN / features of the one/two peptides
             store_idx: ar-like, indices to be used for the prediction process.
+            cv: int, cv-index of current iteration
 
         Returns:
             None
         """
         # store crosslink predictions
         predictions = xirtnetwork.model.predict(xdata)
-        self.store_predictions(xirtnetwork, predictions, store_idx, suf="")
+        self.store_predictions(xirtnetwork, predictions, store_idx, cv=cv, suf="")
 
         # if single predictions should be included in the df.Not meaningful for linear peptides.
         # For crosslinked peptides, the raw RT time of the two peptides are added.
@@ -227,12 +230,12 @@ class ModelData:
             # create dummy input with all zeroes as second peptide
             dummy = np.zeros_like(xdata[0])
             pep1_predictions = xirtnetwork.model.predict((xdata[0], dummy))
-            self.store_predictions(xirtnetwork, pep1_predictions, store_idx, suf="peptide1")
+            self.store_predictions(xirtnetwork, pep1_predictions, store_idx, cv=cv, suf="peptide1")
 
             pep2_predictions = xirtnetwork.model.predict((xdata[1], dummy))
-            self.store_predictions(xirtnetwork, pep2_predictions, store_idx, suf="peptide2")
+            self.store_predictions(xirtnetwork, pep2_predictions, store_idx, cv=cv, suf="peptide2")
 
-    def store_predictions(self, xirtnetwork, predictions, store_idx, suf=""):
+    def store_predictions(self, xirtnetwork, predictions, store_idx, cv=0, suf=""):
         """
         Format predictions to store them in a prediction dataframe.
 
@@ -245,6 +248,7 @@ class ModelData:
             xirtnetwork:    tf obj, trained network model
             predictions: ar-like, array with predictions
             store_idx: ar-like, index belonging to the predictions to the predictions
+            cv: int, cv iteration if crossvalidaton was performed
             suf: str, suffix to append to the default column names for the predictions
         Returns:
             None
@@ -256,6 +260,9 @@ class ModelData:
         # make sure list is iterable per task
         if len(xirtnetwork.tasks) == 1:
             predictions = [predictions]
+
+        # store cv value, only needed once
+        self.prediction_df["cv"].loc[store_idx] = cv
 
         for task_i, pred_ar in zip(xirtnetwork.tasks, predictions):
             # get activation type because linear, sigmoid, softmax all require different encoding/
@@ -277,16 +284,37 @@ class ModelData:
             elif pred_type == "softmax":
                 # classification, take maximum probability as class value
                 self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
-                    np.argmax(pred_ar, axis=1) + 1
+                    np.argmax(pred_ar, axis=1)
                 self.prediction_df[task_i + "-probability" + suf].loc[store_idx] = \
                     np.max(pred_ar, axis=1)
 
             elif pred_type == "sigmoid":
                 self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
-                    sigmoid_to_class(pred_ar) + 1
+                    sigmoid_to_class(pred_ar)
 
             else:
                 raise ValueError("{} not supported, only linear/softmax/sigmoid".format(pred_type))
+
+
+def compute_accuracy(predictions, expected, tasks, params):
+    """
+    Compute accuracy for ordinal predictions.
+
+    Args:
+        predictions: ar-like, multi-task predictions from xirt
+        expected: dataframe, pandas dataframe with indices matching the predictions
+        tasks: ar-like, lists of tasks
+        params: dict, parameter
+    Returns:
+        list, accuracy values for tasks with ordinal scale
+    """
+    accuracy_tmp = []
+    # compute accuracy
+    for task_i, pred_ar in zip(tasks, predictions):
+        if "ordinal" in params[task_i + "-column"]:
+            accuracy_tmp.append(accuracy_score(sigmoid_to_class(pred_ar),
+                                               expected[task_i + "_0based"]))
+    return np.round(accuracy_tmp, 3)
 
 
 def sigmoid_to_class(predictions, t=0.5):

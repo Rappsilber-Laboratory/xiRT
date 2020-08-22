@@ -16,7 +16,10 @@ biopython = "*"
 pydot = "*"
 graphviz = "*"
 xlwt = "*"
+palettable = "*"
 xlrd = "*"
+statannot = "*"
+openpyxl = "*"
 
 [dev-packages]
 twine = "*"

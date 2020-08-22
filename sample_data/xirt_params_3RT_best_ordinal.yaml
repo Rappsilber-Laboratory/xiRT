@@ -42,11 +42,11 @@ dense:
 embedding:
   length: 50
 learning:
-  batch_size: 128
-  epochs: 75
+  batch_size: 256
+  epochs: 50
   learningrate: 0.001
-  patience: 15
   verbose: 1
+  optimizer: adam
 output:
   callback-path: data/results/callbacks/
   hsax-activation: sigmoid
@@ -75,7 +75,7 @@ callbacks:
   check_point: True
   log_csv: True
   early_stopping: True
-  early_stopping_patience: 15
+  early_stopping_patience: 30
   tensor_board: False
   progressbar: True
   reduce_lr: True

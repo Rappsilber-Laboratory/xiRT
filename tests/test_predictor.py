@@ -165,19 +165,22 @@ def test_store_predictions():
     xirtnetwork.output_p["scx-activation"] = "softmax"
     xirtnetwork.output_p["hsax-activation"] = "sigmoid"
     # 3 classes fake
+    # scx is 1-hot / softmax encoding -> max = class
+    # hsax is ordinal / sigmoid encoding -> first val <= 0.5 or last entry = class
     predictions = [np.array([[0, 0.1, 0.9], [0.5, 0.4, 0.3], [0.2, 0.8, 0.2]]),
                    [1, 2, 3],
                    np.array([[0.4, 0.24, 0.1], [0.6, 0.24, 0.1], [0.9, 0.6, 0.5]])]
+    cv = 1
 
-    training_data.store_predictions(xirtnetwork, predictions, store_idx)
-
+    training_data.store_predictions(xirtnetwork, predictions, store_idx, cv=cv)
     exp_idx = psms_df.index
-    exp_scx = [3, 1, 2]
+    exp_scx = [2, 0, 1]
     exp_rp = [1, 2, 3]
-    exp_hsax = [1, 2, 3]
+    exp_hsax = [0, 1, 2]
     assert np.all(training_data.prediction_df.loc[exp_idx]["scx-prediction"] == exp_scx)
     assert np.all(training_data.prediction_df.loc[exp_idx]["rp-prediction"] == exp_rp)
     assert np.all(training_data.prediction_df.loc[exp_idx]["hsax-prediction"] == exp_hsax)
+    assert np.all(training_data.prediction_df.loc[exp_idx]["cv"] == 1)
 
 
 def test_sigmoid_to_class():
@@ -188,3 +191,17 @@ def test_sigmoid_to_class():
     exp_preds = [0, 1, 2, 2]
     preds = xr.sigmoid_to_class(predictions, 0.5)
     assert np.all(preds == exp_preds)
+
+
+def test_compute_accuracy():
+    # ordinal predictions
+    predictions = [np.array([[0.5, 0, 0],
+                             [0.8, 0.5, 0]])]
+
+    expected = pd.DataFrame()
+    # expected classes are 0 and 1 with 0.5 as threshold
+    expected["hsax_0based"] = [0, 1]
+    tasks = ["hsax"]
+    params = {"hsax-column": "hsax_ordinal"}
+    exp_acc = np.array([1.0])
+    assert np.all(exp_acc == xr.compute_accuracy(predictions, expected, tasks, params))
