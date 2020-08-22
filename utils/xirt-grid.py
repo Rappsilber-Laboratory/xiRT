@@ -86,18 +86,16 @@ parser = argparse.ArgumentParser(
                 "from a predefined yaml grid.")
 parser.add_argument("-i", dest="infile", required=True,
                     help="YAML grid file holding parameter combinations.",
-                    metavar="CSMS", type=lambda x: is_valid_file(parser, x))
+                    metavar="CSMS", type=str)
 parser.add_argument("-o", dest="outdir", required=True,
                     help="Output dir, where to store the individual yaml files and overview table.",
-                    metavar="OUTDIR", type="str")
+                    metavar="OUTDIR", type=str)
 args = parser.parse_args()
 
 outdir = args.outdir
 infile = args.infile
+print(args)
 # %%
-infile = r"C:\\Users\\hanjo\\PycharmProjects\\xiRT\\sample_data\\xirt_grid.yaml"
-outdir = "results/parameters/"
-
 # create outdir
 if not os.path.exists(outdir):
     os.makedirs(outdir)

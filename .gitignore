@@ -6,7 +6,8 @@ __pycache__/
 # C extensions
 *.so
 *.pdf
-
+*.snakemake
+snakemake
 # Distribution / packaging
 .Python
 pipenv
@@ -15,6 +16,9 @@ results/
 tests/results/
 intern_data/
 intern_tests/
+utils/grid/
+utils/grid_results/
+
 HILIC/
 develop-eggs/
 dist/

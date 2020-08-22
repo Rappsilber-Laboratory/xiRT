@@ -35,6 +35,7 @@ grid_parameters:
         patience : [15]
         learningrate : [0.001] # 0.005
         verbose: [1]
+        optimizer: ["adam"]
 
     siamese:
         use: [True]
