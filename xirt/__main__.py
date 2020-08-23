@@ -53,7 +53,7 @@ def arg_parser():  # pragma: not covered
 
 
 def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform_qc=True,
-                write=True):
+                write=True, write_dummy=True):
     """
     Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
 
@@ -66,6 +66,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         nrows: int, number of rows to sample (for quicker testing purposes only)
         perform_qc: bool, indicates if qc plots should be done.
         write: bool,  indicates result predictions should be stored
+        write_dummy: bool if true dummy txt file is written after execution (for snakemake usag)
 
     Returns:
         None
@@ -274,8 +275,9 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             training_data.prediction_df.filter(regex="error").to_csv(
                 os.path.join(outpath, "errors.csv"))
 
-    with open(xirt_loc.replace(".yaml", ".txt")) as of:
-        of.write("done.")
+    if write_dummy:
+        with open(xirt_loc.replace(".yaml", ".txt")) as of:
+            of.write("done.")
 
     print("Done.")
 
