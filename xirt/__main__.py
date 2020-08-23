@@ -258,6 +258,11 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                xirt_params=xirt_params, outpath=outpath)
 
     print("Writing output tables:")
+    # store setup in summary
+    model_summary["xirt_params"] = xirt_loc
+    model_summary["learning_params"] = setup_loc
+    model_summary["peptides"] = peptides_file
+    
     df_history_all.to_csv(os.path.join(outpath, "epoch_history.csv"))
     model_summary_df.to_csv(os.path.join(outpath, "model_summary.csv"))
     if write:
