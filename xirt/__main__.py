@@ -278,9 +278,6 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     # write a text file to indicate xirt is done.
     if write_dummy:
         outname = os.path.basename(xirt_loc.replace(".yaml", ".txt"))
-        if not os.path.exists(outpath):
-            os.makedirs(outpath)
-
         with open(os.path.join(outpath, outname), "w") as of:
             of.write("done.")
     print("Done.")
