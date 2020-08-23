@@ -33,9 +33,9 @@ grid_parameters:
         epochs : [25, 50] # 100
         batch_size : [256] # 256
         patience : [15]
-        learningrate : [0.001] # 0.005
+        learningrate : [0.001, 0.01] # 0.005
         verbose: [1]
-        optimizer: [adam]
+        optimizer: ["adam"]
 
     siamese:
         use: [True]

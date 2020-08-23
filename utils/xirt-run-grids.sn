@@ -35,4 +35,4 @@ rule xiRT:
          YAML_DIR + "{sample}.txt"
 
     shell:
-        "xirt -i {params.psms} -o {params.out} -x {input.configs} -l {params.learning}"
+        "xirt -i {params.psms} -o {params.out} -x {input.configs} -l {params.learning} --no-write"

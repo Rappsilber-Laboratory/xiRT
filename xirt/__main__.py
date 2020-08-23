@@ -42,10 +42,18 @@ def arg_parser():  # pragma: not covered
                         help="YAML parameter file to control training and testing splits and data.",
                         required=True, action="store", dest="learning_params")
 
+    parser.add_argument('--write', dest='write', action='store_true',
+                        help="Flag for writing result prediction files. If false only summaries"
+                             "are written.")
+    parser.add_argument('--no-write', dest='write', action='store_false',
+                        help="Flag for writing result prediction files. If false only summaries"
+                             "are written.")
+    parser.set_defaults(write=True)
     return parser
 
 
-def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform_qc=True):
+def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform_qc=True,
+                write=True):
     """
     Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
 
@@ -57,6 +65,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         single_pep_predictions:
         nrows: int, number of rows to sample (for quicker testing purposes only)
         perform_qc: bool, indicates if qc plots should be done.
+        write: bool,  indicates result predictions should be stored
 
     Returns:
         None
@@ -248,21 +257,22 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                xirt_params=xirt_params, outpath=outpath)
 
     print("Writing output tables:")
-    df_history_all.to_excel(os.path.join(outpath, "epoch_history.xlsx"))
-    try:
-        training_data.psms.to_excel(os.path.join(outpath, "processed_psms.xlsx"))
-        model_summary_df.to_excel(os.path.join(outpath, "model_summary.xlsx"))
-        training_data.prediction_df.to_excel(os.path.join(outpath, "prediction.xlsx"))
-        features_exhaustive.to_excel(os.path.join(outpath, "error_interactions.xlsx"))
-        training_data.prediction_df.filter(regex="error").to_excel(
-            os.path.join(outpath, "errors.xlsx"))
-    except ValueError as err:
-        print("Excel writing failed ({})".format(err))
-        training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
-        model_summary_df.to_csv(os.path.join(outpath, "model_summary.csv"))
-        training_data.prediction_df.to_csv(os.path.join(outpath, "prediction.csv"))
-        features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
-        training_data.prediction_df.filter(regex="erro").to_csv(os.path.join(outpath, "errors.csv"))
+    df_history_all.to_csv(os.path.join(outpath, "epoch_history.csv"))
+    model_summary_df.to_csv(os.path.join(outpath, "model_summary.csv"))
+    if write:
+        try:
+            training_data.psms.to_excel(os.path.join(outpath, "processed_psms.xlsx"))
+            training_data.prediction_df.to_excel(os.path.join(outpath, "prediction.xlsx"))
+            features_exhaustive.to_excel(os.path.join(outpath, "error_interactions.xlsx"))
+            training_data.prediction_df.filter(regex="error").to_excel(
+                os.path.join(outpath, "errors.xlsx"))
+        except ValueError as err:
+            print("Excel writing failed ({})".format(err))
+            training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
+            training_data.prediction_df.to_csv(os.path.join(outpath, "prediction.csv"))
+            features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
+            training_data.prediction_df.filter(regex="error").to_csv(
+                os.path.join(outpath, "errors.csv"))
     print("Done.")
 
 
@@ -278,7 +288,7 @@ def main():
     print("Calling xiRT")
     # call function
     xirt_runner(args.in_peptides, args.out_dir,
-                args.xirt_params, args.learning_params)
+                args.xirt_params, args.learning_params, write=args.write)
 
 
 if __name__ == "__main__":  # pragma: no cover
