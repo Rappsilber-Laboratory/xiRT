@@ -29,10 +29,11 @@ rule xiRT:
     params:
         learning = LEARNING_CONF,
         psms = PSMS,
-        out = OUT
+        out = OUT,
+        samplename = "{sample}"
 
     output:
          YAML_DIR + "{sample}.txt"
 
     shell:
-        "xirt -i {params.psms} -o {params.out} -x {input.configs} -l {params.learning} --no-write"
+        "xirt -i {params.psms} -o {params.out}/{params.samplename} -x {input.configs} -l {params.learning} --no-write"

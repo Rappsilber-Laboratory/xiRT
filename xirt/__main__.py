@@ -273,6 +273,10 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
             training_data.prediction_df.filter(regex="error").to_csv(
                 os.path.join(outpath, "errors.csv"))
+
+    with open(xirt_loc.replace(".yaml", ".txt")) as of:
+        of.write("done.")
+
     print("Done.")
 
 
