@@ -408,7 +408,6 @@ class xiRTNET:
         elif self.learning_p["optimizer"].lower() == "nadam":
             opt = optimizers.Nadam(learning_rate=self.learning_p["learningrate"])
 
-
         # get parameters from config file
         loss = {i: self.output_p[i + "-loss"] for i in self.tasks}
         metric = {i: self.output_p[i + "-metrics"] for i in self.tasks}
