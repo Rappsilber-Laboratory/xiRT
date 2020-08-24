@@ -50,9 +50,9 @@ class ModelData:
         if str_filter == "":
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & self.psms["isTT"]
         else:
-            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) \
-                       & (self.psms["Fasta1"].str.contains("_ECOLI")) \
-                       & (self.psms["Fasta2"].str.contains("_ECOLI"))
+            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) & (
+                self.psms["Fasta1"].str.contains("_ECOLI")) & (
+                           self.psms["Fasta2"].str.contains("_ECOLI"))
         self.psms["fdr_mask"] = fdr_mask
 
     def set_unique_shuffled_sampled_training_idx(self, sample_frac=1, random_state=42):

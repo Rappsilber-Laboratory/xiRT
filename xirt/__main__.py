@@ -22,8 +22,8 @@ def arg_parser():  # pragma: not covered
     """
     description = """
     xiRT is a machine learning tool for the (multidimensional) RT prediction of linear and
-    crosslinked peptides. Use --help to see the command line arguments. 
-    
+    crosslinked peptides. Use --help to see the command line arguments.
+
     Visit the documentation to get more information:
     https://xirt.readthedocs.io/en/latest/
     """
