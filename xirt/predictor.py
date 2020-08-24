@@ -353,11 +353,13 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
 
     Args:
         matches_df: df, dataframe with peptide identifications
-        sequence_type: str, either linear or cross-linked indicating the input molecule type.
+        sequence_type: str, either linear, pseudolinear or cross-linked indicating the input
+        molecule type (default: crosslink)
         max_length: int, maximal length of peptide sequences to consider. Longer sequences will
-        be removed
-        cl_residue: bool, if true handles cross-link sites as additional modifications
-        fraction_cols: ar-like, list of columsn that encode frationation data
+        be removed. (default: 1)
+        cl_residue: bool, if true handles cross-link sites as additional modifications.
+        (default: True)
+        fraction_cols: ar-like, list of columsn that encode frationation data. (default: [])
     Returns:
         model_data, processed feature dataframes and label encoder
     """
@@ -400,7 +402,13 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
             np.concatenate, axis=1)
         seq_proc = ["Seqar_Pseudo"]
 
-    # TODO remove longer peptide
+    # length filter
+    if max_length != -1:
+        len1 = matches_df[seq_proc[0]].str.len()
+        len2 = matches_df[seq_proc[1]].str.len() if len(seq_proc) == 2 else np.zeros_like(len1)
+        valid_length = (len1 <= max_length) & (len2 <= max_length)
+        matches_df = matches_df[valid_length]
+
     features_rnn_seq1, features_rnn_seq2, le = \
         xp.featurize_sequences(matches_df, seq_cols=seq_proc, max_length=max_length)
 
