@@ -113,6 +113,7 @@ class ModelData:
         train_df_idx = self.train_idx.values
 
         if len(cv_pattern) == 1:
+            logger.info("Running in train-mode: no cv will be done - only 1 split.")
             # train on entire data set - a fraction for testing/validation is mandatory!
             # syntax a bit confusing:
             # split data into 100% - 2x test size, % test size, % test size
@@ -124,6 +125,7 @@ class ModelData:
             yield train_idx, val_idx, pre_idx
 
         else:
+            logger.info("Running in crossvalidation-mode: cv will be done.")
             # get n_splits of the training
             kf = KFold(n_splits=n_splits, shuffle=False)
             kf.get_n_splits(self.features1.loc[self.train_idx])
