@@ -20,6 +20,22 @@ def test_preprocessing_crosslinks():
     assert np.any(training_data.features1 != training_data.features2)
 
 
+def test_preprocessing_pseudolinear():
+    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv")).head(100)
+    training_data = xr.preprocess(psms_df, "pseudolinear", max_length=-1, cl_residue=False)
+
+    assert len(training_data.features1) == 100
+    assert len(training_data.features2) == 0
+
+
+def test_length_filter():
+    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv")).head(100)
+    training_data = xr.preprocess(psms_df, "pseudolinear", max_length=40, cl_residue=False)
+
+    assert len(training_data.features1) < 100
+    assert len(training_data.features2) == 0
+
+
 def test_preprocessing_linear():
     psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv")).head(100)
     training_data = xr.preprocess(psms_df, "linear", max_length=-1, cl_residue=False)
