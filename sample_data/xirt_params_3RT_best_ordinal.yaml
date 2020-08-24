@@ -44,7 +44,7 @@ embedding:
 learning:
   batch_size: 256
   epochs: 50
-  learningrate: 0.001
+  learningrate: 0.01
   verbose: 1
   optimizer: adam
 output:

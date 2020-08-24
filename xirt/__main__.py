@@ -234,14 +234,17 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                   callbacks=callbacks)
     else:
         logger.info("Selecting best performing CV model to predict unseen data.")
+
         # load the best performing model across cv from the validation split
         best_model_idx = np.argmin(
             model_summary_df[model_summary_df["Split"] == "Validation"]["loss"].values)
         logger.info("Best Model: {}".format(best_model_idx))
-        logger.info("Model Summary: {}".format(model_summary_df.to_string()))
+        logger.info("Loading weights.")
         xirtnetwork.model.load_weights(os.path.join(xirtnetwork.callback_p["callback_path"],
                                                     "xirt_weights_{}.h5".format(
                                                         str(best_model_idx + 1).zfill(2))))
+        logger.info("Model Summary:")
+        logger.info(model_summary_df.groupby("Split").agg([np.mean, np.std]).to_string())
 
     # get the 'unvalidation data', e.g. data that was not used during training becasue
     # here the CSMs are that we want to save / resore later!
