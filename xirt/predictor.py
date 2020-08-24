@@ -1,5 +1,6 @@
 """Module to organize predictions from CLMS data."""
 import sys
+import logging
 
 import numpy as np
 import pandas as pd
@@ -10,6 +11,7 @@ from xirt import processing as xp
 from xirt import sequences as xs
 from xirt import xirtnet
 
+logger = logging.getLogger(__name__)
 
 class ModelData:
     """Class to keep data together."""
@@ -47,6 +49,7 @@ class ModelData:
         Returns:
             None
         """
+
         if str_filter == "":
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & self.psms["isTT"]
         else:
@@ -54,6 +57,7 @@ class ModelData:
                 self.psms["Fasta1"].str.contains("_ECOLI")) & (
                 self.psms["Fasta2"].str.contains("_ECOLI"))
         self.psms["fdr_mask"] = fdr_mask
+        logger.info("Setting FDR mask: {} valid entries".format(np.sum(fdr_mask)))
 
     def set_unique_shuffled_sampled_training_idx(self, sample_frac=1, random_state=42):
         """
@@ -69,6 +73,7 @@ class ModelData:
         Returns:
             None
         """
+        logger.info("Shuffling data (random_state: {})".format(random_state))
         psms_train_idx = self.psms[
             (self.psms["fdr_mask"]) & (~self.psms["Duplicate"].astype(bool))].sample(
             frac=sample_frac, random_state=random_state).index
@@ -92,11 +97,14 @@ class ModelData:
             iterator, (train_idx, val_idx, pred_idx)
         """
         if not self.shuffled:
-            raise ValueError("Data must be shuffled to avoid undesired bias in the splits.")
+            msg = "Data must be shuffled to avoid undesired bias in the splits."
+            logger.critical(msg)
+            raise ValueError(msg)
 
         if test_size < 0.1:
-            raise ValueError(
-                'Test split value must be > 0.1. Please set test_size to min 0.1 (10%).')
+            msg = 'Test split value must be > 0.1. Please set test_size to min 0.1 (10%).'
+            logger.critical(msg)
+            raise ValueError(msg)
 
         # note: code with *loc indicates 0 based locations. code with idx indicates pandas index
         # used for train/validation splits
@@ -363,11 +371,15 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     Returns:
         model_data, processed feature dataframes and label encoder
     """
+    logger.info("Preprocessing peptides.")
+    logger.info("Input peptides: {}".format(len(matches_df)))
     # set index
     matches_df.set_index("PSMID", drop=False, inplace=True)
 
     # sort to keep only highest scoring peptide from duplicated entries
     matches_df = matches_df.sort_values(by="score", ascending=False)
+
+    logger.info("Reordering peptide sequences. (mode: {})".format(sequence_type))
 
     # generate columns to handle based on input data type
     if sequence_type in ["crosslink", "pseudolinear"]:
@@ -378,7 +390,9 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         matches_df["Peptide2"] = ""
         seq_in = ["Peptide1"]
     else:
-        sys.exit("sequence type not supported. Must be one of (crosslink, pseudolinear, linear)")
+        msg = "sequence type not supported. Must be one of (crosslink, pseudolinear, linear)"
+        logger.critical(msg)
+        sys.exit(msg)
 
     # dynamically get if linear or crosslinked
     seq_proc = ["Seqar_" + i for i in seq_in]
@@ -391,8 +405,11 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
 
     # mark all duplicates
     matches_df["Duplicate"] = matches_df.duplicated(["PepSeq1PepSeq2_str"], keep="first")
+    logger.info("Duplicatad entries (by sequence only): {}/{}".format(matches_df["Duplicate"].sum(),
+                                                                      len(matches_df)))
 
     if cl_residue:
+        logger.info("Encode crosslinked residues.")
         xs.modify_cl_residues(matches_df, seq_in=seq_in)
 
     # for pseudo linears, simply concat the input data and put a spacer between the two sequences
@@ -409,6 +426,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         valid_length = (len1 <= max_length) & (len2 <= max_length)
         matches_df = matches_df[valid_length]
 
+    logger.info("Applying length filter: {} peptides left".format(len(matches_df)))
     features_rnn_seq1, features_rnn_seq2, le = \
         xp.featurize_sequences(matches_df, seq_cols=seq_proc, max_length=max_length)
 
