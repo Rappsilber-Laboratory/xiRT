@@ -29,3 +29,4 @@ train:
   test_frac: 0.10
   sample_frac: 1
   sample_state: 21
+  refit: False
