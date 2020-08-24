@@ -188,6 +188,8 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath):  # pragma: no cov
     epochlogs = glob.glob(os.path.join(callback_path, "*epochlog*"))
     df = pd.concat(pd.read_csv(i) for i in epochlogs)
 
+    if len(tasks) == 1:
+        df.columns = [tasks[0] + "-" + i if i not in ["epoch", "lr"] else i for i in df.columns]
     # transform and melt dataframe for easier plotting, can probably be optimized
     dfs = []
     for rt_task in tasks:
@@ -228,29 +230,44 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath):  # pragma: no cov
 
         # metric
         f, ax = plt.subplots()
-        ax = sns.lineplot(x="epoch", y="value", hue="variable", style="Split", data=df_temp_frac,
-                          ax=ax, palette=frac_hues, legend=False)
         # make custom legend because lineplot will duplicate the legends with the same color
-        handles_frac = [Line2D([0], [0], label=li, color=frac_hues[li]) for li, ci in
-                        zip(frac_metrics[:nfracs], frac_hues)]
-        handles_cont = [Line2D([0], [0], label=li, color=cont_hues[li]) for li, ci in
-                        zip(cont_metrics[:ncont], cont_hues)]
-        ax.set(
-            ylabel=xirt_params["output"][xirt_params["predictions"]["fractions"][0] + "-" + cname])
-        ax2 = ax.twinx()
-        ax2 = sns.lineplot(x="epoch", y="value", hue="variable", style="Split",
-                           data=df_temp_cont, ax=ax2, legend=False, palette=cont_hues)
-        ax2.set(
-            ylabel=xirt_params["output"][xirt_params["predictions"]["continues"][0] + "-" + cname])
-        sns.despine(right=False)
-        ax.legend(handles=list(np.hstack([handles_frac, handles_cont,
-                                          Line2D([0], [0], color="k", ls="-", label="training"),
-                                          Line2D([0], [0], color="k", ls="--",
-                                                 label="validation")])),
-                  loc=2, ncol=3, bbox_to_anchor=(0.01, 1.2), borderaxespad=0.)
+        if (len(frac_hues) > 0) & (len(cont_hues)):
+            handles_frac = [Line2D([0], [0], label=li, color=frac_hues[li]) for li, ci in
+                            zip(frac_metrics[:nfracs], frac_hues)]
+            handles_cont = [Line2D([0], [0], label=li, color=cont_hues[li]) for li, ci in
+                            zip(cont_metrics[:ncont], cont_hues)]
 
-        for axt in [ax, ax2]:
-            axt.yaxis.set_major_locator(ticker.MaxNLocator(5))
+            ax = sns.lineplot(x="epoch", y="value", hue="variable", style="Split",
+                              data=df_temp_frac, ax=ax, palette=frac_hues, legend=False)
+
+            ax.set(
+                ylabel=xirt_params["output"][
+                    xirt_params["predictions"]["fractions"][0] + "-" + cname])
+            ax2 = ax.twinx()
+            ax2 = sns.lineplot(x="epoch", y="value", hue="variable", style="Split",
+                               data=df_temp_cont, ax=ax2, legend=False, palette=cont_hues)
+            ax2.set(
+                ylabel=xirt_params["output"][
+                    xirt_params["predictions"]["continues"][0] + "-" + cname])
+            sns.despine(right=False)
+            ax.legend(handles=list(np.hstack([handles_frac, handles_cont,
+                                              Line2D([0], [0], color="k", ls="-", label="training"),
+                                              Line2D([0], [0], color="k", ls="--",
+                                                     label="validation")])),
+                      loc=2, ncol=3, bbox_to_anchor=(0.01, 1.2), borderaxespad=0.)
+
+            for axt in [ax, ax2]:
+                axt.yaxis.set_major_locator(ticker.MaxNLocator(5))
+
+        else:
+            # deal with single plot case ...
+            ax = sns.lineplot(x="epoch", y="value", hue="variable", style="Split",
+                              data=df_temp_cont, ax=ax, palette=cont_hues, legend="full")
+            ax.set(ylabel=xirt_params["output"][
+                xirt_params["predictions"]["continues"][0] + "-" + cname])
+            sns.despine(right=False)
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
+        plt.show()
         plt.tight_layout()
         save_fig(f, outpath, outname="cv_epochs_{}".format(cname))
         plt.clf()
@@ -268,6 +285,10 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
         None
     """
     # %%
+    if len(tasks) == 1:
+        summary_df.columns = [tasks[0] + "_" + i if i not in ["CV", "Split"] else i for i in
+                              summary_df.columns]
+
     for col in tasks:
         if "ordinal" in xirt_params["output"][col + "-column"]:
             # rewrite params to use accuracy
@@ -278,6 +299,9 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
     metrics = [xirt_params["output"][i + "-metrics"] for i in tasks]
     for eval_method in [metrics, "losses"]:
         f, axes = plt.subplots(1, len(tasks), figsize=(5, 4))
+        if len(tasks) == 1:
+            axes = [axes]
+
         for ii, m, t in zip(range(len(tasks)), eval_method, tasks):
             if eval_method == "losses":
                 m = "loss"
@@ -333,7 +357,10 @@ def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath):  # pr
         cont = sorted(xirt_params["predictions"]["continues"])
         ntasks = len(fracs) + len(cont)
 
-        f, axes = plt.subplots(1, ntasks, figsize=(12, 4))
+        f, axes = plt.subplots(1, ntasks, figsize=(4 * ntasks, 4))
+        if ntasks == 1:
+            f, axes = plt.subplots(1, ntasks, figsize=(4 * ntasks, 4))
+            axes = [axes]
         idx = 0
         # plot heatmap variant for variant for fraction prediction
         for frac_task in fracs:
@@ -349,8 +376,9 @@ def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath):  # pr
                                     temp_cv_df[cont_task + "-prediction"].values, task=cont_task,
                                     ax=axes[idx], color=colors[idx])
             idx += 1
-        axes[int(ntasks/2)].set(xlabel=axes[int(ntasks/2)].get_xlabel() + "\nCV: {}".format(i))
+        axes[int(ntasks / 2)].set(xlabel=axes[int(ntasks / 2)].get_xlabel() + "\nCV: {}".format(i))
         plt.tight_layout()
+        plt.show()
         save_fig(f, outpath, "qc_cv{}_obs_pred".format(str(i).zfill(2)))
         plt.clf()
     # %%
@@ -418,7 +446,7 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
     # convenient ass to columns
     tasks_errors = [i + "-error" for i in tasks]
     # melt data
-    df_ec_melt = df_all_info[np.concatenate([tasks_errors, ["isTT"]])].melt(id_vars=["isTT"],)
+    df_ec_melt = df_all_info[np.concatenate([tasks_errors, ["isTT"]])].melt(id_vars=["isTT"], )
     df_ec_melt = df_ec_melt.rename({"isTT": "PSM type"}, axis=1)
     df_ec_melt["variable"] = df_ec_melt["variable"].str.replace("-error", "")
     # counts = dict(df_all_info["isTT"].value_counts())
