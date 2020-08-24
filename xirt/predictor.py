@@ -13,6 +13,7 @@ from xirt import xirtnet
 
 logger = logging.getLogger(__name__)
 
+
 class ModelData:
     """Class to keep data together."""
 
@@ -49,7 +50,6 @@ class ModelData:
         Returns:
             None
         """
-
         if str_filter == "":
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & self.psms["isTT"]
         else:

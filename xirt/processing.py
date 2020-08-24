@@ -14,6 +14,7 @@ from xirt import sequences as xs
 
 logger = logging.getLogger(__name__)
 
+
 def prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"]):
     """Convert Peptide sequences to unified format.
 
