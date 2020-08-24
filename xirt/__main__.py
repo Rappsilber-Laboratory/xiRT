@@ -12,6 +12,7 @@ import yaml
 from xirt import features as xf
 from xirt import predictor as xr
 from xirt import xirtnet, qc
+from xirt import __version__ as xv
 
 logger = logging.getLogger(__name__)
 
@@ -303,7 +304,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             training_data.prediction_df.filter(regex="error").to_excel(
                 os.path.join(outpath, "errors.xlsx"))
         except ValueError as err:
-            print("Excel writing failed ({})".format(err))
+            logger.warning("Excel writing failed ({})".format(err))
             training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
             training_data.prediction_df.to_csv(os.path.join(outpath, "prediction.csv"))
             features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
@@ -314,12 +315,11 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     if write_dummy:
         with open(xirt_loc.replace(".yaml", ".txt"), "w") as of:
             of.write("done.")
-    print("Done.")
+    logger.info("Completed xiRT run.")
 
 
 def main():
     """Run xiRT main function."""
-    print("Parsing Arguments")
     parser = arg_parser()
     try:
         args = parser.parse_args(sys.argv[1:])
@@ -332,15 +332,17 @@ def main():
     # create console handler and set level to debug
     ch = logging.FileHandler(os.path.join(args.out_dir, "xirt_logger.log"), "w")
     ch.setLevel(logging.DEBUG)
-    # create formatter
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    # add formatter to ch
-    ch.setFormatter(formatter)
-    # add ch to logger
+    ch.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     logger.addHandler(ch)
 
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setLevel(logging.DEBUG)
+    sh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(sh)
+
     logger.info("Init logging file.")
-    logger.info("Starting xiRT:")
+    logger.info("Starting xiRT.")
+    logger.info("Using xiRT version: {}".format(xv.__version__))
 
     # call function
     xirt_runner(args.in_peptides, args.out_dir, args.xirt_params, args.learning_params,
