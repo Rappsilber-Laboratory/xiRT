@@ -1,0 +1,39 @@
+"""
+snakemake workflow to run a set of grid parameters with xiRT.
+
+using the snakemake engine (Koester et al.)
+
+example:
+snakemake -s xirt-run-grids.sn --config yaml="PATH_to_YAMLs" psms="PATH_TO_PSMS" param="PATH_TO_LEARNING_P" out="PATH_FOR_STORAGE" --cores 1
+"""
+import glob
+import os
+
+LEARNING_CONF = config["param"]
+PSMS = config["psms"]
+OUT = config["out"]
+YAML_DIR = config["yaml"]
+
+xirt_configs = [os.path.basename(i.replace(".yaml", "")) for i in glob.glob(YAML_DIR + "*.yaml")]
+
+
+
+rule all:
+    input:
+        expand(YAML_DIR + "{sample}.txt", sample=xirt_configs)
+
+rule xiRT:
+    input:
+        configs = YAML_DIR + "{sample}.yaml"
+
+    params:
+        learning = LEARNING_CONF,
+        psms = PSMS,
+        out = OUT,
+        samplename = "{sample}"
+
+    output:
+         YAML_DIR + "{sample}.txt"
+
+    shell:
+        "xirt -i {params.psms} -o {params.out}/{params.samplename} -x {input.configs} -l {params.learning} --no-write"

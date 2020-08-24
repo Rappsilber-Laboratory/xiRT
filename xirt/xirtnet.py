@@ -398,9 +398,15 @@ class xiRTNET:
         if self.learning_p["optimizer"] == "adam":
             opt = optimizers.Adam(lr=self.learning_p["learningrate"])
 
-        if self.learning_p["optimizer"].lower() == "sgd":
+        elif self.learning_p["optimizer"].lower() == "sgd":
             opt = optimizers.SGD(learning_rate=self.learning_p["learningrate"],
                                  momentum=0.0, nesterov=False, name='SGD')
+
+        elif self.learning_p["optimizer"].lower() == "rmsprob":
+            opt = optimizers.RMSprop(learning_rate=self.learning_p["learningrate"])
+
+        elif self.learning_p["optimizer"].lower() == "nadam":
+            opt = optimizers.Nadam(learning_rate=self.learning_p["learningrate"])
 
         # get parameters from config file
         loss = {i: self.output_p[i + "-loss"] for i in self.tasks}
