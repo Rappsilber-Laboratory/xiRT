@@ -102,7 +102,6 @@ def add_heatmap(y, yhat, task, ax, colormap, dims):  # pragma: no cover
     ax.set(ylim=(cm_scx.shape[0], 0), xlabel="Observed {}\n".format(task),
            title="""{}\n{}""".format(task, metric_str), ylabel="Predicted {}".format(task))
     sns.despine()
-    plt.show()
     return ax
 
 
@@ -267,7 +266,6 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath):  # pragma: no cov
                 xirt_params["predictions"]["continues"][0] + "-" + cname])
             sns.despine(right=False)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
-        plt.show()
         plt.tight_layout()
         save_fig(f, outpath, outname="cv_epochs_{}".format(cname))
         plt.clf()
@@ -378,7 +376,6 @@ def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath):  # pr
             idx += 1
         axes[int(ntasks / 2)].set(xlabel=axes[int(ntasks / 2)].get_xlabel() + "\nCV: {}".format(i))
         plt.tight_layout()
-        plt.show()
         save_fig(f, outpath, "qc_cv{}_obs_pred".format(str(i).zfill(2)))
         plt.clf()
     # %%
