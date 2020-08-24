@@ -8,8 +8,11 @@ import numpy as np
 import pandas as pd
 from pyteomics import parser
 from tensorflow.keras import utils
-
+import logging
 from xirt import sequences as xs
+
+
+logger = logging.getLogger(__name__)
 
 
 def prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"]):
@@ -38,6 +41,8 @@ def prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"]):
     """
     # for all sequence columns in the dataframe perform the processing
     # if linear only a single column, if cross-linked two columns are processed
+    logger.info("Preparing peptide sequences for columns: {}".format(",".join(seq_cols)))
+
     for seq_col in seq_cols:
         # code if sequences are represented with N.SEQUENCE.C
         if "." in psms_df.iloc[0][seq_col]:
@@ -76,6 +81,7 @@ def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], 
     # get padding length
     if max_length == -1:
         max_length = psms_df[seq_cols].applymap(len).max().max()
+    logger.info("Setting max_length to: {}".format(max_length))
 
     # get amino acid alphabet
     if len(seq_cols) > 1:
@@ -83,6 +89,8 @@ def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], 
                               f(psms_df[seq_cols[1]].str.join(sep="").drop_duplicates()))
     else:
         alphabet = f(psms_df[seq_cols[0]].str.join(sep="").drop_duplicates())
+
+    logger.info("alphabet: {}".format(alphabet))
 
     # perform the label encoding + padding
     encoded_s1, le = xs.label_encoding(psms_df[seq_cols[0]], max_length, alphabet=alphabet)
