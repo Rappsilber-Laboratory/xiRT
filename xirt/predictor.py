@@ -51,8 +51,8 @@ class ModelData:
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & self.psms["isTT"]
         else:
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) \
-                & (self.psms["Fasta1"].str.contains("_ECOLI")) \
-                & (self.psms["Fasta2"].str.contains("_ECOLI"))
+                       & (self.psms["Fasta1"].str.contains("_ECOLI")) \
+                       & (self.psms["Fasta2"].str.contains("_ECOLI"))
         self.psms["fdr_mask"] = fdr_mask
 
     def set_unique_shuffled_sampled_training_idx(self, sample_frac=1, random_state=42):
@@ -276,7 +276,7 @@ class ModelData:
                 if pred_type == "softmax":
                     self.prediction_df[task_i + "-probability" + suf] = -1000000
 
-            if (pred_type == "linear") or (pred_type == "relu"):
+            if pred_type in ["linear", "relu"]:
                 # easiest, just ravel to 1d ar
                 self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = np.ravel(
                     pred_ar)
@@ -368,20 +368,15 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     matches_df = matches_df.sort_values(by="score", ascending=False)
 
     # generate columns to handle based on input data type
-    if sequence_type == "crosslink":
+    if sequence_type in ["crosslink", "pseudolinear"]:
         # change peptide order
         matches_df = xs.reorder_sequences(matches_df)
         seq_in = ["Peptide1", "Peptide2"]
-
-    elif sequence_type == "pseudolinear":
-        # TODO
-        sys.exit("Sorry, not yet implemented ):. (crosslink, pseudolinears, linear)")
-
     elif sequence_type == "linear":
         matches_df["Peptide2"] = ""
         seq_in = ["Peptide1"]
     else:
-        sys.exit("sequence type not supported. Must be one of (crosslink, pseudolinears, linear)")
+        sys.exit("sequence type not supported. Must be one of (crosslink, pseudolinear, linear)")
 
     # dynamically get if linear or crosslinked
     seq_proc = ["Seqar_" + i for i in seq_in]
@@ -397,6 +392,13 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
 
     if cl_residue:
         xs.modify_cl_residues(matches_df, seq_in=seq_in)
+
+    # for pseudo linears, simply concat the input data and put a spacer between the two sequences
+    if sequence_type == "pseudolinear":
+        matches_df["pseudo_spacer"] = [["X"]] * len(matches_df)
+        matches_df["Seqar_Pseudo"] = matches_df[[seq_proc[0], "pseudo_spacer", seq_proc[1]]].apply(
+            np.concatenate, axis=1)
+        seq_proc = ["Seqar_Pseudo"]
 
     # TODO remove longer peptide
     features_rnn_seq1, features_rnn_seq2, le = \
