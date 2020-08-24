@@ -81,8 +81,10 @@ def add_heatmap(y, yhat, task, ax, colormap, dims):  # pragma: no cover
         axes, matplotlib axes object
     """
     # prepare confusion matrix
-
-    cm_scx = pd.DataFrame(np.flip(confusion_matrix(y, yhat), axis=0))
+    # note that yhat and y are change in the order here! This is needed because sklearn
+    # arranges the confusion matrix very confusing ... this way bottom left, to top right
+    # will equal a correaltion / straight line = expected behavior
+    cm_scx = pd.DataFrame(np.flip(confusion_matrix(yhat, y), axis=0))
     cm_scx.columns = cm_scx.columns
     cm_scx.index = np.flip(cm_scx.columns)
     # mask for not writing zeroes into the plot
@@ -91,8 +93,8 @@ def add_heatmap(y, yhat, task, ax, colormap, dims):  # pragma: no cover
     # annotation
     metric_str = """r2: {:.2f} f1: {:.2f} acc: {:.2f} racc: {:.2f}""".format(
         custom_r2(y, yhat), f1_score(y, yhat, average="macro"),
-        accuracy_score(y, yhat), relaxed_accuracy(y.values, yhat.values))
-
+        accuracy_score(y, yhat), relaxed_accuracy(y, yhat))
+    f, ax = plt.subplots()
     ax = sns.heatmap(cm_scx, cmap=colormap, annot=True, annot_kws={"size": 12},
                      fmt='.0f', cbar=True, mask=mask, ax=ax)
     ax.axhline(y=dims[-1], color='k')
@@ -100,6 +102,7 @@ def add_heatmap(y, yhat, task, ax, colormap, dims):  # pragma: no cover
     ax.set(ylim=(cm_scx.shape[0], 0), xlabel="Observed {}\n".format(task),
            title="""{}\n{}""".format(task, metric_str), ylabel="Predicted {}".format(task))
     sns.despine()
+    plt.show()
     return ax
 
 
