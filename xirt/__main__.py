@@ -334,7 +334,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     logger.info("Completed xiRT run.")
 
 
-def main():
+def main():  # pragma: no cover
     """Run xiRT main function."""
     parser = arg_parser()
     try:

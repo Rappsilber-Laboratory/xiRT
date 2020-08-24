@@ -61,6 +61,36 @@ def test_xirt_compilation():
     assert xirtnetwork.model._is_compiled is True
 
 
+def test_xirt_compilation_sgd():
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
+                           Loader=yaml.FullLoader)
+    xiRTconfig["learning"]["optimizer"] = "sgd"
+    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork.build_model(siamese=True)
+    xirtnetwork.compile()
+    assert xirtnetwork.model.optimizer._name.lower() == "sgd"
+
+
+def test_xirt_compilation_rmsprop():
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
+                           Loader=yaml.FullLoader)
+    xiRTconfig["learning"]["optimizer"] = "rmsprob"
+    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork.build_model(siamese=True)
+    xirtnetwork.compile()
+    assert xirtnetwork.model.optimizer._name.lower() == "rmsprop"
+
+
+def test_xirt_compilation_nadam():
+    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
+                           Loader=yaml.FullLoader)
+    xiRTconfig["learning"]["optimizer"] = "nadam"
+    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork.build_model(siamese=True)
+    xirtnetwork.compile()
+    assert xirtnetwork.model.optimizer._name.lower() == "nadam"
+
+
 def test_xirt_compilation_siameseoptions():
     # test the usage of different combination layers
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
