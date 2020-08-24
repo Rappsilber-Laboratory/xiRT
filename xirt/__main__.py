@@ -329,6 +329,10 @@ def main():
     except TypeError:
         parser.print_usage()
 
+    # create dir if not there
+    if not os.path.exists(args.out_dir):
+        os.makedirs(args.out_dir)
+
     # create logger
     logger = logging.getLogger('xirt')
     logger.setLevel(logging.DEBUG)
