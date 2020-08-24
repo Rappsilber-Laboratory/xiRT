@@ -156,6 +156,11 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         # init the network model
         xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
         xirtnetwork.compile()
+        # loading predfined weights
+        if learning_params["train"]["pretrained_weights"].lower() != "none":
+            logger.info("Loading pretrained weights into model.")
+            xirtnetwork.model.load_weights(learning_params["train"]["pretrained_weights"])
+
         callbacks = xirtnetwork.get_callbacks(suffix=str(cv_counter).zfill(2))
 
         # assemble training data
@@ -230,6 +235,11 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                            cont_cols=cont_cols)
         xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
         xirtnetwork.compile()
+
+        if learning_params["train"]["pretrained_weights"].lower() != "none":
+            logger.info("Loading pretrained weights into model for refit option.")
+            xirtnetwork.model.load_weights(learning_params["train"]["pretrained_weights"])
+
         _ = xirtnetwork.model.fit(xrefit, yrefit, validation_split=test_size,
                                   epochs=xirt_params["learning"]["epochs"],
                                   batch_size=xirt_params["learning"]["batch_size"],
