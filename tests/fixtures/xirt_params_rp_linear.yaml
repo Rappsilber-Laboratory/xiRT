@@ -8,7 +8,7 @@ LSTM:
   lstm_bn: true
   nlayers: 1
   type: GRU
-  units: 50
+  units: 5
 dense:
   activation:
   - relu
