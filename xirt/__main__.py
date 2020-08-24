@@ -86,7 +86,10 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     logger.info("peptides: {}".format(peptides_file))
 
     # convenience short cuts
-    n_splits = learning_params["train"]["ncv"]
+    if learning_params["train"]["mode"] == "train":
+        n_splits = 1
+    else:
+        n_splits = learning_params["train"]["ncv"]
     test_size = learning_params["train"]["test_frac"]
     outpath = os.path.abspath(out_dir)
     xirt_params["callbacks"]["callback_path"] = os.path.join(outpath, "callbacks")
@@ -210,7 +213,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     # store model summary data
     model_summary_df = pd.DataFrame(model_summary, columns=metric_columns)
     model_summary_df["CV"] = np.repeat(np.arange(1, n_splits + 1), 3)
-    model_summary_df["Split"] = np.tile(["Train", "Validation", "Prediction"], 3)
+    model_summary_df["Split"] = np.tile(["Train", "Validation", "Prediction"], n_splits)
 
     # store manual accuray for ordinal data
     if has_ordinal:
