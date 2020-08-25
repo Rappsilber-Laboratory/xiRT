@@ -171,7 +171,7 @@ def relaxed_accuracy(y, yhat):
     return np.round(sum(np.abs(y - yhat) <= 1) / len(yhat), 2)
 
 
-def plot_epoch_cv(callback_path, tasks, xirt_params, outpath):  # pragma: no cover
+def plot_epoch_cv(callback_path, tasks, xirt_params, outpath, show=False):  # pragma: no cover
     """Do a QC plot of the metrics and losses for all tasks across the epochs (over all cvs).
 
     Args:
@@ -179,6 +179,7 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath):  # pragma: no cov
         tasks: ar-like, list of tasks that were used as identifier in xirt
         xirt_params: dict, parsed yaml file for xirt config.
         outpath: str, location to store the plots
+        show: bool, if True plot figure
     Returns:
         None
     """
@@ -197,6 +198,7 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath):  # pragma: no cov
         df_temp["variable_norm"] = df_temp.groupby('variable').transform(lambda x: (x / x.max()))[
             "value"]
         dfs.append(df_temp)
+
     dfs = pd.concat(dfs)
     dfs["Split"] = ["Training" if "val" not in i else "Validation" for i in dfs["variable"]]
     dfs["Metric"] = ["Loss" if "loss" in i.lower() else "Metric" for i in dfs["variable"]]
@@ -229,7 +231,7 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath):  # pragma: no cov
         # metric
         f, ax = plt.subplots()
         # make custom legend because lineplot will duplicate the legends with the same color
-        if (len(frac_hues) > 0) & (len(cont_hues)):
+        if (len(frac_hues) > 0) & (len(cont_hues) > 0):
             handles_frac = [Line2D([0], [0], label=li, color=frac_hues[li]) for li, ci in
                             zip(frac_metrics[:nfracs], frac_hues)]
             handles_cont = [Line2D([0], [0], label=li, color=cont_hues[li]) for li, ci in
@@ -266,6 +268,8 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath):  # pragma: no cov
             sns.despine(right=False)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
         plt.tight_layout()
+        if show:
+            plt.show()
         save_fig(f, outpath, outname="cv_epochs_{}".format(cname))
         plt.clf()
 
