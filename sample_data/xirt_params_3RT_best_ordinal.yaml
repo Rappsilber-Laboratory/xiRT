@@ -75,12 +75,12 @@ callbacks:
   check_point: True
   log_csv: True
   early_stopping: True
-  early_stopping_patience: 30
+  early_stopping_patience: 10
   tensor_board: False
   progressbar: True
   reduce_lr: True
-  reduce_lr_factor: 0.5
-  reduce_lr_patience: 15
+  reduce_lr_factor: 0.1
+  reduce_lr_patience: 5
 predictions:
   continues:
     - rp
