@@ -6,6 +6,7 @@ preprocessing:
     le: None
     max_length: -1 # -1
     cl_residue: True
+    filter: ""
 
 
 # fdr: float, a FDR cutoff for peptide matches to be included in the training process
