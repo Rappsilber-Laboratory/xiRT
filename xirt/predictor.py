@@ -96,6 +96,10 @@ class ModelData:
         Returns:
             iterator, (train_idx, val_idx, pred_idx)
         """
+        # for predict mode, do not iterate
+        if n_splits == 0:
+            return
+
         if not self.shuffled:
             msg = "Data must be shuffled to avoid undesired bias in the splits."
             logger.critical(msg)
