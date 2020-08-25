@@ -94,7 +94,6 @@ def add_heatmap(y, yhat, task, ax, colormap, dims):  # pragma: no cover
     metric_str = """r2: {:.2f} f1: {:.2f} acc: {:.2f} racc: {:.2f}""".format(
         custom_r2(y, yhat), f1_score(y, yhat, average="macro"),
         accuracy_score(y, yhat), relaxed_accuracy(y, yhat))
-    f, ax = plt.subplots()
     ax = sns.heatmap(cm_scx, cmap=colormap, annot=True, annot_kws={"size": 12},
                      fmt='.0f', cbar=True, mask=mask, ax=ax)
     ax.axhline(y=dims[-1], color='k')
@@ -330,7 +329,7 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
         # %%
 
 
-def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath):  # pragma: no cover
+def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath, show=False):  # pragma: no cover
     """Plot observed vs. predicted figure for all tasks.
 
     Args:
@@ -338,6 +337,7 @@ def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath):  # pr
         input_psms: df, input dataframe after xiRT is completed
         xirt_params: dict, xirt parameters
         outpath: str, location to store the figures
+        show: bool, if true plots the figure, else just store them
 
     Returns:
         None
@@ -357,8 +357,8 @@ def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath):  # pr
 
         f, axes = plt.subplots(1, ntasks, figsize=(4 * ntasks, 4))
         if ntasks == 1:
-            f, axes = plt.subplots(1, ntasks, figsize=(4 * ntasks, 4))
             axes = [axes]
+
         idx = 0
         # plot heatmap variant for variant for fraction prediction
         for frac_task in fracs:
@@ -376,6 +376,8 @@ def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath):  # pr
             idx += 1
         axes[int(ntasks / 2)].set(xlabel=axes[int(ntasks / 2)].get_xlabel() + "\nCV: {}".format(i))
         plt.tight_layout()
+        if show:
+            plt.show()
         save_fig(f, outpath, "qc_cv{}_obs_pred".format(str(i).zfill(2)))
         plt.clf()
     # %%
