@@ -19,7 +19,7 @@ def rename_columns_crosslinks(psms_df):
     psms_df.rename(columns={"file": "Run"}, inplace=True)
     # psms_df.rename(columns={"run": "Run"}, inplace=True)
     psms_df.rename(columns={"Score": "score"}, inplace=True)
-    # psms_df.rename(columns={"fdr": "FDR"}, inplace=True)
+    psms_df.rename(columns={"fdr": "FDR"}, inplace=True)
     psms_df.rename(columns={"PepSeq1": "Peptide1"}, inplace=True)
     psms_df.rename(columns={"PepSeq2": "Peptide2"}, inplace=True)
     psms_df.rename(columns={"match score": "score"}, inplace=True)
@@ -63,7 +63,7 @@ parser.add_argument("-i", "--in-xifdr",
 parser.add_argument("-o", "--out-xirt", help="Output CSM format for usage in xiRT.",
                     required=True, action="store", dest="out_peptides")
 
-minimal_columns = ["rp", "Fasta1", "Fasta2", "score", "Peptide1", "Peptide2", "fdr",
+minimal_columns = ["rp", "Fasta1", "Fasta2", "score", "Peptide1", "Peptide2", "FDR",
                    "Run", "fdrGroup", "PSMID", "isTT", "isTD", "isDD",
                    "LinkPos1", "LinkPos2", "PrecoursorCharge", "Protein1",
                    "Protein2", "Crosslinker", "Decoy1", "Decoy2", "PepPos1", "PepPos2"]
@@ -81,5 +81,5 @@ df_csms = df_csms[sorted(df_csms.columns)]
 #  transform run name to fraction
 df_csms["scx"] = df_csms["Run"].apply(annotate_fraction, args=("SCX",))
 df_csms["hsax"] = df_csms["Run"].apply(annotate_fraction, args=("hSAX",))
-df_csms.to_csv(args.out_peptides, sep=";")
+df_csms.to_csv(args.out_peptides, sep=",")
 print("Writing file: {}".format(args.out_peptides))
