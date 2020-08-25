@@ -52,17 +52,13 @@ class ModelData:
         """
         logger.info("Setting FDR mask.")
         if str_filter == "":
-            str_filter_mask = [True]
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & self.psms["isTT"]
-
-            logger.info("Removed {} peptides (str).".format(np.sum(~str_filter_mask)))
+            logger.info("Removed 0 peptides (str).")
         else:
-
-            str_filter_mask = (self.psms["Fasta1"].str.contains(str_filter)) & (
+            str_mask = (self.psms["Fasta1"].str.contains(str_filter)) & (
                 self.psms["Fasta2"].str.contains(str_filter))
-            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) & str_filter_mask
-
-            logger.info("Removed {} peptides (str filter).".format(np.sum(~str_filter_mask)))
+            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) & str_mask
+            logger.info("Removed {} peptides (str filter).".format(np.sum(~str_mask)))
 
         self.psms["fdr_mask"] = fdr_mask
         logger.info("Removed {} peptides (TD/DD).".format(np.sum(~self.psms["isTT"])))
