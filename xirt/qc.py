@@ -1,5 +1,6 @@
 """Module to perform QC on the xiRT performance."""
 import glob
+import logging
 import os
 
 import matplotlib as mpl
@@ -27,7 +28,7 @@ targetdecoys_cm = sns.xkcd_palette(["faded green", "orange", "dark orange"])
 TOTAL_color = palettable.cartocolors.qualitative.Bold_6.mpl_colors[1:3][1]
 new_rc_params = {'text.usetex': False, "svg.fonttype": 'none'}
 mpl.rcParams.update(new_rc_params)
-
+logger = logging.getLogger(__name__)
 
 def encode_pval(pvalue):
     """
@@ -94,6 +95,11 @@ def add_heatmap(y, yhat, task, ax, colormap, dims):  # pragma: no cover
     metric_str = """r2: {:.2f} f1: {:.2f} acc: {:.2f} racc: {:.2f}""".format(
         custom_r2(y, yhat), f1_score(y, yhat, average="macro"),
         accuracy_score(y, yhat), relaxed_accuracy(y, yhat))
+    metric_str = """r2: {:.2f} f1: {:.2f} acc: {:.2f} racc: {:.2f}""".format(
+        custom_r2(y, yhat), f1_score(y, yhat, average="macro"),
+        accuracy_score(y, yhat), relaxed_accuracy(y, yhat))
+    logger.info("QC: {}".format(task))
+    logger.info("Metrics: {}".format(metric_str))
     ax = sns.heatmap(cm_scx, cmap=colormap, annot=True, annot_kws={"size": 12},
                      fmt='.0f', cbar=True, mask=mask, ax=ax)
     ax.axhline(y=dims[-1], color='k')
@@ -121,10 +127,13 @@ def add_scatter(y, yhat, task, ax, color):  # pragma: no cover
     xmin, xmax = np.hstack([y, yhat]).min(), np.hstack([y, yhat]).max()
     xmin = xmin - 0.1 * xmin
     xmax = xmax + 0.1 * xmax
+    metric_str = """r2: {:.2f} """.format(custom_r2(y, yhat))
+    metric_str = """r2: {:.2f} """.format(custom_r2(y, yhat))
+    logger.info("QC: {}".format(task))
+    logger.info("Metrics: {}".format(metric_str))
     ax.scatter(y, yhat, facecolor="none", edgecolor=color)
-    ax.set(title="""{}\nr2: {}""".format(task, custom_r2(y, yhat)),
-           xlabel="Observed {}".format(task.upper()), ylabel="Predicted {}".format(task),
-           xlim=(xmin, xmax), ylim=(xmin, xmax))
+    ax.set(title=metric_str, xlabel="Observed {}".format(task.upper()),
+           ylabel="Predicted {}".format(task), xlim=(xmin, xmax), ylim=(xmin, xmax))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
     sns.despine()
     return ax
