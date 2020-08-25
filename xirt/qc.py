@@ -30,6 +30,7 @@ new_rc_params = {'text.usetex': False, "svg.fonttype": 'none'}
 mpl.rcParams.update(new_rc_params)
 logger = logging.getLogger(__name__)
 
+
 def encode_pval(pvalue):
     """
     Given a p-value returns a significant annotation of the float in * decoding.
