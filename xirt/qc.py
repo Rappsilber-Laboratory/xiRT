@@ -333,7 +333,8 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
         # %%
 
 
-def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath, show=False):  # pragma: no cover
+def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath,
+                        show=False):  # pragma: no cover
     """Plot observed vs. predicted figure for all tasks.
 
     Args:
