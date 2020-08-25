@@ -105,7 +105,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                   fraction_cols=xirt_params["predictions"]["fractions"])
 
     # set training index by FDR and duplicates
-    training_data.set_fdr_mask(fdr_cutoff=learning_params["train"]["fdr"])
+    training_data.set_fdr_mask(fdr_cutoff=learning_params["train"]["fdr"],
+                               str_filter=learning_params["preprocessing"]["filter"])
     training_data.set_unique_shuffled_sampled_training_idx(
         sample_frac=learning_params["train"]["sample_frac"],
         random_state=learning_params["train"]["sample_state"])

@@ -53,9 +53,16 @@ class ModelData:
         if str_filter == "":
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & self.psms["isTT"]
         else:
-            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) & (
-                self.psms["Fasta1"].str.contains("_ECOLI")) & (
-                self.psms["Fasta2"].str.contains("_ECOLI"))
+            logger.info("Applying string filter to Fasta columns.")
+            str_filter_mask = (self.psms["Fasta1"].str.contains(str_filter)) & (
+                self.psms["Fasta2"].str.contains(str_filter))
+
+            logger.info("Removed {} peptides (str filter).".format(np.sum(~str_filter_mask)))
+            logger.info("Removed {} peptides (TD/DD filter).".format(np.sum(~self.psms["isTT"])))
+            logger.info(
+                "Removed {} peptides (FDR filter).".format(np.sum(~self.psms["FDR"] <= fdr_cutoff)))
+
+            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) & str_filter_mask
         self.psms["fdr_mask"] = fdr_mask
         logger.info("Setting FDR mask: {} valid entries".format(np.sum(fdr_mask)))
 
