@@ -17,8 +17,8 @@ DESCRIPTION = \
     'xiRT: Multi-dimensional Retention Time Prediction for Linear and Crosslinked Peptides.'
 URL = 'https://rappsilber-laboratory.github.io/xiRT/'
 URL_DOKU = "https://xirt.readthedocs.io/en/latest/"
-URL_GITHUB = "https://github.com/gieses/xiRT"
-URL_ISSUES = "https://github.com/gieses/xiRT/issues"
+URL_GITHUB = "https://github.com/Rappsilber-Laboratory/xiRT"
+URL_ISSUES = "https://github.com/Rappsilber-Laboratory/xiRT/issues"
 EMAIL = 'sven.giese@hpi.de'
 AUTHOR = 'Sven Giese'
 REQUIRES_PYTHON = '>=3.6.0'
