@@ -50,13 +50,20 @@ class ModelData:
         Returns:
             None
         """
+        logger.info("Setting FDR mask.")
         if str_filter == "":
             fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & self.psms["isTT"]
+            logger.info("Removed 0 peptides (str).")
         else:
-            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) & (
-                self.psms["Fasta1"].str.contains("_ECOLI")) & (
-                self.psms["Fasta2"].str.contains("_ECOLI"))
+            str_mask = (self.psms["Fasta1"].str.contains(str_filter)) & (
+                self.psms["Fasta2"].str.contains(str_filter))
+            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) & str_mask
+            logger.info("Removed {} peptides (str filter).".format(np.sum(~str_mask)))
+
         self.psms["fdr_mask"] = fdr_mask
+        logger.info("Removed {} peptides (TD/DD).".format(np.sum(~self.psms["isTT"])))
+        logger.info("Removed {} peptides (FDR).".format(np.sum(~(self.psms["FDR"] <= fdr_cutoff))))
+        logger.info("Removed {} peptides (combined).".format(np.sum(~fdr_mask)))
         logger.info("Setting FDR mask: {} valid entries".format(np.sum(fdr_mask)))
 
     def set_unique_shuffled_sampled_training_idx(self, sample_frac=1, random_state=42):
@@ -96,6 +103,10 @@ class ModelData:
         Returns:
             iterator, (train_idx, val_idx, pred_idx)
         """
+        # for predict mode, do not iterate
+        if n_splits == 0:
+            return
+
         if not self.shuffled:
             msg = "Data must be shuffled to avoid undesired bias in the splits."
             logger.critical(msg)

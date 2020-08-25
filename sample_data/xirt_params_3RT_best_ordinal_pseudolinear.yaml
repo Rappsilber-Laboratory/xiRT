@@ -68,19 +68,19 @@ output:
   scx-metrics: mse
   scx-weight: 50
 siamese:
-  use: True
+  use: False
   merge_type: add
   single_predictions: True
 callbacks:
   check_point: True
   log_csv: True
   early_stopping: True
-  early_stopping_patience: 10
+  early_stopping_patience: 30
   tensor_board: False
   progressbar: True
   reduce_lr: True
-  reduce_lr_factor: 0.1
-  reduce_lr_patience: 5
+  reduce_lr_factor: 0.5
+  reduce_lr_patience: 15
 predictions:
   continues:
     - rp

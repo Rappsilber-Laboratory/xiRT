@@ -8,7 +8,7 @@ LSTM:
   lstm_bn: true
   nlayers: 1
   type: GRU
-  units: 50
+  units: 5
 dense:
   activation:
   - relu
@@ -27,9 +27,9 @@ dense:
   - l2
   - l2
   neurons:
-  - 300
-  - 150
-  - 75
+  - 50
+  - 25
+  - 10
   nlayers: 3
   regularization:
   - true
@@ -42,48 +42,34 @@ dense:
 embedding:
   length: 50
 learning:
-  batch_size: 256
-  epochs: 50
-  learningrate: 0.01
+  batch_size: 512
+  epochs: 1
+  learningrate: 0.001
   verbose: 1
   optimizer: adam
 output:
-  callback-path: data/results/callbacks/
-  hsax-activation: sigmoid
-  hsax-column: hsax_ordinal
-  hsax-dimension: 10
-  hsax-loss: binary_crossentropy
-  hsax-metrics: mse
-  hsax-weight: 50
   rp-activation: linear
   rp-column: rp
   rp-dimension: 1
   rp-loss: mse
   rp-metrics: mse
   rp-weight: 1
-  scx-activation: sigmoid
-  scx-column: scx_ordinal
-  scx-dimension: 9
-  scx-loss: binary_crossentropy
-  scx-metrics: mse
-  scx-weight: 50
 siamese:
-  use: True
+  use: False
   merge_type: add
   single_predictions: True
 callbacks:
   check_point: True
   log_csv: True
   early_stopping: True
-  early_stopping_patience: 10
+  early_stopping_patience: 15
   tensor_board: False
   progressbar: True
   reduce_lr: True
-  reduce_lr_factor: 0.1
-  reduce_lr_patience: 5
+  reduce_lr_factor: 0.5
+  reduce_lr_patience: 15
 predictions:
   continues:
     - rp
-  fractions: # simply write fractions: [] if no fraction prediction is desired
-    - scx
-    - hsax
+  # simply write fractions: [] if no fraction prediction is desired
+  fractions: []

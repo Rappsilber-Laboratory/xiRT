@@ -6,7 +6,6 @@ preprocessing:
     max_length: -1 # -1
     cl_residue: True
     filter: ""
-
 # train and transfer share the same options that are necessary to run xiML, here is a brief rundown:
 # fdr: float, a FDR cutoff for peptide matches to be included in the training process
 # ncv: int, number of CV folds to perform to avoid training/prediction on the same data
@@ -30,4 +29,4 @@ train:
   test_frac: 0.10
   sample_frac: 1
   sample_state: 21
-  refit: False
+  refit: True
