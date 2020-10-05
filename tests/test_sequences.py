@@ -106,16 +106,35 @@ def test_modify_cl_residues():
     psms_df["LinkPos1"] = [5, 0, 3]
     psms_df["LinkPos2"] = [2, 0, 2]
 
-    seq1_exp = np.array([
-        ['E', 'L', 'V', 'I', 'S', 'clK', 'L', 'I', 'V', 'E', 'S'],
-        ['clK', 'I', 'N', 'G', 'R'],
-        ['P', 'E', 'P', 'clK', 'R']])
-    seq2_exp = np.array([
-        ['A', 'A', 'clK', 'A', 'A', 'A'],
-        ['clK', 'C', 'C', 'C', 'C'],
-        ['D', 'D', 'clR', 'K']])
+    seq1_exp = np.array([['E', 'L', 'V', 'I', 'S', 'clK', 'L', 'I', 'V', 'E', 'S'],
+                         ['clK', 'I', 'N', 'G', 'R'],
+                         ['P', 'E', 'P', 'clK', 'R']])
+    seq2_exp = np.array([['A', 'A', 'clK', 'A', 'A', 'A'],
+                         ['clK', 'C', 'C', 'C', 'C'],
+                         ['D', 'D', 'clR', 'K']])
 
     xs.modify_cl_residues(psms_df, seq_in=["Peptide1", "Peptide2"])
+
+    assert np.all(psms_df["Seqar_Peptide1"].values == seq1_exp)
+    assert np.all(psms_df["Seqar_Peptide2"].values == seq2_exp)
+
+
+def test_modify_cl_residues_reduce():
+    # modify cl residues by cl prefix, test by sequence and cross-link site information
+    psms_df = pd.DataFrame()
+    psms_df["Seqar_Peptide1"] = [list(i) for i in ["ELVISKLIVES", "KINGR", "PEPKR"]]
+    psms_df["Seqar_Peptide2"] = [list(i) for i in ["AAKAAA", "KCCCC", "DDRK"]]
+    psms_df["LinkPos1"] = [5, 0, 3]
+    psms_df["LinkPos2"] = [2, 0, 2]
+
+    seq1_exp = np.array([['E', 'L', 'V', 'I', 'S', 'clX', 'L', 'I', 'V', 'E', 'S'],
+                         ['clX', 'I', 'N', 'G', 'R'],
+                         ['P', 'E', 'P', 'clX', 'R']])
+    seq2_exp = np.array([['A', 'A', 'clX', 'A', 'A', 'A'],
+                         ['clX', 'C', 'C', 'C', 'C'],
+                         ['D', 'D', 'clX', 'K']])
+
+    xs.modify_cl_residues(psms_df, seq_in=["Peptide1", "Peptide2"], reduce_cl=True)
 
     assert np.all(psms_df["Seqar_Peptide1"].values == seq1_exp)
     assert np.all(psms_df["Seqar_Peptide2"].values == seq2_exp)
