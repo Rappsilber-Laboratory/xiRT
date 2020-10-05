@@ -170,8 +170,9 @@ For **ordinal regression** always use the following setup:
 
 For **regression** always use the following setup:
 
-      scx-activation: linear
-      scx-column: scx
-      scx-dimension: 15
-      scx-loss: mse
-      scx-metrics: mse
+      rp-activation: linear
+      rp-column: rp
+      rp-dimension: 1
+      rp-loss: mse
+      rp-metrics: mse
+
