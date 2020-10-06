@@ -274,8 +274,8 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath, show=False):  # pr
 
         else:
             # deal with single plot case ...
-            hues = cont_hues if len(cont_hues) >0 else frac_hues
-            param_col = "continues" if len(cont_hues) >0 else "fractions"
+            hues = cont_hues if len(cont_hues) > 0 else frac_hues
+            param_col = "continues" if len(cont_hues) > 0 else "fractions"
             ax = sns.lineplot(x="epoch", y="value", hue="variable", style="Split",
                               data=df_temp_cont, ax=ax, palette=hues, legend="full")
             ax.set(ylabel=xirt_params["output"][
@@ -302,8 +302,9 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
     """
     # %%
     if len(tasks) == 1:
-        summary_df.columns = [tasks[0] + "_" + i if i not in ["CV", "Split"] else i for i in
-                              summary_df.columns]
+        colstr = "{}_ordinal-accuracy".format(tasks[0])
+        summary_df.columns = [tasks[0] + "_" + i if i not in [colstr, "CV", "Split"] else i for i
+                              in summary_df.columns]
 
     for col in tasks:
         if "ordinal" in xirt_params["output"][col + "-column"]:
