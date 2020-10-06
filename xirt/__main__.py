@@ -54,10 +54,10 @@ def arg_parser():  # pragma: not covered
 
     parser.add_argument('--write', dest='write', action='store_true',
                         help="Flag for writing result prediction files. If false only summaries"
-                             "are written.")
+                             "are written (default: --write).")
     parser.add_argument('--no-write', dest='write', action='store_false',
                         help="Flag for writing result prediction files. If false only summaries"
-                             "are written.")
+                             "are written (default: --write).")
     parser.set_defaults(write=True)
     return parser
 
@@ -165,9 +165,9 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         # init the network model
         xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
         xirtnetwork.compile()
-        # loading predfined weights
+        # loading pre-trained weights
         if learning_params["train"]["pretrained_weights"].lower() != "none":
-            logger.info("Loading pretrained weights into model.")
+            logger.info("Loading pre-trained weights.")
             xirtnetwork.model.load_weights(learning_params["train"]["pretrained_weights"])
 
         callbacks = xirtnetwork.get_callbacks(suffix=str(cv_counter).zfill(2))
@@ -233,9 +233,16 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
 
         # store manual accuray for ordinal data
         if has_ordinal:
-            for count, task_i in enumerate(xirtnetwork.tasks):
-                if "ordinal" in xirtnetwork.output_p[task_i + "-column"]:
-                    model_summary_df[task_i + "_ordinal-accuracy"] = accuracies_all[count::2]
+            for count, task_i in enumerate(frac_cols):
+                if "ordinal" in xirtnetwork.output_p[task_i.split("_")[0] + "-column"]:
+                    # accuracies_all contains accuracies for train, validation, pred
+                    # problem is that accuracies are computed after the loop and stored in a 1d-ar
+                    # retrieve information again
+                    if len(frac_cols) == 1:
+                        model_summary_df[task_i + "_ordinal-accuracy"] = accuracies_all
+                    else:
+                        model_summary_df[task_i + "_ordinal-accuracy"] = accuracies_all[
+                                                                         count::len(frac_cols)]
 
         if learning_params["train"]["refit"]:
             logger.info("Refitting model on entire data to predict unseen data.")
@@ -295,15 +302,15 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     else:
         eval_unvalidation.extend([-1, "Unvalidation"])
 
+    # prediction modes dont have any training information
     if learning_params["train"]["mode"] != "predict":
-        model_summary_df.loc[len(model_summary_df)] = eval_unvalidation
-
         # collect epoch training data
+        model_summary_df.loc[len(model_summary_df)] = eval_unvalidation
         df_history_all = pd.concat(histories)
         df_history_all = df_history_all.reset_index(drop=False).rename(columns={"index": "epoch"})
         df_history_all["epoch"] += 1
 
-    # compute features
+    # compute features for rescoring
     xf.compute_prediction_errors(training_data.psms, training_data.prediction_df,
                                  xirtnetwork.tasks, frac_cols,
                                  (xirtnetwork.siamese_p["single_predictions"]
@@ -314,6 +321,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                               degree=len(xirtnetwork.tasks))
 
     # qc
+    # only training procedure includes qc
     if perform_qc and (learning_params["train"]["mode"] != "predict"):
         logger.info("Generating qc plots.")
         qc.plot_epoch_cv(callback_path=xirtnetwork.callback_p["callback_path"],
@@ -336,9 +344,10 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     model_summary_df.to_csv(os.path.join(outpath, "model_summary.csv"))
 
     if write:
+        # store data
         training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
-        training_data.prediction_df.to_csv(os.path.join(outpath, "prediction.csv"))
-        features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
+        training_data.prediction_df.to_csv(os.path.join(outpath, "error_features.csv"))
+        features_exhaustive.to_csv(os.path.join(outpath, "error_features_interactions.csv"))
 
     # write a text file to indicate xirt is done.
     if write_dummy:
@@ -383,7 +392,7 @@ def main():  # pragma: no cover
 
     # call function
     xirt_runner(args.in_peptides, args.out_dir, args.xirt_params, args.learning_params,
-                write=args.write)
+                write=args.write, nrows=1000)
 
 
 if __name__ == "__main__":  # pragma: no cover
