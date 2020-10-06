@@ -330,6 +330,11 @@ def compute_accuracy(predictions, expected, tasks, params):
         list, accuracy values for tasks with ordinal scale
     """
     accuracy_tmp = []
+    # predictions must have the same shape as the tasks.
+    # class predictions with a single task come as an n-dimensional array instead of an nested ar
+    # therefore, predictions must be put into a list to match the dimension of tasks
+    if len(predictions) > len(tasks):
+        predictions = [predictions]
     # compute accuracy
     for task_i, pred_ar in zip(tasks, predictions):
         if "ordinal" in params[task_i + "-column"]:
