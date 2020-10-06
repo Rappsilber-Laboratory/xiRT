@@ -6,29 +6,6 @@ import sys
 import pandas as pd
 
 
-def rename_columns_crosslinks(psms_df):
-    """
-    Rename columns in the crosslink result files from xiFDR.
-
-    Args:
-        psms_df: df, dataframe with CSMs (xiFDR format required).
-
-    Returns:
-        psms_df: df, same df but with changed column names
-    """
-    psms_df.rename(columns={"file": "Run"}, inplace=True)
-    # psms_df.rename(columns={"run": "Run"}, inplace=True)
-    psms_df.rename(columns={"Score": "score"}, inplace=True)
-    psms_df.rename(columns={"fdr": "FDR"}, inplace=True)
-    psms_df.rename(columns={"PepSeq1": "Peptide1"}, inplace=True)
-    psms_df.rename(columns={"PepSeq2": "Peptide2"}, inplace=True)
-    psms_df.rename(columns={"match score": "score"}, inplace=True)
-    psms_df.rename(columns={"Description1": "Fasta1"}, inplace=True)
-    psms_df.rename(columns={"Description2": "Fasta2"}, inplace=True)
-    psms_df.rename(columns={"MatchScore": "score"}, inplace=True)
-    psms_df.rename(columns={"Actual_RT": "rp"}, inplace=True)
-    psms_df.rename(columns={"ElutionStart": "rp"}, inplace=True)
-    return psms_df
 description = """
     xiFDR2xiRT - a convenience script to generate a minimal input for using xiRT from xiFDR data.
     
@@ -53,7 +30,11 @@ args = parser.parse_args(sys.argv[1:])
 print("Reading file: {}".format(args.in_peptides))
 # read, rename, minimize, sort
 df_csms = pd.read_csv(args.in_peptides)
-df_csms = rename_columns_crosslinks(df_csms)[minimal_columns]
+df_csms.rename(columns={"file": "Run", "Score": "score", "PepSeq1": "Peptide1",
+                        "PepSeq2": "Peptide2", "match score": "score", "Description1": "Fasta1",
+                        "Description2": "Fasta2", "MatchScore": "score", "Actual_RT": "rp",
+                        "ElutionStart": "rp"}, inplace=True)
+df_csms = df_csms[minimal_columns]
 df_csms = df_csms.loc[:, ~df_csms.columns.duplicated()]
 df_csms = df_csms[sorted(df_csms.columns)]
 

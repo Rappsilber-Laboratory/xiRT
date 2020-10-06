@@ -4,6 +4,8 @@ import argparse
 import os
 import sys
 import logging
+from datetime import datetime
+import time
 
 import numpy as np
 import pandas as pd
@@ -77,6 +79,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     Returns:
         None
     """
+    start_time = time.time()
     xirt_params = yaml.load(open(xirt_loc), Loader=yaml.FullLoader)
     learning_params = yaml.load(open(setup_loc), Loader=yaml.FullLoader)
     matches_df = pd.read_csv(peptides_file, nrows=nrows)
@@ -340,6 +343,9 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         with open(xirt_loc.replace(".yaml", ".txt"), "w") as of:
             of.write("done.")
     logger.info("Completed xiRT run.")
+    logger.info("End Time: {}".format(datetime.now().strftime("%H:%M:%S")))
+    end_time = time.time()
+    logger.info("xiRT took: {:.2f} minutes".format((end_time - start_time) / 60.))
 
 
 def main():  # pragma: no cover
@@ -369,8 +375,10 @@ def main():  # pragma: no cover
     logger.addHandler(sh)
 
     logger.info("Init logging file.")
+    logger.info("Starting Time: {}".format(datetime.now().strftime("%H:%M:%S")))
     logger.info("Starting xiRT.")
     logger.info("Using xiRT version: {}".format(xv.__version__))
+
 
     # call function
     xirt_runner(args.in_peptides, args.out_dir, args.xirt_params, args.learning_params,
