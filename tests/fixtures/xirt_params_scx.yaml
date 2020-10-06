@@ -48,12 +48,12 @@ learning:
   verbose: 1
   optimizer: adam
 output:
-  rp-activation: linear
-  rp-column: rp
-  rp-dimension: 1
-  rp-loss: mse
-  rp-metrics: mse
-  rp-weight: 1
+  scx-activation: sigmoid
+  scx-column: scx_ordinal
+  scx-dimension: 9
+  scx-loss: binary_crossentropy
+  scx-metrics: mse
+  scx-weight: 50
 siamese:
   use: True
   merge_type: add
@@ -69,7 +69,6 @@ callbacks:
   reduce_lr_factor: 0.5
   reduce_lr_patience: 15
 predictions:
-  continues:
-    - rp
+  continues: []
   # simply write fractions: [] if no fraction prediction is desired
-  fractions: []
+  fractions: [scx]
