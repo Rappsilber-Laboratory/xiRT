@@ -198,8 +198,11 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath, show=False):  # pr
     df = pd.concat(pd.read_csv(i) for i in epochlogs)
 
     if len(tasks) == 1:
+        # write task as prefix for columns
         df.columns = [tasks[0] + "-" + i if i not in ["epoch", "lr"] else i for i in df.columns]
+
     # transform and melt dataframe for easier plotting, can probably be optimized
+    # RT = retention time
     dfs = []
     for rt_task in tasks:
         df_temp = df.filter(regex="{}|epoch".format(rt_task)).melt(id_vars="epoch")
@@ -271,10 +274,12 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath, show=False):  # pr
 
         else:
             # deal with single plot case ...
+            hues = cont_hues if len(cont_hues) >0 else frac_hues
+            param_col = "continues" if len(cont_hues) >0 else "fractions"
             ax = sns.lineplot(x="epoch", y="value", hue="variable", style="Split",
-                              data=df_temp_cont, ax=ax, palette=cont_hues, legend="full")
+                              data=df_temp_cont, ax=ax, palette=hues, legend="full")
             ax.set(ylabel=xirt_params["output"][
-                xirt_params["predictions"]["continues"][0] + "-" + cname])
+                xirt_params["predictions"][param_col][0] + "-" + cname])
             sns.despine(right=False)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
         plt.tight_layout()
