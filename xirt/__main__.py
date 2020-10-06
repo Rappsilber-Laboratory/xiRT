@@ -1,20 +1,20 @@
 """xiRT main module to run the training and prediction."""
 
 import argparse
+import logging
 import os
 import sys
-import logging
-from datetime import datetime
 import time
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import yaml
 
+from xirt import __version__ as xv
 from xirt import features as xf
 from xirt import predictor as xr
 from xirt import xirtnet, qc
-from xirt import __version__ as xv
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,9 @@ def arg_parser():  # pragma: not covered
 
     Visit the documentation to get more information:
     https://xirt.readthedocs.io/en/latest/
-    """
+    
+    Current Version: {}
+    """.format(xv.__version__)
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-i", "--in_peptides",
                         help="Input peptide table to learn (and predict) the retention times.",
