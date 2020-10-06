@@ -32,7 +32,7 @@ def arg_parser():  # pragma: not covered
 
     Visit the documentation to get more information:
     https://xirt.readthedocs.io/en/latest/
-    
+
     Current Version: {}
     """.format(xv.__version__)
     parser = argparse.ArgumentParser(description=description)
@@ -380,7 +380,6 @@ def main():  # pragma: no cover
     logger.info("Starting Time: {}".format(datetime.now().strftime("%H:%M:%S")))
     logger.info("Starting xiRT.")
     logger.info("Using xiRT version: {}".format(xv.__version__))
-
 
     # call function
     xirt_runner(args.in_peptides, args.out_dir, args.xirt_params, args.learning_params,
