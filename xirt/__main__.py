@@ -392,7 +392,7 @@ def main():  # pragma: no cover
 
     # call function
     xirt_runner(args.in_peptides, args.out_dir, args.xirt_params, args.learning_params,
-                write=args.write, nrows=1000)
+                write=args.write)
 
 
 if __name__ == "__main__":  # pragma: no cover
