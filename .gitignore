@@ -18,7 +18,7 @@ intern_data/
 intern_tests/
 utils/grid/
 utils/grid_results/
-
+manuscript2020/
 HILIC/
 develop-eggs/
 dist/
@@ -187,3 +187,4 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+/manuscript2020/

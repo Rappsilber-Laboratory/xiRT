@@ -19,7 +19,7 @@ parser.add_argument("-i", "--in-xifdr",
 parser.add_argument("-o", "--out-xirt", help="Output CSM format for usage in xiRT.",
                     required=True, action="store", dest="out_peptides")
 
-minimal_columns = ["rp", "Fasta1", "Fasta2", "score", "Peptide1", "Peptide2", "FDR",
+minimal_columns = ["rp", "Fasta1", "Fasta2", "score", "Peptide1", "Peptide2", "fdr",
                    "Run", "fdrGroup", "PSMID", "isTT", "isTD", "isDD",
                    "LinkPos1", "LinkPos2", "PrecoursorCharge", "Protein1",
                    "Protein2", "Crosslinker", "Decoy1", "Decoy2", "PepPos1", "PepPos2"]

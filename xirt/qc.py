@@ -452,7 +452,7 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
     # input_psms = input_psms.set_index("PSMID")
 
     # fdr filter
-    df_all_info = input_psms[(input_psms["FDR"] <= max_fdr) & (input_psms["FDR"] >= min_fdr)]
+    df_all_info = input_psms[(input_psms["fdr"] <= max_fdr) & (input_psms["fdr"] >= min_fdr)]
     # remove duplicates
     df_all_info = df_all_info[~ df_all_info["Duplicate"]]
     # merge dataf rames
