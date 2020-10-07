@@ -235,15 +235,15 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         if has_ordinal:
             for count, task_i in enumerate(frac_cols):
                 taski_short = task_i.split("_")[0]
-                if "ordinal" in xirtnetwork.output_p[ taski_short + "-column"]:
+                if "ordinal" in xirtnetwork.output_p[taski_short + "-column"]:
                     # accuracies_all contains accuracies for train, validation, pred
                     # problem is that accuracies are computed after the loop and stored in a 1d-ar
                     # retrieve information again
                     if len(frac_cols) == 1:
                         model_summary_df[taski_short + "_ordinal-accuracy"] = accuracies_all
                     else:
-                        model_summary_df[taski_short + "_ordinal-accuracy"] = accuracies_all[
-                                                                         count::len(frac_cols)]
+                        model_summary_df[taski_short
+                                         + "_ordinal-accuracy"] = accuracies_all[count::len(frac_cols)]
 
         if learning_params["train"]["refit"]:
             logger.info("Refitting model on entire data to predict unseen data.")
