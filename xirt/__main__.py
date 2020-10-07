@@ -243,8 +243,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                     if len(frac_cols) == 1:
                         model_summary_df[taski_short + "_ordinal-accuracy"] = accuracies_all
                     else:
-                        model_summary_df[taski_short
-                                         + "_ordinal-accuracy"] = accuracies_all[count::len(frac_cols)]
+                        model_summary_df[taski_short + "_ordinal-accuracy"] = accuracies_all[
+                                                                              count::len(frac_cols)]
 
         if learning_params["train"]["refit"]:
             logger.info("Refitting model on entire data to predict unseen data.")
@@ -351,7 +351,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         training_data_Xy = ((training_data.features1, training_data.features2),
                             training_data.get_classes(training_data.psms.index,
                                                       frac_cols=frac_cols, cont_cols=cont_cols))
-        
+
         with open(os.path.join(xirt_params["callbacks"]["callback_path"], "Xy_data.p"), 'wb') as po:
             pickle.dump(training_data_Xy, po, protocol=pickle.HIGHEST_PROTOCOL)
 
