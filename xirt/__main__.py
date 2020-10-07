@@ -3,6 +3,7 @@
 import argparse
 import logging
 import os
+import pickle
 import sys
 import time
 from datetime import datetime
@@ -350,7 +351,9 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         training_data_Xy = ((training_data.features1, training_data.features2),
                             training_data.get_classes(training_data.psms.index,
                                                       frac_cols=frac_cols, cont_cols=cont_cols))
-        training_data_Xy.to_pickle(os.path.join(outpath, "Xy_data.p"))
+        with open(os.path.join(outpath, "Xy_data.p", 'wb')) as pobj:
+            pickle.dump(training_data_Xy, pobj, protocol=pickle.HIGHEST_PROTOCOL)
+            
         training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
         training_data.prediction_df.to_csv(os.path.join(outpath, "error_features.csv"))
         features_exhaustive.to_csv(os.path.join(outpath, "error_features_interactions.csv"))
