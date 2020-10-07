@@ -243,8 +243,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                     if len(frac_cols) == 1:
                         model_summary_df[taski_short + "_ordinal-accuracy"] = accuracies_all
                     else:
-                        model_summary_df[taski_short + "_ordinal-accuracy"] = accuracies_all[
-                                                                              count::len(frac_cols)]
+                        model_summary_df[taski_short+ "_ordinal-accuracy"] = \
+                            accuracies_all[count::len(frac_cols)]
 
         if learning_params["train"]["refit"]:
             logger.info("Refitting model on entire data to predict unseen data.")
