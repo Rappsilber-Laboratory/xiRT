@@ -243,7 +243,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                     if len(frac_cols) == 1:
                         model_summary_df[taski_short + "_ordinal-accuracy"] = accuracies_all
                     else:
-                        model_summary_df[taski_short+ "_ordinal-accuracy"] = \
+                        model_summary_df[taski_short + "_ordinal-accuracy"] = \
                             accuracies_all[count::len(frac_cols)]
 
         if learning_params["train"]["refit"]:
@@ -354,6 +354,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
 
         with open(os.path.join(xirt_params["callbacks"]["callback_path"], "Xy_data.p"), 'wb') as po:
             pickle.dump(training_data_Xy, po, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(os.path.join(xirt_params["callbacks"]["callback_path"], "encoder.p"), 'wb') as po:
+            pickle.dump(training_data.le, po, protocol=pickle.HIGHEST_PROTOCOL)
 
         training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
         training_data.prediction_df.to_csv(os.path.join(outpath, "error_features.csv"))
