@@ -178,7 +178,8 @@ class xiRTNET:
         # translate labels into continuous space
         net = Embedding(input_dim=self.input_dim,
                         output_dim=self.embedding_p["length"],
-                        embeddings_initializer="he_normal", name="main_embedding")(inlayer)
+                        embeddings_initializer="he_normal", name="main_embedding",
+                        mask_zero=True)(inlayer)
 
         # sequence layers (LSTM-type) + batch normalization if in config
         for i in np.arange(self.LSTM_p["nlayers"]):
