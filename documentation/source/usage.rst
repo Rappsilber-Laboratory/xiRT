@@ -152,38 +152,30 @@ Note
 ****
 It is important to follow the conventions above. Otherwise learning results can vary a lot.
 
-For **classification** always use the following setup:
+For classification always use the following setup:
 
-      scx-activation: softmax
-
-      scx-column: scx_1hot
-
-      scx-dimension: 15
-
-      scx-loss: categorical_crossentropy
-
-      scx-metrics: accuracy
+    output:
+        scx-activation: softmax
+        scx-column: scx_1hot
+        scx-dimension: 15
+        scx-loss: categorical_crossentropy
+        scx-metrics: accuracy
 
 For **ordinal regression** always use the following setup:
 
-    scx-activation: sigmoid
-
-    scx-column: scx_ordinal
-
-    scx-dimension: 15
-
-    scx-loss: binary_crossentropy
-
-    scx-metrics: mse
+    output:
+        scx-activation: sigmoid
+        scx-column: scx_ordinal
+        scx-dimension: 15
+        scx-loss: binary_crossentropy
+        scx-metrics: mse
 
 For **regression** always use the following setup:
-
-    rp-activation: linear
-
-    rp-column: rp
-
-    rp-dimension: 1
-
-    rp-loss: mse
-
-    rp-metrics: mse
+    
+    output:
+        rp-activation: linear
+        rp-column: rp
+        rp-dimension: 1
+        rp-loss: mse
+        rp-metrics: mse
+        
