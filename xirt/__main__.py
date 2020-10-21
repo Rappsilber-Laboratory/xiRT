@@ -16,7 +16,9 @@ from xirt import __version__ as xv
 from xirt import features as xf
 from xirt import predictor as xr
 from xirt import xirtnet, qc
+import matplotlib
 
+matplotlib.use('Agg')
 logger = logging.getLogger(__name__)
 
 
@@ -148,7 +150,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     # train on n-1 fold, use test_size from n-1 folds for validation and test/predict RT
     # on the remaining fold
     logger.info("Starting crossvalidation (nfolds={})".format(n_splits))
-
+    start_timecv = time.time()
     for train_idx, val_idx, pred_idx in training_data.iter_splits(n_splits=n_splits,
                                                                   test_size=test_size):
         logger.info("---------------------------------------------------------")
@@ -368,6 +370,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     logger.info("Completed xiRT run.")
     logger.info("End Time: {}".format(datetime.now().strftime("%H:%M:%S")))
     end_time = time.time()
+    logger.info("xiRT CV-training took: {:.2f} minutes".format((end_time - start_timecv) / 60.))
     logger.info("xiRT took: {:.2f} minutes".format((end_time - start_time) / 60.))
 
 

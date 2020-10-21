@@ -24,7 +24,7 @@ recurrent layer is directly forwarded to the task subnetworks. For crosslinked p
 peptide has it's own input and after the recurrent layer the two outputs are first combined and then
 passed towards the individual task networks. In contrast, to typical regression models the input
 data (peptide) sequences are not transformed into features but rather the entire peptide
-sequence including modificatins is used as input.
+sequence including modifications is used as input.
 
 **Supported Prediction Tasks**
 
