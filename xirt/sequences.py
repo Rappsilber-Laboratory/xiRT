@@ -185,7 +185,7 @@ def modify_cl_residues(matches_df, seq_in=["Peptide1", "Peptide2"], reduce_cl=Fa
                     print("List index out of range. Check peptide sequence for unwanted characters")
                     print(row["Seqar_" + seq_i])
                     print(seq_id)
-                    print(row["LinkPos"])
+                    print(row["LinkPos" + str(seq_id + 1)])
 
             matches_df.at[idx, "Seqar_" + seq_i][row["LinkPos" + str(seq_id + 1)]] = "cl" + residue
 
