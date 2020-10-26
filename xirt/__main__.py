@@ -158,29 +158,15 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         logger.info("Rescoring Candidates indices: {}".format(training_data.predict_idx[0:10]))
 
         # init the network model
-        # either load from existing or create from config
-        if learning_params["train"]["pretrained_model"].lower() != "none":
-            logger.info("Loading existing model from reference.")
-            xirtnetwork.load_model(learning_params["train"]["pretrained_model"])
-        else:
-            logger.info("Building new model from config.")
-            xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
-
-        # once model architecture is there, check if weights should be loaded
-        # loading predefined weights
+        xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
+        xirtnetwork.compile()
+        # loading predfined weights
         if learning_params["train"]["pretrained_weights"].lower() != "none":
-            logger.info("Loading pre-trained weights into model.")
+            logger.info("Loading pretrained weights into model.")
             xirtnetwork.model.load_weights(learning_params["train"]["pretrained_weights"])
 
-        # after loading the weights, we need to pop / re-design the layers for transfer learning
-        if learning_params["train"]["pretrained_model"].lower() != "none":
-            logger.info("Adjusting model architecture.")
-            xirtnetwork.adjust_model()
-
-        # finally compile
-        xirtnetwork.compile()
-
         callbacks = xirtnetwork.get_callbacks(suffix=str(cv_counter).zfill(2))
+
         # assemble training data
         xt_cv = training_data.get_features(train_idx)
         yt_cv = training_data.get_classes(train_idx, frac_cols=frac_cols, cont_cols=cont_cols)
@@ -382,10 +368,6 @@ def main():  # pragma: no cover
     sh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     logger.addHandler(sh)
 
-    logger.info("command line call:")
-    logger.info(
-        "xirt -i {} -o {} -x {} -l {}".format(args.in_peptides, args.out_dir, args.xirt_params,
-                                              args.learning_params))
     logger.info("Init logging file.")
     logger.info("Starting xiRT.")
     logger.info("Using xiRT version: {}".format(xv.__version__))

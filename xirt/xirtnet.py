@@ -13,7 +13,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger
 from tensorflow.keras.layers import Embedding, GRU, BatchNormalization, \
     Input, concatenate, Dropout, Dense, LSTM, Bidirectional, Add, Maximum, Multiply, Average, \
     Concatenate
-from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.models import Model
 from tensorflow.keras.utils import plot_model
 from tensorflow.python.keras.layers import CuDNNGRU, CuDNNLSTM
 from tqdm.keras import TqdmCallback
@@ -510,45 +510,6 @@ class xiRTNET:
             None
         """
         self.model.load_weights(location)
-
-    # pragma: no cover
-    def load_model(self, location):
-        """
-        Load model architecutre.
-
-        Args:
-            location: str, location of network architecture
-
-        Returns:
-
-        """
-        self.model = load_model(location)
-
-    def adjust_model(self):
-        """
-        Adjust a already loaded model architecture with new output dimensions.
-
-        This function requires the config to contain a model architecture as well as pretrained
-        weights. The applications are transfer-learning settings with different dimensions.
-
-        Returns:
-            none
-        """
-        # we want the outputs from the layer before the prediction layer as new input
-        architecture_dic = {t: self.model.layers[-2 * len(self.tasks) + ii].output for ii, t in
-                            enumerate(self.tasks)}
-        # remove the last n(tasks) layers from the network
-        for t in self.tasks:
-            self.model.layers.pop()
-
-        act_conf = self.output_p
-        # create list with the new prediction layers with the new dimensions from the config
-        new_tasks = [(Dense(act_conf[f"{t}-dimension"], name=f"{t}",
-                            activation=act_conf[f"{t}-activation"])(architecture_dic[t])) for t in
-                     self.tasks]
-
-        # reconnect the model input with the output
-        self.model = Model(inputs=self.model.input, outputs=new_tasks)
 
 
 def params_to_df(yaml_file, out_file):
