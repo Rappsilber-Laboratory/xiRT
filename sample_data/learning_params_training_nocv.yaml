@@ -1,12 +1,10 @@
 # preprocessing options:
 # le: str, label encoder location
 # max_length: float, max length of sequences
-# filter: string filter that must be contained in the description for a CSM to be included
 preprocessing:
     le: None
     max_length: -1 # -1
     cl_residue: True
-    filter: "ECOLI"
 
 # train and transfer share the same options that are necessary to run xiML, here is a brief rundown:
 # fdr: float, a FDR cutoff for peptide matches to be included in the training process

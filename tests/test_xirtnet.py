@@ -201,26 +201,3 @@ def test_params_to_df(tmpdir):
     assert os.path.isfile(p)
     assert not params_df.empty
     os.remove(p)
-
-
-def test_adjust():
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
-                           Loader=yaml.FullLoader)
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
-    xirtnetwork.build_model(siamese=True)
-    # was 9 in config
-    xirtnetwork.output_p["scx-dimension"] = 5
-    # was 10
-    xirtnetwork.output_p["hsax-dimension"] = 5
-
-    # difference should be:
-    # hsax: 10 (neurons) * 10 = 100 + 10 = 110
-    # hsax: 10 (neurons) * 5 = 50 + 5 = 55
-    # scx: 10 (neurons) * 5 = 50 + 5 = 55
-    # scx: 10 (neurons) * 9 = 90 + 9 = 99
-    exp_diff = 110 + 99 - 55 - 55
-    params_old = xirtnetwork.model.count_params()
-
-    # adjust model
-    xirtnetwork.adjust_model()
-    assert (params_old - xirtnetwork.model.count_params()) == exp_diff
