@@ -466,7 +466,7 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
     tasks_errors = [i + "-error" for i in tasks]
     # melt data
     df_ec_melt = df_all_info[np.concatenate([tasks_errors, ["Type"]])].melt(id_vars=["Type"], )
-    df_ec_melt = df_ec_melt.rename({"isTT": "PSM type"}, axis=1)
+    df_ec_melt = df_ec_melt.rename({"Type": "PSM type"}, axis=1)
     df_ec_melt["variable"] = df_ec_melt["variable"].str.replace("-error", "")
     # counts = dict(df_all_info["isTT"].value_counts())
 
