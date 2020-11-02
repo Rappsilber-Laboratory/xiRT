@@ -453,10 +453,6 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
         None
     """
     # %%
-    # set index
-    # df_errors = df_errors.set_index("PSMID")
-    # input_psms = input_psms.set_index("PSMID")
-
     # fdr filter
     df_all_info = input_psms[(input_psms["fdr"] <= max_fdr) & (input_psms["fdr"] >= min_fdr)]
     # remove duplicates

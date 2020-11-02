@@ -337,6 +337,9 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         qc.plot_cv_predictions(training_data.prediction_df, training_data.psms,
                                xirt_params=xirt_params, outpath=outpath)
 
+        qc.plot_error_characteristics(training_data.prediction_df, training_data.psms,
+                                      xirtnetwork.tasks, xirt_params, outpath, max_fdr=0.01)
+
     logger.info("Writing output tables.")
     # store setup in summary
     model_summary_df["xirt_params_loc"] = xirt_loc
