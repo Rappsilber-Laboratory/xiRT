@@ -494,7 +494,7 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
         axes[idx] = plt_func(x="variable", y="value", hue="PSM type",
                              data=df_ec_melt_cont, ax=axes[idx],
                              hue_order=[True, False], palette=targetdecoys_cm)
-        pairs = [(("rp", True), ("rp", False))]
+        pairs = [((i, True), (i, False)) for i in cont]
         statannot.add_stat_annotation(axes[idx], data=df_ec_melt_cont,
                                       x="variable", y="value", hue="PSM type", test="t-test_ind",
                                       text_format="star", loc="outside", verbose=2, box_pairs=pairs)
