@@ -459,10 +459,13 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
     df_all_info = df_all_info[~ df_all_info["Duplicate"]]
     # merge dataf rames
     df_all_info = df_all_info.join(df_errors)
+    # unify decoy annotation
+    ref = np.array(["TT", "TD", "DD"])
+    df_all_info["Type"] = ref[np.argmax(df_all_info[["isTT", "isTD", "isDD"]].values, axis=1)]
     # convenient ass to columns
     tasks_errors = [i + "-error" for i in tasks]
     # melt data
-    df_ec_melt = df_all_info[np.concatenate([tasks_errors, ["isTT"]])].melt(id_vars=["isTT"], )
+    df_ec_melt = df_all_info[np.concatenate([tasks_errors, ["Type"]])].melt(id_vars=["Type"], )
     df_ec_melt = df_ec_melt.rename({"isTT": "PSM type"}, axis=1)
     df_ec_melt["variable"] = df_ec_melt["variable"].str.replace("-error", "")
     # counts = dict(df_all_info["isTT"].value_counts())
@@ -482,8 +485,8 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
     if len(fracs) > 0:
         df_ec_melt_frac = df_ec_melt[df_ec_melt["variable"].str.contains("|".join(fracs))]
         axes[idx] = plt_func(x="variable", y="value", hue="PSM type", data=df_ec_melt_frac,
-                             ax=axes[idx], hue_order=[True, False], palette=targetdecoys_cm)
-        pairs = [((i, True), (i, False)) for i in fracs]
+                             ax=axes[idx], hue_order=["TT", "TD", "DD"], palette=targetdecoys_cm)
+        pairs = [((i, "TT"), (i, "TD")) for i in fracs]
         statannot.add_stat_annotation(axes[idx], data=df_ec_melt_frac,
                                       x="variable", y="value", hue="PSM type", test="t-test_ind",
                                       text_format="star", loc="outside", verbose=2, box_pairs=pairs)
@@ -493,8 +496,8 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
         df_ec_melt_cont = df_ec_melt[df_ec_melt["variable"].str.contains("|".join(cont))]
         axes[idx] = plt_func(x="variable", y="value", hue="PSM type",
                              data=df_ec_melt_cont, ax=axes[idx],
-                             hue_order=[True, False], palette=targetdecoys_cm)
-        pairs = [((i, True), (i, False)) for i in cont]
+                             hue_order=["TT", "TD", "DD"], palette=targetdecoys_cm)
+        pairs = [((i, "TT"), (i, "TD")) for i in cont]
         statannot.add_stat_annotation(axes[idx], data=df_ec_melt_cont,
                                       x="variable", y="value", hue="PSM type", test="t-test_ind",
                                       text_format="star", loc="outside", verbose=2, box_pairs=pairs)
