@@ -481,14 +481,12 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
     idx = 0
     if len(fracs) > 0:
         df_ec_melt_frac = df_ec_melt[df_ec_melt["variable"].str.contains("|".join(fracs))]
-        axes[idx] = plt_func(x="variable", y="value", hue="PSM type",
-                             data=df_ec_melt_frac, ax=axes[idx],
-                             hue_order=[True, False], palette=targetdecoys_cm)
+        axes[idx] = plt_func(x="variable", y="value", hue="PSM type", data=df_ec_melt_frac,
+                             ax=axes[idx], hue_order=[True, False], palette=targetdecoys_cm)
         pairs = [(("hsax", True), ("hsax", False)), (("scx", True), ("scx", False))]
         statannot.add_stat_annotation(axes[idx], data=df_ec_melt_frac,
                                       x="variable", y="value", hue="PSM type", test="t-test_ind",
-                                      text_format="star", loc="outside", verbose=2,
-                                      box_pairs=pairs)
+                                      text_format="star", loc="outside", verbose=2, box_pairs=pairs)
         idx += 1
 
     if len(cont) > 0:
@@ -499,13 +497,14 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
         pairs = [(("rp", True), ("rp", False))]
         statannot.add_stat_annotation(axes[idx], data=df_ec_melt_cont,
                                       x="variable", y="value", hue="PSM type", test="t-test_ind",
-                                      text_format="star", loc="outside", verbose=2,
-                                      box_pairs=pairs)
+                                      text_format="star", loc="outside", verbose=2, box_pairs=pairs)
         idx += 1
 
-    for ax in axes:
+    for idx, ax in enumerate(axes):
         ax.axhline(0, lw=1, zorder=0, c="k")
         ax.set(xlabel="", ylabel="Observed - Predicted")
+        if idx > 0:
+            ax.set(ylabel="")
         ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
         sns.despine(ax=ax)
     save_fig(f, outpath, "error_characteristics_")
