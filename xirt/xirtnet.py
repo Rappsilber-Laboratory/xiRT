@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import tensorflow_addons as tfa
 import yaml
 from tensorflow.keras import backend as K
 from tensorflow.keras import losses
@@ -412,6 +413,11 @@ class xiRTNET:
         loss = {i: self.output_p[i + "-loss"] for i in self.tasks}
         metric = {i: self.output_p[i + "-metrics"] for i in self.tasks}
         loss_weights = {i: self.output_p[i + "-weight"] for i in self.tasks}
+
+        # add r2 as metric for regression tasks, dimension=1
+        for tsk in self.tasks:
+            if self.output_p[f"{tsk}-dimension"] == 1:
+                metric[tsk] = [metric[tsk], tfa.metrics.RSquare(dtype=tf.float32, y_shape=(1,))]
 
         self.model.compile(loss=loss, optimizer=opt, metrics=metric, loss_weights=loss_weights)
 
