@@ -233,6 +233,7 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath, show=False):  # pr
         # split data by fractionation / continuous
         df_temp_frac = df_temp[df_temp.RT.str.contains(pattern_frac)]
         df_temp_cont = df_temp[df_temp.RT.str.contains(pattern_cont)]
+        df_temp_cont = df_temp_cont[~df_temp_cont["variable"].str.contains("r_square")]
 
         # get the metrics and stuff for training, validation (thus the, 2 in tile)
         frac_metrics = sorted(df_temp_frac["variable"].drop_duplicates())
