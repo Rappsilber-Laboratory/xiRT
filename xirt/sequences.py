@@ -156,7 +156,7 @@ def reorder_sequences(matches_df):
     return swapping_df
 
 
-def modify_cl_residues(matches_df, seq_in=["Peptide1", "Peptide2"]):
+def modify_cl_residues(matches_df, seq_in=["Peptide1", "Peptide2"], reduce_cl=False):
     """
     Change the cross-linked residues to modified residues.
 
@@ -164,8 +164,10 @@ def modify_cl_residues(matches_df, seq_in=["Peptide1", "Peptide2"]):
 
     Args:
         matches_df: df, dataframe with peptide identifications. Required columns
-        seq_in:
-
+        seq_in: ar-like, list of columns wiht peptide entries
+        reduce_cl: bool, if true crosslinked residues are reduced to X, else the linked residue
+        is kept (default: False). This is useful for transfer learning or promiscuous crosslinker
+        such as SDA.
     Returns:
         psms_df: df, dataframe with adapted sequences in-place
     """
@@ -173,7 +175,19 @@ def modify_cl_residues(matches_df, seq_in=["Peptide1", "Peptide2"]):
     # introduce a new prefix cl for each crosslinked residue
     for seq_id, seq_i in enumerate(seq_in):
         for idx, row in matches_df.iterrows():
-            residue = row["Seqar_" + seq_i][row["LinkPos" + str(seq_id + 1)]]
+            if reduce_cl:
+                # reasign special crosslinker residue
+                residue = "X"
+            else:
+                try:
+                    residue = row["Seqar_" + seq_i][row["LinkPos" + str(seq_id + 1)]]
+                except IndexError:
+                    print(row)
+                    print("List index out of range. Check peptide sequence for unwanted characters")
+                    print(row["Seqar_" + seq_i])
+                    print(seq_id)
+                    print(row["LinkPos" + str(seq_id + 1)])
+
             matches_df.at[idx, "Seqar_" + seq_i][row["LinkPos" + str(seq_id + 1)]] = "cl" + residue
 
 

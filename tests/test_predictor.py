@@ -64,7 +64,7 @@ def test_model_data_trainable():
         pd.DataFrame(np.column_stack([peptide1, peptide2, fasta1, fasta2]),
                      columns=["Peptide1", "Peptide2", "Fasta1", "Fasta2"]),
         [], [], None)
-    data.psms["FDR"] = fdr
+    data.psms["fdr"] = fdr
     data.psms["isTT"] = isTT
     data.set_fdr_mask(0.05)
 
@@ -125,7 +125,7 @@ def test_get_train_psms():
     data = xr.ModelData(
         pd.DataFrame(np.column_stack([peptide1, peptide2]), columns=["Peptide1", "Peptide2"]),
         [], [], None)
-    data.psms["FDR"] = [0, 0.01, 0.05, 0.1, 0.2]
+    data.psms["fdr"] = [0, 0.01, 0.05, 0.1, 0.2]
     data.psms["isTT"] = True
     data.psms["Duplicate"] = [False, False, False, False, False]
     data.set_fdr_mask(0.05)

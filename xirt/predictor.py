@@ -52,17 +52,17 @@ class ModelData:
         """
         logger.info("Setting FDR mask.")
         if str_filter == "":
-            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & self.psms["isTT"]
+            fdr_mask = (self.psms["fdr"] <= fdr_cutoff) & self.psms["isTT"]
             logger.info("Removed 0 peptides (str).")
         else:
             str_mask = (self.psms["Fasta1"].str.contains(str_filter)) & (
                 self.psms["Fasta2"].str.contains(str_filter))
-            fdr_mask = (self.psms["FDR"] <= fdr_cutoff) & (self.psms["isTT"]) & str_mask
+            fdr_mask = (self.psms["fdr"] <= fdr_cutoff) & (self.psms["isTT"]) & str_mask
             logger.info("Removed {} peptides (str filter).".format(np.sum(~str_mask)))
 
         self.psms["fdr_mask"] = fdr_mask
         logger.info("Removed {} peptides (TD/DD).".format(np.sum(~self.psms["isTT"])))
-        logger.info("Removed {} peptides (FDR).".format(np.sum(~(self.psms["FDR"] <= fdr_cutoff))))
+        logger.info("Removed {} peptides (FDR).".format(np.sum(~(self.psms["fdr"] <= fdr_cutoff))))
         logger.info("Removed {} peptides (combined).".format(np.sum(~fdr_mask)))
         logger.info("Setting FDR mask: {} valid entries".format(np.sum(fdr_mask)))
 
@@ -330,6 +330,11 @@ def compute_accuracy(predictions, expected, tasks, params):
         list, accuracy values for tasks with ordinal scale
     """
     accuracy_tmp = []
+    # predictions must have the same shape as the tasks.
+    # class predictions with a single task come as an n-dimensional array instead of an nested ar
+    # therefore, predictions must be put into a list to match the dimension of tasks
+    if len(predictions) > len(tasks):
+        predictions = [predictions]
     # compute accuracy
     for task_i, pred_ar in zip(tasks, predictions):
         if "ordinal" in params[task_i + "-column"]:

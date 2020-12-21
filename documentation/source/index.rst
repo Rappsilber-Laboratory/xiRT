@@ -18,18 +18,19 @@ of PSMs with the predicted retention times.
 
 xiRT uses a deep neural network architecture to realize the simultaneous learning for multiple
 retention times. In brief, xiRT builds a multi-layer network that can be divided into a Siamese part
-and individual task subnetworks. The Siamese part takes the peptide sequences as input and applys
+and individual task subnetworks. The Siamese part takes the peptide sequences as input and applies
 and Embedding and Recurrent function to the input. For linear peptides the output of the
 recurrent layer is directly forwarded to the task subnetworks. For crosslinked peptides, each
-peptide has it's own input and after the recurrent layer the two outputs are first combined and then
+peptide has its own input and after the recurrent layer the two outputs are first combined and then
 passed towards the individual task networks. In contrast, to typical regression models the input
 data (peptide) sequences are not transformed into features but rather the entire peptide
-sequence including modificatins is used as input.
+sequence including modifications is used as input.
 
 **Supported Prediction Tasks**
 
 xiRT is versatile in the input and experimental design. An arbitrary number of prefractionation
-methods are supported as well as a standard reversed phase RT prediction.
+methods are supported as well as a standard reversed phase RT prediction. In addition,
+similar tasks such has collision-cross section prediction can be learned.
 
 .. toctree::
    :maxdepth: 2

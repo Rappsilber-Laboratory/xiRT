@@ -198,8 +198,11 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath, show=False):  # pr
     df = pd.concat(pd.read_csv(i) for i in epochlogs)
 
     if len(tasks) == 1:
+        # write task as prefix for columns
         df.columns = [tasks[0] + "-" + i if i not in ["epoch", "lr"] else i for i in df.columns]
+
     # transform and melt dataframe for easier plotting, can probably be optimized
+    # RT = retention time
     dfs = []
     for rt_task in tasks:
         df_temp = df.filter(regex="{}|epoch".format(rt_task)).melt(id_vars="epoch")
@@ -230,6 +233,7 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath, show=False):  # pr
         # split data by fractionation / continuous
         df_temp_frac = df_temp[df_temp.RT.str.contains(pattern_frac)]
         df_temp_cont = df_temp[df_temp.RT.str.contains(pattern_cont)]
+        df_temp_cont = df_temp_cont[~df_temp_cont["variable"].str.contains("r_square")]
 
         # get the metrics and stuff for training, validation (thus the, 2 in tile)
         frac_metrics = sorted(df_temp_frac["variable"].drop_duplicates())
@@ -271,10 +275,12 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath, show=False):  # pr
 
         else:
             # deal with single plot case ...
+            hues = cont_hues if len(cont_hues) > 0 else frac_hues
+            param_col = "continues" if len(cont_hues) > 0 else "fractions"
             ax = sns.lineplot(x="epoch", y="value", hue="variable", style="Split",
-                              data=df_temp_cont, ax=ax, palette=cont_hues, legend="full")
+                              data=df_temp_cont, ax=ax, palette=hues, legend="full")
             ax.set(ylabel=xirt_params["output"][
-                xirt_params["predictions"]["continues"][0] + "-" + cname])
+                xirt_params["predictions"][param_col][0] + "-" + cname])
             sns.despine(right=False)
             ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
         plt.tight_layout()
@@ -297,8 +303,9 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
     """
     # %%
     if len(tasks) == 1:
-        summary_df.columns = [tasks[0] + "_" + i if i not in ["CV", "Split"] else i for i in
-                              summary_df.columns]
+        colstr = "{}_ordinal-accuracy".format(tasks[0])
+        summary_df.columns = [tasks[0] + "_" + i if i not in [colstr, "CV", "Split"] else i for i
+                              in summary_df.columns]
 
     for col in tasks:
         if "ordinal" in xirt_params["output"][col + "-column"]:
@@ -447,21 +454,20 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
         None
     """
     # %%
-    # set index
-    # df_errors = df_errors.set_index("PSMID")
-    # input_psms = input_psms.set_index("PSMID")
-
     # fdr filter
-    df_all_info = input_psms[(input_psms["FDR"] <= max_fdr) & (input_psms["FDR"] >= min_fdr)]
+    df_all_info = input_psms[(input_psms["fdr"] <= max_fdr) & (input_psms["fdr"] >= min_fdr)]
     # remove duplicates
     df_all_info = df_all_info[~ df_all_info["Duplicate"]]
     # merge dataf rames
     df_all_info = df_all_info.join(df_errors)
+    # unify decoy annotation
+    ref = np.array(["TT", "TD", "DD"])
+    df_all_info["Type"] = ref[np.argmax(df_all_info[["isTT", "isTD", "isDD"]].values, axis=1)]
     # convenient ass to columns
     tasks_errors = [i + "-error" for i in tasks]
     # melt data
-    df_ec_melt = df_all_info[np.concatenate([tasks_errors, ["isTT"]])].melt(id_vars=["isTT"], )
-    df_ec_melt = df_ec_melt.rename({"isTT": "PSM type"}, axis=1)
+    df_ec_melt = df_all_info[np.concatenate([tasks_errors, ["Type"]])].melt(id_vars=["Type"], )
+    df_ec_melt = df_ec_melt.rename({"Type": "PSM type"}, axis=1)
     df_ec_melt["variable"] = df_ec_melt["variable"].str.replace("-error", "")
     # counts = dict(df_all_info["isTT"].value_counts())
 
@@ -479,31 +485,30 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
     idx = 0
     if len(fracs) > 0:
         df_ec_melt_frac = df_ec_melt[df_ec_melt["variable"].str.contains("|".join(fracs))]
-        axes[idx] = plt_func(x="variable", y="value", hue="PSM type",
-                             data=df_ec_melt_frac, ax=axes[idx],
-                             hue_order=[True, False], palette=targetdecoys_cm)
-        pairs = [(("hsax", True), ("hsax", False)), (("scx", True), ("scx", False))]
+        axes[idx] = plt_func(x="variable", y="value", hue="PSM type", data=df_ec_melt_frac,
+                             ax=axes[idx], hue_order=["TT", "TD", "DD"], palette=targetdecoys_cm)
+        pairs = [((i, "TT"), (i, "TD")) for i in fracs]
         statannot.add_stat_annotation(axes[idx], data=df_ec_melt_frac,
                                       x="variable", y="value", hue="PSM type", test="t-test_ind",
-                                      text_format="star", loc="outside", verbose=2,
-                                      box_pairs=pairs)
+                                      text_format="star", loc="outside", verbose=2, box_pairs=pairs)
         idx += 1
 
     if len(cont) > 0:
         df_ec_melt_cont = df_ec_melt[df_ec_melt["variable"].str.contains("|".join(cont))]
         axes[idx] = plt_func(x="variable", y="value", hue="PSM type",
                              data=df_ec_melt_cont, ax=axes[idx],
-                             hue_order=[True, False], palette=targetdecoys_cm)
-        pairs = [(("rp", True), ("rp", False))]
+                             hue_order=["TT", "TD", "DD"], palette=targetdecoys_cm)
+        pairs = [((i, "TT"), (i, "TD")) for i in cont]
         statannot.add_stat_annotation(axes[idx], data=df_ec_melt_cont,
                                       x="variable", y="value", hue="PSM type", test="t-test_ind",
-                                      text_format="star", loc="outside", verbose=2,
-                                      box_pairs=pairs)
+                                      text_format="star", loc="outside", verbose=2, box_pairs=pairs)
         idx += 1
 
-    for ax in axes:
+    for idx, ax in enumerate(axes):
         ax.axhline(0, lw=1, zorder=0, c="k")
         ax.set(xlabel="", ylabel="Observed - Predicted")
+        if idx > 0:
+            ax.set(ylabel="")
         ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
         sns.despine(ax=ax)
     save_fig(f, outpath, "error_characteristics_")

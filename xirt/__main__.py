@@ -1,19 +1,24 @@
 """xiRT main module to run the training and prediction."""
 
 import argparse
-import os
-import sys
 import logging
+import os
+import pickle
+import sys
+import time
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import yaml
 
+from xirt import __version__ as xv
 from xirt import features as xf
 from xirt import predictor as xr
 from xirt import xirtnet, qc
-from xirt import __version__ as xv
+import matplotlib
 
+matplotlib.use('Agg')
 logger = logging.getLogger(__name__)
 
 
@@ -30,7 +35,9 @@ def arg_parser():  # pragma: not covered
 
     Visit the documentation to get more information:
     https://xirt.readthedocs.io/en/latest/
-    """
+
+    Current Version: {}
+    """.format(xv.__version__)
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-i", "--in_peptides",
                         help="Input peptide table to learn (and predict) the retention times.",
@@ -50,10 +57,10 @@ def arg_parser():  # pragma: not covered
 
     parser.add_argument('--write', dest='write', action='store_true',
                         help="Flag for writing result prediction files. If false only summaries"
-                             "are written.")
+                             "are written (default: --write).")
     parser.add_argument('--no-write', dest='write', action='store_false',
                         help="Flag for writing result prediction files. If false only summaries"
-                             "are written.")
+                             "are written (default: --write).")
     parser.set_defaults(write=True)
     return parser
 
@@ -77,6 +84,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     Returns:
         None
     """
+    start_time = time.time()
     xirt_params = yaml.load(open(xirt_loc), Loader=yaml.FullLoader)
     learning_params = yaml.load(open(setup_loc), Loader=yaml.FullLoader)
     matches_df = pd.read_csv(peptides_file, nrows=nrows)
@@ -142,7 +150,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     # train on n-1 fold, use test_size from n-1 folds for validation and test/predict RT
     # on the remaining fold
     logger.info("Starting crossvalidation (nfolds={})".format(n_splits))
-
+    start_timecv = time.time()
     for train_idx, val_idx, pred_idx in training_data.iter_splits(n_splits=n_splits,
                                                                   test_size=test_size):
         logger.info("---------------------------------------------------------")
@@ -242,9 +250,17 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
 
         # store manual accuray for ordinal data
         if has_ordinal:
-            for count, task_i in enumerate(xirtnetwork.tasks):
-                if "ordinal" in xirtnetwork.output_p[task_i + "-column"]:
-                    model_summary_df[task_i + "_ordinal-accuracy"] = accuracies_all[count::2]
+            for count, task_i in enumerate(frac_cols):
+                taski_short = task_i.split("_")[0]
+                if "ordinal" in xirtnetwork.output_p[taski_short + "-column"]:
+                    # accuracies_all contains accuracies for train, validation, pred
+                    # problem is that accuracies are computed after the loop and stored in a 1d-ar
+                    # retrieve information again
+                    if len(frac_cols) == 1:
+                        model_summary_df[taski_short + "_ordinal-accuracy"] = accuracies_all
+                    else:
+                        model_summary_df[taski_short + "_ordinal-accuracy"] = \
+                            accuracies_all[count::len(frac_cols)]
 
         if learning_params["train"]["refit"]:
             logger.info("Refitting model on entire data to predict unseen data.")
@@ -304,15 +320,15 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     else:
         eval_unvalidation.extend([-1, "Unvalidation"])
 
+    # prediction modes dont have any training information
     if learning_params["train"]["mode"] != "predict":
-        model_summary_df.loc[len(model_summary_df)] = eval_unvalidation
-
         # collect epoch training data
+        model_summary_df.loc[len(model_summary_df)] = eval_unvalidation
         df_history_all = pd.concat(histories)
         df_history_all = df_history_all.reset_index(drop=False).rename(columns={"index": "epoch"})
         df_history_all["epoch"] += 1
 
-    # compute features
+    # compute features for rescoring
     xf.compute_prediction_errors(training_data.psms, training_data.prediction_df,
                                  xirtnetwork.tasks, frac_cols,
                                  (xirtnetwork.siamese_p["single_predictions"]
@@ -323,6 +339,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                               degree=len(xirtnetwork.tasks))
 
     # qc
+    # only training procedure includes qc
     if perform_qc and (learning_params["train"]["mode"] != "predict"):
         logger.info("Generating qc plots.")
         qc.plot_epoch_cv(callback_path=xirtnetwork.callback_p["callback_path"],
@@ -333,6 +350,9 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
 
         qc.plot_cv_predictions(training_data.prediction_df, training_data.psms,
                                xirt_params=xirt_params, outpath=outpath)
+
+        qc.plot_error_characteristics(training_data.prediction_df, training_data.psms,
+                                      xirtnetwork.tasks, xirt_params, outpath, max_fdr=0.01)
 
     logger.info("Writing output tables.")
     # store setup in summary
@@ -345,15 +365,30 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     model_summary_df.to_csv(os.path.join(outpath, "model_summary.csv"))
 
     if write:
+        # store data
         training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
-        training_data.prediction_df.to_csv(os.path.join(outpath, "prediction.csv"))
-        features_exhaustive.to_csv(os.path.join(outpath, "error_interactions.csv"))
+        training_data_Xy = ((training_data.features1, training_data.features2),
+                            training_data.get_classes(training_data.psms.index,
+                                                      frac_cols=frac_cols, cont_cols=cont_cols))
+
+        with open(os.path.join(xirt_params["callbacks"]["callback_path"], "Xy_data.p"), 'wb') as po:
+            pickle.dump(training_data_Xy, po, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(os.path.join(xirt_params["callbacks"]["callback_path"], "encoder.p"), 'wb') as po:
+            pickle.dump(training_data.le, po, protocol=pickle.HIGHEST_PROTOCOL)
+
+        training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
+        training_data.prediction_df.to_csv(os.path.join(outpath, "error_features.csv"))
+        features_exhaustive.to_csv(os.path.join(outpath, "error_features_interactions.csv"))
 
     # write a text file to indicate xirt is done.
     if write_dummy:
         with open(xirt_loc.replace(".yaml", ".txt"), "w") as of:
             of.write("done.")
     logger.info("Completed xiRT run.")
+    logger.info("End Time: {}".format(datetime.now().strftime("%H:%M:%S")))
+    end_time = time.time()
+    logger.info("xiRT CV-training took: {:.2f} minutes".format((end_time - start_timecv) / 60.))
+    logger.info("xiRT took: {:.2f} minutes".format((end_time - start_time) / 60.))
 
 
 def main():  # pragma: no cover
@@ -387,6 +422,7 @@ def main():  # pragma: no cover
         "xirt -i {} -o {} -x {} -l {}".format(args.in_peptides, args.out_dir, args.xirt_params,
                                               args.learning_params))
     logger.info("Init logging file.")
+    logger.info("Starting Time: {}".format(datetime.now().strftime("%H:%M:%S")))
     logger.info("Starting xiRT.")
     logger.info("Using xiRT version: {}".format(xv.__version__))
 

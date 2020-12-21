@@ -26,6 +26,7 @@ train:
   augment: False
   sequence_type: "crosslink"
   pretrained_weights: "None"
+  pretrained_model: "None"
   test_frac: 0.10
   sample_frac: 1
   sample_state: 21
