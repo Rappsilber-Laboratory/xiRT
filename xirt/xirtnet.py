@@ -526,7 +526,7 @@ class xiRTNET:
             location: str, location of network architecture
 
         Returns:
-
+            None
         """
         self.model = load_model(location)
 
