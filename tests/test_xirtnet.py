@@ -24,34 +24,6 @@ def test_xirt_class():
     assert xirtnetwork.siamese_p == xiRTconfig["siamese"]
 
 
-def test_xirt_normal_model(tmpdir):
-    p = tmpdir.mkdir("tmp")
-
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
-                           Loader=yaml.FullLoader)
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
-    xirtnetwork.build_model(siamese=False)
-
-    # create the image
-    #xirtnetwork.export_model_visualization(os.path.join(os.path.abspath(p), "model_figure_normal_"))
-    #assert os.path.isfile(os.path.join(os.path.abspath(p), "model_figure_normal_xiRT_model.pdf"))
-    #os.remove(os.path.join(os.path.abspath(p), "model_figure_normal_xiRT_model.pdf"))
-    assert True
-
-def test_xirt_siamese_model(tmpdir):
-    p = tmpdir.mkdir("tmp")
-    xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
-                           Loader=yaml.FullLoader)
-
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
-    xirtnetwork.build_model(siamese=True)
-    assert True
-    # create the image
-    #xirtnetwork.export_model_visualization(os.path.join(os.path.abspath(p), "siamese_"))
-    #assert os.path.isfile(os.path.join(os.path.abspath(p), "siamese_xiRT_model.pdf"))
-    #os.remove(os.path.join(os.path.abspath(p), "siamese_xiRT_model.pdf"))
-
-
 def test_xirt_compilation():
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
