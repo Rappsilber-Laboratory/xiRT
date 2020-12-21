@@ -4,6 +4,7 @@ on:
   push:
     branches: 
     - master
+    # all branches
     - '**'
   pull_request:
     branches: [ master ]
