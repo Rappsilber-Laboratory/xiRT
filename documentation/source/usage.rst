@@ -122,6 +122,37 @@ Here we have the same experimental setup as above but the scx prediction task is
 as classification. For classification the activation, column and loss must be defined as in the
 example.
 
+Transfer Learning
+*************************
+xiRT supports multiple types of transfer-learning capabilities. For instance,
+training the exact same architecture (dimensions, sequence lengths) on a data set (e.g. BS3 crosslinked)
+and then fine tune the learned weights on the actual data set (e.g. DSS crosslinked). This requires
+a simple change in the learning (-l parameter) config. The *pretrained_model* parameter needs to be adapted
+for the location of the weights file from the BS3 model.
+Another option is to change the underlying even more. This might be necessary when the training
+data was trained with e.g. 10 fractions but only 5 got acquired in the new acquisition. In this
+scenario the weights cannot be used from the last layers. Therefore, the *pretrained_weights* and the *pretrained_model*
+parameter need to be given in the learning (-l) config.
+
+The files in the repository ("sample_data" and "models" folder) provide examples to achieve the
+transfer learning. Two calls to xiRT are necessary:
+
+**Example:**
+
+``# train the full model, dont do crossvalidation!``
+
+``>xirt -i sample_data\DSS_xisearch_fdr_CSM50percent.csv
+-x sample_data\xirt_params_3RT_best_ordinal.yaml
+>-l sample_data\learning_params_training_nocv.yaml
+-o models/3DRT_full_nocv``
+
+``# use the already trained architecture``
+
+``>xirt -i sample_data\DSS_xisearch_fdr_CSM50percent_transfer_scx17to23_hsax2to9.csv
+-x sample_data\xirt_params_3RT_best_ordinal_scx17to23_hsax2to9.yaml
+-l sample_data\learning_params_training_nocv_scx17to23_hsax2to9.yaml
+-o models\3DRT_transfer_dimensions``
+
 Further extensions
 ******************
 
@@ -173,11 +204,9 @@ For **ordinal regression** always use the following setup:
         scx-metrics: mse
 
 For **regression** always use the following setup:
-    
     output:
         rp-activation: linear
         rp-column: rp
         rp-dimension: 1
         rp-loss: mse
         rp-metrics: mse
-        

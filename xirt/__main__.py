@@ -189,7 +189,6 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         xirtnetwork.compile()
 
         callbacks = xirtnetwork.get_callbacks(suffix=str(cv_counter).zfill(2))
-
         # assemble training data
         xt_cv = training_data.get_features(train_idx)
         yt_cv = training_data.get_classes(train_idx, frac_cols=frac_cols, cont_cols=cont_cols)
@@ -418,6 +417,10 @@ def main():  # pragma: no cover
     sh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     logger.addHandler(sh)
 
+    logger.info("command line call:")
+    logger.info(
+        "xirt -i {} -o {} -x {} -l {}".format(args.in_peptides, args.out_dir, args.xirt_params,
+                                              args.learning_params))
     logger.info("Init logging file.")
     logger.info("Starting Time: {}".format(datetime.now().strftime("%H:%M:%S")))
     logger.info("Starting xiRT.")
