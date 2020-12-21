@@ -21,6 +21,7 @@ palettable = "*"
 xlrd = "*"
 statannot = "*"
 openpyxl = "*"
+tensorflow_addons = "*"
 
 [dev-packages]
 twine = "*"
