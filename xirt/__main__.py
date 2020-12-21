@@ -166,12 +166,27 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         logger.info("Rescoring Candidates indices: {}".format(training_data.predict_idx[0:10]))
 
         # init the network model
-        xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
-        xirtnetwork.compile()
-        # loading pre-trained weights
+        # either load from existing or create from config
+        if learning_params["train"]["pretrained_model"].lower() != "none":
+            logger.info("Loading existing model from reference.")
+            xirtnetwork.load_model(learning_params["train"]["pretrained_model"])
+        else:
+            logger.info("Building new model from config.")
+            xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
+
+        # once model architecture is there, check if weights should be loaded
+        # loading predefined weights
         if learning_params["train"]["pretrained_weights"].lower() != "none":
-            logger.info("Loading pre-trained weights.")
+            logger.info("Loading pre-trained weights into model.")
             xirtnetwork.model.load_weights(learning_params["train"]["pretrained_weights"])
+
+        # after loading the weights, we need to pop / re-design the layers for transfer learning
+        if learning_params["train"]["pretrained_model"].lower() != "none":
+            logger.info("Adjusting model architecture.")
+            xirtnetwork.adjust_model()
+
+        # finally compile
+        xirtnetwork.compile()
 
         callbacks = xirtnetwork.get_callbacks(suffix=str(cv_counter).zfill(2))
 
