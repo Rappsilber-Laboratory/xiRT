@@ -20,7 +20,7 @@ peptides using a (siamese) deep neural network architecture.
 ---
 ## overview
 
-xiRT is a deep learning tool to predict the retention times(s) of linear and crosslinked peptides 
+xiRT is a deep learning tool to predict the retention time(s) of linear and crosslinked peptides 
 from multiple fractionation dimensions including RP (typically coupled to the mass spectrometer). 
 xiRT was developed with a combination of SCX / hSAX / RP chromatography. However, xiRT supports
 all available chromatography methods.
@@ -33,8 +33,8 @@ larger one for crosslinked RT predictions.
 
 ## Description
 xiRT is meant to be used to generate additional information about CSMs for machine learning-based
-rescoring frameworks (similar to percolator). However, xiRT also delivers RT prediction for various 
-scenarios. Therefore xiRT offers several training / prediction  modes that need to be configured 
+rescoring frameworks but the usage can be extended to spectral libraries, targeted acquisitions etc.
+Therefore xiRT offers several training / prediction  modes that need to be configured 
 depending on the use case. At the moment training, prediction, crossvalidation are the supported
 modes.
 - *training*: trains xiRT on the input CSMs (using 10% for validation) and stores a trained model
@@ -42,9 +42,10 @@ modes.
 - *crossvalidation*: load/train a model and predict RTs for all data points without using them
 in the training process. Requires the training of several models during CV
 
-Note: all modes can be supplemented by using a pretrained model ("transfer learning").
+Note: all modes can be supplemented by using a pretrained model ("transfer learning") when not 
+enough training data is available to achieve robust prediction performance.
 
-This readme only gives a brief overview about xiRTs functions and parameters. Please refere
+This readme only gives a brief overview about xiRTs functions and parameters. Please refer
 to the [documentation](https://xirt.readthedocs.io/en/latest/) for more details and examples.
 
 ### Installation and Usage
@@ -54,14 +55,16 @@ below.
 
 #### Installation
 To install xiRT simply run the command below. We recommend to use an isolated python environment,
-for example by using pipenv or conda. 
+for example by using pipenv **or** conda. 
 Using pipenv:
 >pipenv shell
 >
 >pip install xirt
 
-To enable CUDA support, the easiest thing is to create a conda environment. Conda will take care of 
-the CUDA libraries and other dependencies.
+To enable CUDA support, the using a conda environment is the easiest solution. 
+Conda will take care of the CUDA libraries and other dependencies. Note, xiRT runs either on CPUs
+or GPUs. In the YAML file for network architecture this needs to be specified.
+
 > conda create --name xirt_env python=3.7
 >
 >conda activate xirt_env
@@ -85,13 +88,13 @@ The command line interface (CLI) requires three inputs:
 To use xiRT these options are put together as shown below:
 > xirt(.exe) -i peptides.csv -o out_dir -x xirt_params -l learning_params
 
-To adapt the xiRT parameters a yaml config file needs to be prepared. The configuration file
+To adapt the xiRT parameters a YAML config file needs to be prepared. The configuration file
 is used to determine network parameters (number of neurons, layers, regularization) but also for the
-definition of the prediction task (classification, regression, ordered regression). Depending
-on the decoding of the target variable the output layers need to be adapted. For standard RP 
+definition of the prediction task (classification, regression, ordinal regression). Depending
+on the decoding of the target variable, the output layers need to be adapted. For standard RP 
 prediction, regression is essentially the only viable option. For SCX/hSAX (general classification
 from fractionation experiments) the prediction task can be formulated as classification, 
-regression or ordered regression. For the usage of regression for fractionation it is recommended 
+regression or ordinal regression. For the usage of regression for fractionation it is recommended 
 that the estimated salt concentrations are used as target variable for the prediction  (raw 
 fraction numbers are possible too).
 
@@ -122,12 +125,13 @@ This file determines the input data to be used and gives some training procedure
 
 ### Contributors
 - Sven Giese
+- Ludwig Sinn
 
 ## Citation
 If you consider xiRT helpful for your work please cite our manuscript. *Currently, in preparation.*
 
 ## RappsilberLab
-The Rappsilber applies and developes crosslinking chemistry methods, workflows and software.
+The Rappsilber applies and develops crosslinking chemistry methods, workflows and software.
 Visit the lab page to learn more about the developed [software](https://www.rappsilberlab.org/software/).
 
 ## xiSUITE
