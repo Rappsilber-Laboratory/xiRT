@@ -8,6 +8,7 @@
 ![PyPI version](https://flat.badgen.net/pypi/v/xiRT)
 ![coverage](documentation/imgs/coverage.svg)
 [![Documentation Status](https://readthedocs.org/projects/xirt/badge/?version=latest)](https://xirt.readthedocs.io/en/latest/?badge=latest)
+![pytest](https://github.com/Rappsilber-Laboratory/xiRT/workflows/pytest/badge.svg)
 
 A python package for multi-dimensional retention time prediction for linear and crosslinked 
 peptides using a (siamese) deep neural network architecture.
