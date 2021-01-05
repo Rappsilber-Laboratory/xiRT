@@ -107,6 +107,8 @@ regression or ordinal regression. For the usage of regression for fractionation 
 that the estimated salt concentrations are used as target variable for the prediction  (raw 
 fraction numbers are possible too).
 
+Please find a working example / quick-start guide [here](https://xirt.readthedocs.io/en/latest/usage.html#quick-start).
+
 ### input format
 | short name         | explicit column name | description                                                                    | Example     |
 |--------------------|----------------------|--------------------------------------------------------------------------------|-------------|
