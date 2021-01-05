@@ -8,7 +8,7 @@ preprocessing:
     le: None
     max_length: -1
     cl_residue: True
-    filter: "_ECOLI"
+    filter: ""
 
 # train and transfer share the same options that are necessary to run xiML, here is a brief rundown:
 # fdr: float, a FDR cutoff for peptide matches to be included in the training process
@@ -33,6 +33,7 @@ train:
   augment: False
   sequence_type: "crosslink"
   pretrained_weights: "None"
+  pretrained_model: "None"
   test_frac: 0.10
   sample_frac: 1
   sample_state: 21
