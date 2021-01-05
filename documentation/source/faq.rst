@@ -31,3 +31,9 @@ on a desktop pc.
 '''''''''''''''''''''''''''''''''''
 Please create an `GitHub issue <https://github.com/Rappsilber-Laboratory/xiRT/issues/new>`_
 if we can assist you with your analysis or if anything is unclear.
+
+7. Which chromatography types are supported?
+''''''''''''''''''''''''''''''''''''''''''''
+xiRT is agnostic to the type of chromatography and supports to learn 1, 2,3 ..., n chromatography
+dimensions at the same time. Continuous (e.g. reversed phase) and discrete
+(fractionation) retention time measurements are supported.
