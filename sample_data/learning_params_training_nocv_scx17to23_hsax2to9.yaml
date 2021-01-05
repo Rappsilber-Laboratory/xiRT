@@ -27,8 +27,8 @@ train:
   mode: "train" # other modes are: train / crossvalidation / predict
   augment: False
   sequence_type: "crosslink"
-  pretrained_weights: "models/3DRT_full_nocv/callbacks/xirt_weights_01.h5"
-  pretrained_model: "models/3DRT_full_nocv/callbacks/xirt_model_01.h5"
+  pretrained_weights: "DSS_transfer_learning_example/xirt_weights_01.h5"
+  pretrained_model: "DSS_transfer_learning_example/xirt_model_01.h5"
   test_frac: 0.10
   sample_frac: 1
   sample_state: 21

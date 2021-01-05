@@ -41,6 +41,7 @@ similar tasks such has collision-cross section prediction can be learned.
    usage
    results
    parameters
+   faq
    modules
    development
 
