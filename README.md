@@ -11,7 +11,7 @@
 ![pytest](https://github.com/Rappsilber-Laboratory/xiRT/workflows/pytest/badge.svg)
 
 A python package for multi-dimensional retention time prediction for linear and crosslinked 
-peptides using a (siamese) deep neural network architecture.
+peptides using a (Siamese) deep neural network architecture.
 ---
 
 - [Overview](#overview)
@@ -54,9 +54,16 @@ to the [documentation](https://xirt.readthedocs.io/en/latest/) for more details 
 xiRT is a python package that comes with a executable python file. To run xiRT follow the steps 
 below.
 
+#### Requirements
+xiRT requires a running python installation on windows/mac/linux. All further requirements
+are managed during the installation process via pip or conda. xiRT was tested using python >3.7 with
+TensorFlow 1.4 and python >3.8 and TensorFlow >2.0. A GPU is not mandatory to run xiRT, however
+it can greatly decrease runtime. Further system requirements depend on the data sets to be used.
+
 #### Installation
 To install xiRT simply run the command below. We recommend to use an isolated python environment,
-for example by using pipenv **or** conda. 
+for example by using pipenv **or** conda. Installation should finish within minutes.
+
 Using pipenv:
 >pipenv shell
 >
@@ -78,7 +85,8 @@ Hint:
 pydot and graphviz sometimes make trouble when they are installed via pip. If on linux,
 simply use *sudo apt-get install graphviz*, on windows download latest graphviz package from 
 [here](https://www2.graphviz.org/Packages/stable/windows/), unzip the content of the file and the
-*bin* directory path to the windows PATH variable.
+*bin* directory path to the windows PATH variable. These two packages allow the vizualization
+of the neural network architecture.
 
 #### Usage
 The command line interface (CLI) requires three inputs:
@@ -104,25 +112,35 @@ fraction numbers are possible too).
 |--------------------|----------------------|--------------------------------------------------------------------------------|-------------|
 | peptide sequence 1 | Peptide1             | First peptide sequence for crosslinks                                        | PEPRTIDER   |
 | peptide sequence 2 | Peptide2             | Second peptide sequence for crosslinks, or empty                                 | ELRVIS      |
+| fasta descrition 1        | Fasta1             | FASTA header / description of protein 1                                    | SUCD_ECOLI Succinate--CoA ligase [ADP-forming]           |
+| fasta descrition 2        | Fasta2             | FASTA header / description of protein 2                                | SUCC_ECOLI Succinate--CoA ligase [ADP-forming]           |
 | link site 1        | LinkPos1             | Crosslink position in the first peptide (0-based)                                    | 3           |
 | link site 2        | LinkPos2             | Crosslink position in the second peptide (0-based                                | 2           |
-| precursor charge   | Charge               | Precursor charge of the crosslinked peptide                                    | 3           |
-| score              | Score                | Single score from the search engine                                            | 17.12       |
-| unique id          | CSMID                | A unique index for each entry in the result table                              | 0           |
-| decoy              | isTT                 | Binary column which is True for any TT identification and False for TD, DD ids | TT          |
+| score              | score                | Single score from the search engine                                            | 17.12       |
+| unique id          | PSMID                | A unique index for each entry in the result table                              | 0           |
+| TT              | isTT                 | Binary column which is True for any TT identification and False for TD, DD ids | True          |
 | fdr                | fdr                  | Estimated false discovery rate                                                 | 0.01        |
-| fdr level          | fdrGroup             | String identifier for heteromeric and self links (splitted FDR)                | heteromeric |
 
 The first four columns should be self explanatory, if not check the [sample input](https://github.com/Rappsilber-Laboratory/xiRT/tree/master/sample_data). 
-The fifth column ("CSMID") is a unique(!) integer that can be used as to retrieve CSMs. In addition, 
-depending on the number retention time domains that should to be learned/predicted the RT columns 
+The fifth column ("PSMID") is a unique(!) integer that can be used as to retrieve CSMs. In addition, 
+depending on the number retention time domains that should be learned/predicted the RT columns 
 need to be present. The column names need to match the configuration in the network parameter yaml.
+Note that xiRT swaps the sequences such that peptide1 is longer than peptide 2. In order to
+keep track of this process all columns that follow the convention <prefix>1 and <prefix>2 are swapped.
+Make sure to only have such paired columns and not single columns ending with 1/2.
 
 #### xiRT config
-This file determines the network architecture and training behaviour used in xiRT.
+This file determines the network architecture and training behaviour used in xiRT. Please see
+the [documentation](https://xirt.readthedocs.io/en/latest/parameters.html#xirt-parameters) for a 
+detailed example. For crosslinks the most important parameter sections to adapt are the *output* and
+the *predictions* section. Here the parameters must be adapted for the used chromatography
+dimensions and modelling choices. See also the provided 
+[examples](https://xirt.readthedocs.io/en/latest/usage.html#examples).
 
 #### Setup config
-This file determines the input data to be used and gives some training procedure options.
+This file determines the input data to be used and gives some training procedure options. Please see
+the [documentation](https://xirt.readthedocs.io/en/latest/parameters.html#learning-parameters) for 
+a detailed example.
 
 ### Contributors
 - Sven Giese

@@ -404,9 +404,11 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         # change peptide order
         matches_df = xs.reorder_sequences(matches_df)
         seq_in = ["Peptide1", "Peptide2"]
+
     elif sequence_type == "linear":
         matches_df["Peptide2"] = ""
         seq_in = ["Peptide1"]
+
     else:
         msg = "sequence type not supported. Must be one of (crosslink, pseudolinear, linear)"
         logger.critical(msg)

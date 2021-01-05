@@ -114,7 +114,7 @@ def reorder_sequences(matches_df):
     Returns:
         df, dataframe with the swapped cells and additional indicator column ('swapped')
     """
-    # compile regex to match columsn with 1/2 in the end of the string
+    # compile regex to match columns with 1/2 in the end of the string
     # check if all pairwise columns are there
     r = re.compile(r"\w+(?:1$|2$)")
     # get matching columns
@@ -124,6 +124,7 @@ def reorder_sequences(matches_df):
     # count occurrences and check if pairs are there
     counts = [(i, j) for i, j in Counter(pairs_noidx).items() if j == 2]
     if len(counts) * 2 != len(pairs_noidx):
+        print(match_columns)
         raise ValueError("Error! Automatic column matching could not find pairwise crosslink "
                          "columns. Please make sure that you have a peptide1, peptide2 "
                          "column name pattern for crosslinks. Columns must appear in pairs if there"
