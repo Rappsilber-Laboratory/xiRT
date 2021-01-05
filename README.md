@@ -69,7 +69,7 @@ Using pipenv:
 >
 >pip install xirt
 
-To enable CUDA support, the using a conda environment is the easiest solution. 
+To enable CUDA support, the using a [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) is the easiest solution.  
 Conda will take care of the CUDA libraries and other dependencies. Note, xiRT runs either on CPUs
 or GPUs. In the YAML file for network architecture this needs to be specified.
 
