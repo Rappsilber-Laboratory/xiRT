@@ -112,8 +112,8 @@ fraction numbers are possible too).
 |--------------------|----------------------|--------------------------------------------------------------------------------|-------------|
 | peptide sequence 1 | Peptide1             | First peptide sequence for crosslinks                                        | PEPRTIDER   |
 | peptide sequence 2 | Peptide2             | Second peptide sequence for crosslinks, or empty                                 | ELRVIS      |
-| fasta descrition 1        | Fasta1             | FASTA header / description of protein 1                                    | SUCD_ECOLI Succinate--CoA ligase [ADP-forming]           |
-| fasta descrition 2        | Fasta2             | FASTA header / description of protein 2                                | SUCC_ECOLI Succinate--CoA ligase [ADP-forming]           |
+| fasta description 1        | Fasta1             | FASTA header / description of protein 1                                    | SUCD_ECOLI Succinate--CoA ligase [ADP-forming]           |
+| fasta description 2        | Fasta2             | FASTA header / description of protein 2                                | SUCC_ECOLI Succinate--CoA ligase [ADP-forming]           |
 | link site 1        | LinkPos1             | Crosslink position in the first peptide (0-based)                                    | 3           |
 | link site 2        | LinkPos2             | Crosslink position in the second peptide (0-based                                | 2           |
 | score              | score                | Single score from the search engine                                            | 17.12       |
