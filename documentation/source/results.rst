@@ -113,6 +113,7 @@ Processed PSMS
 ''''''''''''''
 This table ("processed_psms.csv") contains the input data together with internally done
 processing steps. The additional columns are:
+
 - swapped (indicator if peptide order was swapped)
 - Seq_Peptide1/Seq_Peptide2 (peptide sequences in modX format)
 - Seqar_Peptide1/Seqar_Peptide2 (peptide sequences in array format

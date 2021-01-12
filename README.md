@@ -28,7 +28,8 @@ all available chromatography methods.
 
 xiRT requires the columns shown in the table below. Importantly, the xiRT framework requires that 
 CSM are sorted such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically 
-larger one for crosslinked RT predictions.
+larger one for crosslinked RT predictions. The sorting is done internally and may result in swapped
+peptide sequences in the output tables.
 
 ![xiRT Architecture](documentation/imgs/xiRT.PNG)
 
