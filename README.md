@@ -21,53 +21,62 @@ peptides using a (Siamese) deep neural network architecture.
 ---
 ## overview
 
-xiRT is a deep learning tool to predict the retention time(s) of linear and crosslinked peptides 
-from multiple fractionation dimensions including RP (typically coupled to the mass spectrometer). 
-xiRT was developed with a combination of SCX / hSAX / RP chromatography. However, xiRT supports
-all available chromatography methods.
+xiRT is a deep learning tool to predict the retention time(s) (RT) of linear and crosslinked 
+peptides from multiple fractionation dimensions including reversed phase (RP, typically coupled
+ online to the mass spectrometer). xiRT was developed with data from separating a complex 
+ crosslinked peptide mixture by a combination of strong cation exchange (SCX) / hydrophilic 
+ strong anion exchange (hSAX) / RP chromatography. However, xiRT supports all chromatographic 
+ methods.
 
-xiRT requires the columns shown in the table below. Importantly, the xiRT framework requires that 
-CSM are sorted such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically 
-larger one for crosslinked RT predictions. The sorting is done internally and may result in swapped
-peptide sequences in the output tables.
+xiRT requires the columns shown in the table (“input format”) below in the input data. 
+Importantly, the xiRT framework requires that crosslinked spectrum matches (CSMs) are defined 
+such that for a given Peptide1 - Peptide2, Peptide1 is the longer or lexicographically larger 
+one for RT predictions of crosslinked peptides.The sorting is done internally and may result in 
+swapped peptide sequences in the output tables.
+
+This readme features a quick tour through xiRT. For more information please visit the 
+[documentation](https://xirt.readthedocs.io/en/latest/).
+
 
 ![xiRT Architecture](documentation/imgs/xiRT.PNG)
 
 ## Description
-xiRT is meant to be used to generate additional information about CSMs for machine learning-based
-rescoring frameworks but the usage can be extended to spectral libraries, targeted acquisitions etc.
-Therefore xiRT offers several training / prediction  modes that need to be configured 
-depending on the use case. At the moment training, prediction, crossvalidation are the supported
-modes.
+xiRT is intended to generate additional information about CSMs for machine learning-based 
+rescoring frameworks but the usage can be extended to spectral libraries, targeted acquisitions
+ etc. Therefore, xiRT offers several training / prediction modes that need to be configured 
+ depending on the use case. At the moment training, prediction, cross-validation are the supported 
+ modes.
 - *training*: trains xiRT on the input CSMs (using 10% for validation) and stores a trained model
 - *prediction*: use a pretrained model and predict RTs for the input CSMs
 - *crossvalidation*: load/train a model and predict RTs for all data points without using them
-in the training process. Requires the training of several models during CV
+in the training process. Requires the training of several models during cross-validation (CV).
 
-Note: all modes can be supplemented by using a pretrained model ("transfer learning") when not 
-enough training data is available to achieve robust prediction performance.
+Note: all modes can be supplemented by using a pretrained model ("transfer learning") 
+when the quantity of available training data are insufficient to achieve a robust prediction 
+performance.
 
 This readme only gives a brief overview about xiRTs functions and parameters. Please refer
 to the [documentation](https://xirt.readthedocs.io/en/latest/) for more details and examples.
 
-### Installation and Usage
+## Installation and Usage
 
-xiRT is a python package that comes with a executable python file. To run xiRT follow the steps 
+xiRT is a python package that comes with an executable python file. To run xiRT follow the steps 
 below.
 
-#### Requirements
+### Requirements
 xiRT requires a running python installation on windows/mac/linux. All further requirements
 are managed during the installation process via pip or conda. xiRT was tested using python >3.7 with
 TensorFlow 1.4 and python >3.8 and TensorFlow >2.0. A GPU is not mandatory to run xiRT, however
 it can greatly decrease runtime. Further system requirements depend on the data sets to be used.
 
-#### Installation
-To install xiRT simply run the command below. We recommend to use an isolated python environment,
+### Installation
+To install xiRT simply run the command below. We recommend using an isolated python environment,
 for example by using pipenv **or** conda. Installation should finish within minutes.
 
 Using pipenv:
+>pip install pipenv
 >pipenv shell
->
+>und
 >pip install xirt
 
 To enable CUDA support, using a [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) is the easiest solution.  
@@ -84,10 +93,10 @@ type to GRU/LSTM.
 > conda install tensorflow-gpu
 
 Hint:
-pydot and graphviz sometimes make trouble when they are installed via pip. If on linux,
-simply use *sudo apt-get install graphviz*, on windows download latest graphviz package from 
-[here](https://www2.graphviz.org/Packages/stable/windows/), unzip the content of the file and the
-*bin* directory path to the windows PATH variable. These two packages allow the vizualization
+pydot and graphviz sometimes cause trouble when they are installed via pip. If on linux,
+simply use *sudo apt-get install graphviz*, on windows download the latest graphviz package from 
+[here](https://www2.graphviz.org/Packages/stable/windows/), unzip the content of the file and add the
+*bin* directory path to the windows PATH variable. These two packages allow the visualization
 of the neural network architecture.
 
 #### Usage
@@ -105,9 +114,9 @@ definition of the prediction task (classification, regression, ordinal regressio
 on the decoding of the target variable, the output layers need to be adapted. For standard RP 
 prediction, regression is essentially the only viable option. For SCX/hSAX (general classification
 from fractionation experiments) the prediction task can be formulated as classification, 
-regression or ordinal regression. For the usage of regression for fractionation it is recommended 
-that the estimated salt concentrations are used as target variable for the prediction  (raw 
-fraction numbers are possible too).
+regression or ordinal regression. For the usage of regression for data from a fractionation it is 
+recommended that the estimated salt concentrations are used as target variable for the prediction
+(raw fraction numbers are also possible).
 
 Please find a working example / quick-start guide [here](https://xirt.readthedocs.io/en/latest/usage.html#quick-start).
 
@@ -125,13 +134,14 @@ Please find a working example / quick-start guide [here](https://xirt.readthedoc
 | TT              | isTT                 | Binary column which is True for any TT identification and False for TD, DD ids | True          |
 | fdr                | fdr                  | Estimated false discovery rate                                                 | 0.01        |
 
-The first four columns should be self explanatory, if not check the [sample input](https://github.com/Rappsilber-Laboratory/xiRT/tree/master/sample_data). 
-The fifth column ("PSMID") is a unique(!) integer that can be used as to retrieve CSMs. In addition, 
+The first four columns should be self explanatory, for more information please
+check the [sample input](https://github.com/Rappsilber-Laboratory/xiRT/tree/master/sample_data). 
+The fifth column ("PSMID") is a unique(!) integer that can be used to retrieve CSMs. In addition, 
 depending on the number retention time domains that should be learned/predicted the RT columns 
 need to be present. The column names need to match the configuration in the network parameter yaml.
 Note that xiRT swaps the sequences such that peptide1 is longer than peptide 2. In order to
 keep track of this process all columns that follow the convention <prefix>1 and <prefix>2 are swapped.
-Make sure to only have such paired columns and not single columns ending with 1/2.
+Make sure to only have such paired columns and not single columns ending with either "1" or "2".
 
 #### xiRT config
 This file determines the network architecture and training behaviour used in xiRT. Please see
