@@ -143,7 +143,11 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     if "ordinal" in ";".join([xirtnetwork.output_p[i + "-column"] for i in xirtnetwork.tasks]):
         has_ordinal = True
     else:
-        has_ordinal = False
+        if "coral" in ";".join(
+                [xirtnetwork.output_p[i + "-activation"] for i in xirtnetwork.tasks]):
+            has_ordinal = True
+        else:
+            has_ordinal = False
 
     cv_counter = 1
     # perform crossvalidation
@@ -252,7 +256,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         if has_ordinal:
             for count, task_i in enumerate(frac_cols):
                 taski_short = task_i.split("_")[0]
-                if "ordinal" in xirtnetwork.output_p[taski_short + "-column"]:
+                if ("ordinal" in xirtnetwork.output_p[taski_short + "-column"]) | \
+                    ("coral" in xirtnetwork.output_p[taski_short + "-activation"]):
                     # accuracies_all contains accuracies for train, validation, pred
                     # problem is that accuracies are computed after the loop and stored in a 1d-ar
                     # retrieve information again

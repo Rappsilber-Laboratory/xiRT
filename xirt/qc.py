@@ -325,6 +325,9 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
                 m = "loss"
                 store_str = "loss"
             else:
+                if "coral" in xirt_params["output"][t+"-activation"]:
+                    m = "mean_absolute_error_labels"
+
                 store_str = "metric"
             # points
             axes[ii] = sns.stripplot(x="Split", y="{}_{}".format(t, m), data=summary_df,

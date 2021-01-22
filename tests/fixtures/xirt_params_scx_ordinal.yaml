@@ -1,0 +1,74 @@
+LSTM:
+  activation: tanh
+  activity_regularization: l2
+  activityregularizer_value: 0.001
+  bidirectional: true
+  kernel_regularization: l2
+  kernelregularizer_value: 0.001
+  lstm_bn: true
+  nlayers: 1
+  type: GRU
+  units: 50
+dense:
+  activation:
+  - relu
+  - relu
+  - relu
+  dense_bn:
+  - true
+  - true
+  - true
+  dropout:
+  - 0.1
+  - 0.1
+  - 0.1
+  kernel_regularizer:
+  - l2
+  - l2
+  - l2
+  neurons:
+  - 300
+  - 150
+  - 75
+  nlayers: 3
+  regularization:
+  - true
+  - true
+  - true
+  regularizer_value:
+  - 0.001
+  - 0.001
+  - 0.001
+embedding:
+  length: 50
+learning:
+  batch_size: 256
+  epochs: 100
+  learningrate: 0.01
+  verbose: 1
+  optimizer: adam
+output:
+  scx-activation: coral
+  scx-column: scx_0based
+  scx-dimension: 9
+  scx-loss: coral_loss
+  scx-metrics: mse
+  scx-weight: 1
+siamese:
+  use: True
+  merge_type: add
+  single_predictions: True
+callbacks:
+  check_point: True
+  log_csv: True
+  early_stopping: True
+  early_stopping_patience: 15
+  tensor_board: False
+  progressbar: True
+  reduce_lr: True
+  reduce_lr_factor: 0.5
+  reduce_lr_patience: 15
+predictions:
+  continues: []
+  # simply write fractions: [] if no fraction prediction is desired
+  fractions: [scx]

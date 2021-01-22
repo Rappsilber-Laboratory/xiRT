@@ -1,6 +1,7 @@
 """Module to build the xiRT-network."""
 import os
 
+import coral_ordinal as coral
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -127,10 +128,16 @@ class xiRTNET:
 
             tasks_ar = []
             for task_i in self.tasks:
+                # these are the intermediate layers
                 tmp_task = self._add_task_dense_layers(merger_layer, None)
-                tmp_task = Dense(act_conf[task_i + "-dimension"],
-                                 activation=act_conf[task_i + "-activation"],
-                                 name=task_i)(tmp_task)
+                # final layer with activation
+                if act_conf[task_i + "-activation"] == "coral":
+                    tmp_task = coral.CoralOrdinal(act_conf[task_i + "-dimension"],
+                                                  name=task_i)(tmp_task)
+                else:
+                    tmp_task = Dense(act_conf[task_i + "-dimension"],
+                                     activation=act_conf[task_i + "-activation"],
+                                     name=task_i)(tmp_task)
                 tasks_ar.append(tmp_task)
 
             model_full = Model(inputs=net.input, outputs=tasks_ar)
@@ -410,8 +417,11 @@ class xiRTNET:
             opt = optimizers.Nadam(learning_rate=self.learning_p["learningrate"])
 
         # get parameters from config file
-        loss = {i: self.output_p[i + "-loss"] for i in self.tasks}
-        metric = {i: self.output_p[i + "-metrics"] for i in self.tasks}
+        loss = {i: self.output_p[i + "-loss"] if "coral" not in self.output_p[i + "-loss"] else
+        coral.OrdinalCrossEntropy(num_classes=self.output_p[i + "-dimension"]) for i in
+                self.tasks}
+        metric = {i: self.output_p[i + "-metrics"] if "coral" not in self.output_p[i + "-loss"] else
+        coral.MeanAbsoluteErrorLabels() for i in self.tasks}
         loss_weights = {i: self.output_p[i + "-weight"] for i in self.tasks}
 
         # add r2 as metric for regression tasks, dimension=1

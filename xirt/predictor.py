@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
+import coral_ordinal as coral
 
 from xirt import processing as xp
 from xirt import sequences as xs
@@ -218,9 +219,11 @@ class ModelData:
             return [self.psms[ccol].loc[idx].values for ccol in cont_cols]
 
         if len(cont_cols) == 0:
-            return [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
+            return [xirtnet.reshapey(self.psms[fcol].loc[idx].values) if "0based" not in
+                    fcol else self.psms[fcol].loc[idx].values for fcol in frac_cols]
 
-        y_var = [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
+        y_var = [xirtnet.reshapey(self.psms[fcol].loc[idx].values) if "0based" not in
+                    fcol else self.psms[fcol].loc[idx].values for fcol in frac_cols]
         y_var.extend([self.psms[ccol].loc[idx].values for ccol in cont_cols])
         return y_var
 
@@ -294,13 +297,26 @@ class ModelData:
                 self.prediction_df[task_i + "-prediction" + suf] = -1000000
 
                 # softmax also gets probabilities
-                if pred_type == "softmax":
+                if pred_type in ["softmax", "coral"]:
                     self.prediction_df[task_i + "-probability" + suf] = -1000000
 
             if pred_type in ["linear", "relu"]:
                 # easiest, just ravel to 1d ar
                 self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = np.ravel(
                     pred_ar)
+
+            elif pred_type == "coral":
+                probs = coral.ordinal_softmax(pred_ar).numpy()
+                # classification, take maximum probability as class value
+                self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
+                    np.argmax(probs, axis=1)
+                self.prediction_df[task_i + "-probability" + suf].loc[store_idx] = \
+                    np.max(probs, axis=1)
+                # alternative
+                # self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
+                #      np.argmax(probs, axis=1)
+                #  self.prediction_df[task_i + "-probability" + suf].loc[store_idx] = \
+                #      np.max(probs, axis=1)
 
             elif pred_type == "softmax":
                 # classification, take maximum probability as class value
@@ -340,6 +356,11 @@ def compute_accuracy(predictions, expected, tasks, params):
         if "ordinal" in params[task_i + "-column"]:
             accuracy_tmp.append(accuracy_score(sigmoid_to_class(pred_ar),
                                                expected[task_i + "_0based"]))
+        elif "coral" in params[task_i + "-activation"]:
+            # coral sigmoids
+            accuracy_tmp.append(accuracy_score(
+                coral.ordinal_softmax(pred_ar).numpy().argmax(axis=1),
+                expected[task_i + "_0based"]))
     return np.round(accuracy_tmp, 3)
 
 
