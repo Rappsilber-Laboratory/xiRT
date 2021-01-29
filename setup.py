@@ -8,6 +8,7 @@ import io
 import os
 import sys
 from shutil import rmtree
+import versioneer
 
 from setuptools import find_packages, setup, Command
 
@@ -51,9 +52,9 @@ except FileNotFoundError:
 
 # Load the package's __version__.py module as a dictionary.
 about = {}
-project_slug = NAME.lower().replace("-", "_").replace(" ", "_")
-with open(os.path.join(here, project_slug, '__version__.py')) as f:
-    exec(f.read(), about)
+project_slug = "xirt"
+# with open(os.path.join(here, project_slug, '__version__.py')) as f:
+#     exec(f.read(), about)
 
 
 class UploadCommand(Command):
@@ -99,7 +100,8 @@ class UploadCommand(Command):
 # Where the magic happens:
 setup(
     name=NAME,
-    version=about['__version__'],
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -131,8 +133,7 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: PyPy'
     ],
-    # $ setup.py publish support.
-    cmdclass={
-        'upload': UploadCommand,
-    },
 )
+    # $ setup.py publish support.
+    #cmdclass={'upload': UploadCommand,},
+#)

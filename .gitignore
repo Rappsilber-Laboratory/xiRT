@@ -188,3 +188,7 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 /manuscript2020/
+
+tests/fixtures/coral.py
+
+utils/xiRT2iML.py
