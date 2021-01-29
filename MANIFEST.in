@@ -1,3 +1,5 @@
 include README.md LICENSE
 recursive-include documentation
-exclude tests/sample_data sample_data
+exclude tests/sample_data sample_datainclude versioneer.py
+include xirt/_version.py
+include versioneer.py
