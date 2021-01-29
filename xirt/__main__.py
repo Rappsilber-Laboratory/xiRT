@@ -37,7 +37,7 @@ def arg_parser():  # pragma: not covered
     https://xirt.readthedocs.io/en/latest/
 
     Current Version: {}
-    """.format(xv.__version__)
+    """.format(xv)
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-i", "--in_peptides",
                         help="Input peptide table to learn (and predict) the retention times.",
@@ -424,7 +424,7 @@ def main():  # pragma: no cover
     logger.info("Init logging file.")
     logger.info("Starting Time: {}".format(datetime.now().strftime("%H:%M:%S")))
     logger.info("Starting xiRT.")
-    logger.info("Using xiRT version: {}".format(xv.__version__))
+    logger.info("Using xiRT version: {}".format(xv))
 
     # call function
     xirt_runner(args.in_peptides, args.out_dir, args.xirt_params, args.learning_params,
