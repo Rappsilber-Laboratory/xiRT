@@ -15,7 +15,7 @@ import yaml
 from xirt import __version__ as xv
 from xirt import features as xf
 from xirt import predictor as xr
-from xirt import xirtnet, qc
+from xirt import xirtnet, qc, const
 import matplotlib
 
 matplotlib.use('Agg')
@@ -36,6 +36,10 @@ def arg_parser():  # pragma: not covered
     Visit the documentation to get more information:
     https://xirt.readthedocs.io/en/latest/
 
+    You can generate example configs by running:
+    >xirt -p xirt_params.yaml
+    and
+    >xirt -s learning_params.yaml
     Current Version: {}
     """.format(xv)
     parser = argparse.ArgumentParser(description=description)
@@ -54,6 +58,15 @@ def arg_parser():  # pragma: not covered
     parser.add_argument("-l", "--learning_params",
                         help="YAML parameter file to control training and testing splits and data.",
                         required=True, action="store", dest="learning_params")
+
+    parser.add_argument("-s", "--sample_learning_params",
+                        help="If set to an output location, all other options are ignored and an "
+                             "example config is written for the learning parameter file.",
+                        required=False, action="store", dest="sample_learning_params", default="")
+    parser.add_argument("-p", "--sample_xirt_params",
+                        help="If set to an output location, all other options are ignored and an "
+                             "example config is written for the xirt parameter file.",
+                        required=False, action="store", dest="sample_xirt_params", default="")
 
     parser.add_argument('--write', dest='write', action='store_true',
                         help="Flag for writing result prediction files. If false only summaries"
@@ -394,6 +407,25 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
 def main():  # pragma: no cover
     """Run xiRT main function."""
     parser = arg_parser()
+
+    # check if parameter for option writing is supplied
+    if "-p" in sys.argv[1:]:
+        outfile = sys.argv[1:][sys.argv[1:].index("-p")+1]
+        # write config files
+        if outfile != "":
+            print(f"Writing default config (learning) to file {outfile}.")
+            with open(outfile, "w") as fobj:
+                fobj.write(const.learning_params)
+        sys.exit()
+
+    if "-s" in sys.argv[1:]:
+        outfile = sys.argv[1:][sys.argv[1:].index("-s") + 1]
+        # write config files
+        if outfile != "":
+            print(f"Writing default config (xirt) to file {outfile}.")
+            with open(outfile, "w") as fobj:
+                fobj.write(const.xirt_params)
+        sys.exit()
     try:
         args = parser.parse_args(sys.argv[1:])
     except TypeError:
