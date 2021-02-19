@@ -6,6 +6,14 @@ The command line interface (CLI) requires three inputs:
 2) a `YAML <https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html>`_ file to configure the neural network architecture
 3) another YAML file to configure the general training / prediction behaviour, called setup-config
 
+Probed configs are either available via github or up-to-date configs can be generated from the
+xirt package itself. To generate documented example configs, run the following commands and adapt
+the configs to your needs.
+
+.. code-block:: console
+    > xirt -p learning_params.yaml
+    > xirt -s xirt_params.yaml
+
 To use xiRT these options are put together as shown below:
 
 .. code-block:: console

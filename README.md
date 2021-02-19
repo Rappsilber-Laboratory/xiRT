@@ -88,13 +88,20 @@ pydot and graphviz sometimes make trouble when they are installed via pip. If on
 simply use *sudo apt-get install graphviz*, on windows download latest graphviz package from 
 [here](https://www2.graphviz.org/Packages/stable/windows/), unzip the content of the file and the
 *bin* directory path to the windows PATH variable. These two packages allow the vizualization
-of the neural network architecture.
+of the neural network architecture. If this feature is not desired, the steps above can be omitted.
 
 #### Usage
 The command line interface (CLI) requires three inputs:
 1) input PSM/CSM file
 2) a [YAML](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html) file to configure the neural network architecture
 3) another YAML file to configure the general training / prediction behaviour, called setup-config
+
+Probed configs are either available via github or up-to-date configs can be generated from the
+xirt package itself. To generate documented example configs, run the following commands and adapt
+the configs to your needs.
+
+> xirt -p learning_params.yaml
+> xirt -s xirt_params.yaml
 
 To use xiRT these options are put together as shown below:
 > xirt(.exe) -i peptides.csv -o out_dir -x xirt_params -l learning_params

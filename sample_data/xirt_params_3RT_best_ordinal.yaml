@@ -48,7 +48,6 @@ learning:
   verbose: 1
   optimizer: adam
 output:
-  callback-path: data/results/callbacks/
   hsax-activation: sigmoid
   hsax-column: hsax_ordinal
   hsax-dimension: 10
