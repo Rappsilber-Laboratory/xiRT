@@ -13,9 +13,7 @@ import pandas as pd
 import yaml
 
 from xirt import __version__ as xv
-from xirt import features as xf
-from xirt import predictor as xr
-from xirt import xirtnet, qc, const
+from xirt import const
 import matplotlib
 
 matplotlib.use('Agg')
@@ -97,10 +95,15 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     Returns:
         None
     """
+    from xirt import features as xf
+    from xirt import predictor as xr
+    from xirt import xirtnet, qc
+
     start_time = time.time()
     xirt_params = yaml.load(open(xirt_loc), Loader=yaml.FullLoader)
     learning_params = yaml.load(open(setup_loc), Loader=yaml.FullLoader)
     matches_df = pd.read_csv(peptides_file, nrows=nrows)
+    # matches_df = matches_df[matches_df["PSMID"] == 2618560]
 
     logger.info("xi params: {}".format(xirt_loc))
     logger.info("learning_params: {}".format(setup_loc))
@@ -409,7 +412,7 @@ def main():  # pragma: no cover
     parser = arg_parser()
 
     # check if parameter for option writing is supplied
-    if "-p" in sys.argv[1:]:
+    if "-s" in sys.argv[1:]:
         outfile = sys.argv[1:][sys.argv[1:].index("-p")+1]
         # write config files
         if outfile != "":
@@ -418,7 +421,7 @@ def main():  # pragma: no cover
                 fobj.write(const.learning_params)
         sys.exit()
 
-    if "-s" in sys.argv[1:]:
+    if "-p" in sys.argv[1:]:
         outfile = sys.argv[1:][sys.argv[1:].index("-s") + 1]
         # write config files
         if outfile != "":
