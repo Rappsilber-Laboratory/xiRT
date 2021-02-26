@@ -75,20 +75,23 @@ Conda will take care of the CUDA libraries and other dependencies. Note, xiRT ru
 or GPUs. To use a GPU specify CuDNNGRU/CuDNNLSTM as type in the LSTM settings, to use a CPU set the
 type to GRU/LSTM.
 
-> conda create --name xirt_env python=3.7
+> conda create --name xirt_env python=3.8
 >
 >conda activate xirt_env
 >
 > pip install xirt
->
-> conda install tensorflow-gpu
+
 
 Hint:
+The plotting functionality for the network is not enabled per default because
 pydot and graphviz sometimes make trouble when they are installed via pip. If on linux,
 simply use *sudo apt-get install graphviz*, on windows download latest graphviz package from 
 [here](https://www2.graphviz.org/Packages/stable/windows/), unzip the content of the file and the
-*bin* directory path to the windows PATH variable. These two packages allow the vizualization
-of the neural network architecture. If this feature is not desired, the steps above can be omitted.
+*bin* directory path to the windows PATH variable. These two packages allow the visualization
+of the neural network architecture. xiRT will function also without this functionality.
+
+Older versions of TensorFlow will require the separate installation of tensorflow-gpu. We recommend
+to install tensorflow in conda, especially if GPU usage is desired.
 
 #### Usage
 The command line interface (CLI) requires three inputs:
@@ -97,7 +100,7 @@ The command line interface (CLI) requires three inputs:
 3) another YAML file to configure the general training / prediction behaviour, called setup-config
 
 Probed configs are either available via github or up-to-date configs can be generated from the
-xirt package itself. To generate documented example configs, run the following commands and adapt
+xiRT package itself. To generate documented example configs, run the following commands and adapt
 the configs to your needs.
 
 > xirt -p learning_params.yaml
@@ -125,15 +128,18 @@ Please find a working example / quick-start guide [here](https://xirt.readthedoc
 | peptide sequence 2 | Peptide2             | Second peptide sequence for crosslinks, or empty                                 | ELRVIS      |
 | fasta description 1        | Fasta1             | FASTA header / description of protein 1                                    | SUCD_ECOLI Succinate--CoA ligase [ADP-forming]           |
 | fasta description 2        | Fasta2             | FASTA header / description of protein 2                                | SUCC_ECOLI Succinate--CoA ligase [ADP-forming]           |
+| PSMID                | PSMID                  | A unique identifier for the identification                                                 | 1        |
 | link site 1        | LinkPos1             | Crosslink position in the first peptide (0-based)                                    | 3           |
 | link site 2        | LinkPos2             | Crosslink position in the second peptide (0-based                                | 2           |
 | score              | score                | Single score from the search engine                                            | 17.12       |
 | unique id          | PSMID                | A unique index for each entry in the result table                              | 0           |
-| TT              | isTT                 | Binary column which is True for any TT identification and False for TD, DD ids | True          |
+| TT              | isTT                 | Binary column which is True for any TT  | True          |
+| TD              | isTD                 | Binary column which is True for any TD  | True          |
+| DD              | isDD                 | Binary column which is True for any DD  | True          |
 | fdr                | fdr                  | Estimated false discovery rate                                                 | 0.01        |
 
 The first four columns should be self explanatory, if not check the [sample input](https://github.com/Rappsilber-Laboratory/xiRT/tree/master/sample_data). 
-The fifth column ("PSMID") is a unique(!) integer that can be used as to retrieve CSMs. In addition, 
+The fifth column ("PSMID") is a unique(!) integer that can be used as to retrieve CSMs/PSMs. In addition, 
 depending on the number retention time domains that should be learned/predicted the RT columns 
 need to be present. The column names need to match the configuration in the network parameter yaml.
 Note that xiRT swaps the sequences such that peptide1 is longer than peptide 2. In order to

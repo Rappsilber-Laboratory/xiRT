@@ -37,7 +37,7 @@ Quick start
 
 The GitHub repository contains a few example files. Download the following files from  `HERE <https://github.com/Rappsilber-Laboratory/xiRT/tree/master/sample_data>`_:
 
-- DSS_xisearch_fdr_CSM50percent.csv
+- DSS_xisearch_fdr_CSM50percent_minimal.csv
 - xirt_params_3RT.yaml
 - learning_params_training_cv.yaml
 
@@ -46,7 +46,7 @@ To run xiRT on the data call the main function as follows after successfull inst
 
 .. code-block:: console
 
-    > xirt -i DSS_xisearch_fdr_CSM50percent.csv -o xirt_results22/ -x xirt_params_rp.yaml -l learning_params_training_cv.yaml
+    > xirt -i DSS_xisearch_fdr_CSM50percent_minimal.csv -o xirt_results22/ -x xirt_params_rp.yaml -l learning_params_training_cv.yaml
 
 
 

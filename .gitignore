@@ -12,6 +12,7 @@ snakemake
 .Python
 pipenv
 build/
+sample_run/
 results/
 tests/results/
 intern_data/
