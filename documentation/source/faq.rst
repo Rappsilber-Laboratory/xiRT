@@ -37,3 +37,12 @@ if we can assist you with your analysis or if anything is unclear.
 xiRT is agnostic to the type of chromatography and supports to learn 1, 2,3 ..., n chromatography
 dimensions at the same time. Continuous (e.g. reversed phase) and discrete
 (fractionation) retention time measurements are supported.
+
+8. xirt_params.yaml - File not found error
+''''''''''''''''''''''''''''''''''''''''''
+When using xirt over the command line, make sure to allways use the relative or absolute path to
+the input files.
+
+9. AttributeError: module 'sip' has no attribute 'setapi'
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+The current matplotlib version (3.3) seems to have a bug. Please install matplitlib 3.2 (pip install matplotlib==3.2).

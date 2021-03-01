@@ -21,10 +21,12 @@ peptides using a (Siamese) deep neural network architecture.
 ---
 ## overview
 
-xiRT is a deep learning tool to predict the retention time(s) of linear and crosslinked peptides 
-from multiple fractionation dimensions including RP (typically coupled to the mass spectrometer). 
-xiRT was developed with a combination of SCX / hSAX / RP chromatography. However, xiRT supports
-all available chromatography methods.
+xiRT is a deep learning tool to predict the separation behavior (i.e. retention times) of linear 
+and crosslinked peptides from single to multiple fractionation dimensions including RP (typically 
+directly coupled to the mass spectrometer). xiRT was developed to predict retention times from a 
+multi-dimensional separation from the combination of SCX / hSAX / RP chromatography. 
+However, xiRT supports all available chromatographic and other peptide separation 
+methods
 
 xiRT requires the columns shown in the table below. Importantly, the xiRT framework requires that 
 CSM are sorted such that in the Peptide1 - Peptide2, Peptide1 is the longer or lexicographically 
@@ -70,7 +72,7 @@ Using pipenv:
 >
 >pip install xirt
 
-To enable CUDA support, using a [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) is the easiest solution.  
+Optional: To enable CUDA support, using a [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands) is the easiest solution.  
 Conda will take care of the CUDA libraries and other dependencies. Note, xiRT runs either on CPUs
 or GPUs. To use a GPU specify CuDNNGRU/CuDNNLSTM as type in the LSTM settings, to use a CPU set the
 type to GRU/LSTM.
@@ -93,35 +95,43 @@ of the neural network architecture. xiRT will function also without this functio
 Older versions of TensorFlow will require the separate installation of tensorflow-gpu. We recommend
 to install tensorflow in conda, especially if GPU usage is desired.
 
-#### Usage
+#### General Usage
+
+This section explains the general usage of xiRT via the command line. A minimal working example
+in a quick-start guide fashion is available [here](https://xirt.readthedocs.io/en/latest/usage.html#quick-start).
+
 The command line interface (CLI) requires three inputs:
 1) input PSM/CSM file
 2) a [YAML](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html) file to configure the neural network architecture
 3) another YAML file to configure the general training / prediction behaviour, called setup-config
 
-Probed configs are either available via github or up-to-date configs can be generated from the
-xiRT package itself. To generate documented example configs, run the following commands and adapt
-the configs to your needs.
+Configs are either available via [github](https://github.com/Rappsilber-Laboratory/xiRT/tree/master/default_parameters).
+Alternatively, up-to-date configs can be generated from the xiRT package itself:
 
 > xirt -p learning_params.yaml
+>
 > xirt -s xirt_params.yaml
 
-To use xiRT these options are put together as shown below:
-> xirt(.exe) -i peptides.csv -o out_dir -x xirt_params -l learning_params
+To use these two parameter files in xiRT and store the results in a directory called *out_dir*,  
+run the following command:
 
-To adapt the xiRT parameters a YAML config file needs to be prepared. The configuration file
-is used to determine network parameters (number of neurons, layers, regularization) but also for the
-definition of the prediction task (classification, regression, ordinal regression). Depending
-on the decoding of the target variable, the output layers need to be adapted. For standard RP 
-prediction, regression is essentially the only viable option. For SCX/hSAX (general classification
-from fractionation experiments) the prediction task can be formulated as classification, 
-regression or ordinal regression. For the usage of regression for fractionation it is recommended 
-that the estimated salt concentrations are used as target variable for the prediction  (raw 
-fraction numbers are possible too).
+> xirt -i psms.csv -o out_dir -x xirt_params.yaml -l learning_params.yaml
 
-Please find a working example / quick-start guide [here](https://xirt.readthedocs.io/en/latest/usage.html#quick-start).
+To adapt the xiRT parameters to your needs, edits to the YAML config file are needed. The configuration file
+is used to determine the prediction task (rp, scx, hsax, ...) but also to set important network parameters 
+(number of neurons, layers, regularization). While the default network configuration offers suitable
+parameters for most situations, the prediction tasks need further adjustments. The adjustments
+need to account for the type and number of prediction tasks. Please visit the 
+[documentation](https://xirt.readthedocs.io/en/latest/usage.html#examples) to 
+get more information about viable configurations. 
 
-### input format
+Once xirt is running, the progress is logged to the terminal as well as a dedicated log file. 
+This log file summarizes the training steps and contains important information 
+(settings, file paths, metrics). Further output files and quality control plots are then stored in
+the specified  output (-o) directory. 
+Find a description for the files [here](https://xirt.readthedocs.io/en/latest/results.html)
+
+##### input format
 | short name         | explicit column name | description                                                                    | Example     |
 |--------------------|----------------------|--------------------------------------------------------------------------------|-------------|
 | peptide sequence 1 | Peptide1             | First peptide sequence for crosslinks                                        | PEPRTIDER   |
@@ -146,7 +156,7 @@ Note that xiRT swaps the sequences such that peptide1 is longer than peptide 2. 
 keep track of this process all columns that follow the convention <prefix>1 and <prefix>2 are swapped.
 Make sure to only have such paired columns and not single columns ending with 1/2.
 
-#### xiRT config
+##### xiRT config
 This file determines the network architecture and training behaviour used in xiRT. Please see
 the [documentation](https://xirt.readthedocs.io/en/latest/parameters.html#xirt-parameters) for a 
 detailed example. For crosslinks the most important parameter sections to adapt are the *output* and
@@ -154,7 +164,7 @@ the *predictions* section. Here the parameters must be adapted for the used chro
 dimensions and modelling choices. See also the provided 
 [examples](https://xirt.readthedocs.io/en/latest/usage.html#examples).
 
-#### Setup config
+##### Setup config
 This file determines the input data to be used and gives some training procedure options. Please see
 the [documentation](https://xirt.readthedocs.io/en/latest/parameters.html#learning-parameters) for 
 a detailed example.

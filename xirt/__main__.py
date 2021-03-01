@@ -67,10 +67,10 @@ def arg_parser():  # pragma: not covered
                         required=False, action="store", dest="sample_xirt_params", default="")
 
     parser.add_argument('--write', dest='write', action='store_true',
-                        help="Flag for writing result prediction files. If false only summaries"
+                        help="Flag for writing result prediction files. If false only summaries "
                              "are written (default: --write).")
     parser.add_argument('--no-write', dest='write', action='store_false',
-                        help="Flag for writing result prediction files. If false only summaries"
+                        help="Flag for writing result prediction files. If false only summaries "
                              "are written (default: --write).")
     parser.set_defaults(write=True)
     return parser

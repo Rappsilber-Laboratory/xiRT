@@ -1,17 +1,18 @@
-Usage
-=====
+General Usage
+=============
 The command line interface (CLI) requires three inputs:
 
 1) input PSM/CSM file
 2) a `YAML <https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html>`_ file to configure the neural network architecture
 3) another YAML file to configure the general training / prediction behaviour, called setup-config
 
-Probed configs are either available via github or up-to-date configs can be generated from the
-xirt package itself. To generate documented example configs, run the following commands and adapt
-the configs to your needs.
+Configs are either available via `github <https://github.com/Rappsilber-Laboratory/xiRT/tree/master/default_parameters>`_).
+Alternatively, up-to-date configs can be generated from the xiRT package itself:
 
 .. code-block:: console
+
     > xirt -p learning_params.yaml
+    >
     > xirt -s xirt_params.yaml
 
 To use xiRT these options are put together as shown below:
@@ -38,15 +39,15 @@ Quick start
 The GitHub repository contains a few example files. Download the following files from  `HERE <https://github.com/Rappsilber-Laboratory/xiRT/tree/master/sample_data>`_:
 
 - DSS_xisearch_fdr_CSM50percent_minimal.csv
-- xirt_params_3RT.yaml
+- xirt_params_rp.yaml
 - learning_params_training_cv.yaml
 
-This set of files can now be used to perform a RP prediction on crosslink data.
+This set of files can now be used to perform a RP (only) prediction on crosslink data.
 To run xiRT on the data call the main function as follows after successfull installation:
 
 .. code-block:: console
 
-    > xirt -i DSS_xisearch_fdr_CSM50percent_minimal.csv -o xirt_results22/ -x xirt_params_rp.yaml -l learning_params_training_cv.yaml
+    > xirt -i DSS_xisearch_fdr_CSM50percent_minimal.csv -o xirt_results/ -x xirt_params_rp.yaml -l learning_params_training_cv.yaml
 
 
 
@@ -155,7 +156,8 @@ Transfer Learning
 '''''''''''''''''
 xiRT supports multiple types of transfer-learning capabilities. For instance,
 training the exact same architecture (dimensions, sequence lengths) on a data set (e.g. BS3
-crosslinked) and then fine tune the learned weights on the actual data set (e.g. DSS crosslinked).
+crosslinked) and then fine tune the learned weights on the actual data set (e.g. DSS crosslinked)
+is possible.
 This requires a simple change in the learning (-l parameter) config. The *pretrained_model*
 parameter needs to be adapted for the location of the weights file from the BS3 model.
 Another option is to change the underlying model even more. This might be necessary when the
