@@ -103,7 +103,6 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     xirt_params = yaml.load(open(xirt_loc), Loader=yaml.FullLoader)
     learning_params = yaml.load(open(setup_loc), Loader=yaml.FullLoader)
     matches_df = pd.read_csv(peptides_file, nrows=nrows)
-    # matches_df = matches_df[matches_df["PSMID"] == 2618560]
 
     logger.info("xi params: {}".format(xirt_loc))
     logger.info("learning_params: {}".format(setup_loc))
@@ -413,7 +412,7 @@ def main():  # pragma: no cover
 
     # check if parameter for option writing is supplied
     if "-s" in sys.argv[1:]:
-        outfile = sys.argv[1:][sys.argv[1:].index("-p")+1]
+        outfile = sys.argv[1:][sys.argv[1:].index("-s")+1]
         # write config files
         if outfile != "":
             print(f"Writing default config (learning) to file {outfile}.")
@@ -422,7 +421,7 @@ def main():  # pragma: no cover
         sys.exit()
 
     if "-p" in sys.argv[1:]:
-        outfile = sys.argv[1:][sys.argv[1:].index("-s") + 1]
+        outfile = sys.argv[1:][sys.argv[1:].index("-p") + 1]
         # write config files
         if outfile != "":
             print(f"Writing default config (xirt) to file {outfile}.")
