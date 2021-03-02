@@ -2,12 +2,12 @@ General Usage
 =============
 The command line interface (CLI) requires three inputs:
 
-1) input PSM/CSM file
+1) input spectra matches file (CSMs or PSMs)
 2) a `YAML <https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html>`_ file to configure the neural network architecture
 3) another YAML file to configure the general training / prediction behaviour, called setup-config
 
-Configs are either available via `github <https://github.com/Rappsilber-Laboratory/xiRT/tree/master/default_parameters>`_).
-Alternatively, up-to-date configs can be generated from the xiRT package itself:
+Configs are available via `github <https://github.com/Rappsilber-Laboratory/xiRT/tree/master/default_parameters>`_).
+Alternatively, up-to-date configs can be generated using the xiRT package itself:
 
 .. code-block:: console
 
@@ -15,11 +15,11 @@ Alternatively, up-to-date configs can be generated from the xiRT package itself:
     >
     > xirt -s xirt_params.yaml
 
-To use xiRT these options are put together as shown below:
+To use xiRT these options are combined as shown below:
 
 .. code-block:: console
 
-    >xirt(.exe) -i peptides.csv -o out_dir -x xirt_params.yaml -l learning_params.yaml
+    >xirt -i CSMs.csv -o out_dir -x xirt_params.yaml -l learning_params.yaml
 
 To adapt the xiRT parameters a yaml config file needs to be prepared. The configuration file
 is used to determine network parameters (number of neurons, layers, regularization) but also for the
@@ -96,7 +96,7 @@ at least for crosslinking MS studies. For this experimental setup, the xiRT conf
       rp-weight: 1
 
       scx-activation: sigmoid
-      scx-column: scx-ordinal
+      scx-column: scx_ordinal
       scx-dimension: 15
       scx-loss: binary_crossentropy
       scx-metrics: mse
