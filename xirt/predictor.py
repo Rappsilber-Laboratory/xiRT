@@ -397,6 +397,10 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     # sort to keep only highest scoring peptide from duplicated entries
     matches_df = matches_df.sort_values(by="score", ascending=False)
 
+    if len(matches_df["PSMID"].unique()) != matches_df.shape[0]:
+        logger.warning("PSMID column was not unique! Redundant PSMIDs were removed")
+        matches_df = matches_df.drop_duplicates("PSMID")
+
     logger.info("Reordering peptide sequences. (mode: {})".format(sequence_type))
 
     # generate columns to handle based on input data type

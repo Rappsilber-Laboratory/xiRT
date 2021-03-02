@@ -192,7 +192,7 @@ output:
   # They must be carefully adapted for each prediction task.
   # recommended to use sigmoid for fractions (SCX/hSAX) if ordinal regression method should be used
   hsax-activation: sigmoid
-  # columne where the fraction RT is in the CSV input
+  # column where the fraction RT is in the CSV input ("xx_ordinal" xx_
   hsax-column: hsax_ordinal
   # the number of unique / distinct values (e.g. fractions)
   hsax-dimension: 10
