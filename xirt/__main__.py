@@ -191,7 +191,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             xirtnetwork.load_model(learning_params["train"]["pretrained_model"])
         else:
             logger.info("Building new model from config.")
-            xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
+            xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"],
+                                    alphabet=len(training_data.le.classes_) + 1)
 
         # once model architecture is there, check if weights should be loaded
         # loading predefined weights
@@ -287,7 +288,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             xrefit = training_data.get_features(training_data.train_idx)
             yrefit = training_data.get_classes(training_data.train_idx, frac_cols=frac_cols,
                                                cont_cols=cont_cols)
-            xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
+            xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"],
+                                    alphabet=len(training_data.le.classes_)+1)
             xirtnetwork.compile()
 
             if learning_params["train"]["pretrained_weights"].lower() != "none":
@@ -314,7 +316,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             logger.info(model_summary_df.groupby("Split").agg([np.mean, np.std]).to_string())
     else:
         logger.info("Loading model weights.")
-        xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"])
+        xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"],
+                                alphabet=len(training_data.le.classes_)+1)
         xirtnetwork.compile()
         xirtnetwork.model.load_weights(learning_params["train"]["pretrained_weights"])
         logger.info("Reassigning prediction index for prediction mode.")

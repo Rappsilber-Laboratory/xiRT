@@ -90,7 +90,7 @@ class xiRTNET:
                                      sorted(params["predictions"]["continues"])])
         self.tasks = [i.lower() for i in self.tasks]
 
-    def build_model(self, siamese=False):
+    def build_model(self, siamese=False, alphabet=50):
         """
         Build xiRTNET.
 
@@ -99,11 +99,12 @@ class xiRTNET:
 
         Args:
             siamese: bool, if True siamese architecture is used.
+            alphabet: int, alphabet size
 
         Returns:
             None
         """
-        inlayer, net = self._build_base_network()
+        inlayer, net = self._build_base_network(alphabet)
 
         if siamese:
             # for crosslinks
@@ -164,11 +165,14 @@ class xiRTNET:
                            format(self.siamese_p["merge_type"]))
         return merge_func
 
-    def _build_base_network(self):
+    def _build_base_network(self, alphabet_size=50):
         """
         Construct a simple network that consists of an input, embedding, and recurrent-layers.
 
         Function can be used to  build a scaffold for siamese networks.
+
+        Parameter:
+            alphabet_size: int, alphabet size embedding
 
         Returns:
             tuple, (input, network): the input data structure and the network structure from tf 2.0
@@ -177,9 +181,10 @@ class xiRTNET:
         inlayer = Input(shape=self.input_dim, name="main_input")
 
         # translate labels into continuous space
-        net = Embedding(input_dim=self.input_dim,
+        net = Embedding(input_dim=alphabet_size,
                         output_dim=self.embedding_p["length"],
-                        embeddings_initializer="he_normal", name="main_embedding")(inlayer)
+                        embeddings_initializer="he_normal", name="main_embedding",
+                        input_length=self.input_dim)(inlayer)
 
         # sequence layers (LSTM-type) + batch normalization if in config
         for i in np.arange(self.LSTM_p["nlayers"]):
