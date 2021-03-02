@@ -325,3 +325,62 @@ def test_add_interactions():
 
     exp_feats = [2.0, 4, 6.0]
     assert np.all(df1_feat["feature1 feature2"] == exp_feats)
+
+
+def test_add_rt_features_rponly():
+    df = pd.DataFrame()
+    df["rp-error"] = [2]
+    df["rp-error-peptide1"] = [-3]
+    df["rp-error-peptide2"] = [3]
+    df_features_rp = features.add_rt_features(df)
+
+    assert df_features_rp.shape == (1, 13)
+    assert df_features_rp["feature_rp-error"][0] == [2]
+    assert df_features_rp["feature_rp-error-peptide1"][0] == [-3]
+    assert df_features_rp["feature_rp-error-peptide2"][0] == [3]
+
+    assert df_features_rp["feature_initial_prod"][0] == [np.log2(2.1*3.1*3.1)]
+    assert df_features_rp["feature_initial_min"][0] == [2]
+    assert df_features_rp["feature_initial_max"][0] == [3]
+
+    assert df_features_rp["feature_rp-error_square"][0] == [4]
+    assert df_features_rp["feature_rp-error_abs"][0] == [2]
+    assert df_features_rp["feature_rp-error-peptide1_square"][0] == [9]
+    assert df_features_rp["feature_rp-error-peptide1_abs"][0] == [3]
+    assert df_features_rp["feature_rp-error-peptide2_square"][0] == [9]
+    assert df_features_rp["feature_rp-error-peptide2_abs"][0] == [3]
+
+
+def test_add_rt_features_multi():
+    df = pd.DataFrame()
+    df["rp-error"] = [1]
+    df["rp-error-peptide1"] = [-1]
+    df["rp-error-peptide2"] = [1]
+
+    df["scx-error"] = [2]
+    df["scx-error-peptide1"] = [-2]
+    df["scx-error-peptide2"] = [2]
+
+    df["sec-error"] = [3]
+    df["sec-error-peptide1"] = [-3]
+    df["sec-error-peptide2"] = [3]
+
+    df_features_rp = features.add_rt_features(df)
+
+    assert df_features_rp.shape == (1, 43)
+    assert df_features_rp["feature_rp-error"][0] == [1]
+    assert df_features_rp["feature_rp-error-peptide1"][0] == [-1]
+    assert df_features_rp["feature_rp-error-peptide2"][0] == [1]
+
+    assert df_features_rp["feature_scx-error"][0] == [2]
+    assert df_features_rp["feature_scx-error-peptide1"][0] == [-2]
+    assert df_features_rp["feature_scx-error-peptide2"][0] == [2]
+
+    assert df_features_rp["feature_sec-error"][0] == [3]
+    assert df_features_rp["feature_sec-error-peptide1"][0] == [-3]
+    assert df_features_rp["feature_sec-error-peptide2"][0] == [3]
+
+    assert df_features_rp["feature_initial_prod"][0] == [np.log2(1.1 * 1.1 * 1.1 * 2.1 * 2.1 * 2.1
+                                                                 * 3.1 * 3.1 *3.1)]
+    assert df_features_rp["feature_initial_min"][0] == [1]
+    assert df_features_rp["feature_initial_max"][0] == [3]

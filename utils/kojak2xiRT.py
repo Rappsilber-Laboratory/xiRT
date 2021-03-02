@@ -1,26 +1,4 @@
 """Script to convert kojak result files to be used with xiRT"""
-# description = \
-# """
-# kojak2xiFDR - a convenience script to generate a minimal input for using xiRT from xiFDR data.
-# Use python xiFDR2xiRT.py --help to see more information.
-# """
-# parser = argparse.ArgumentParser(description=description)
-# parser.add_argument("-i", "--in-xifdr",
-#                     help="Input CSMs with assigned false discovery rate estimates.",
-#                     required=True, action="store", dest="in_peptides")
-#
-# parser.add_argument("-o", "--out-xirt", help="Output CSM format for usage in xiRT.",
-#                     required=True, action="store", dest="out_peptides")
-#
-# minimal_columns = ["rp", "Fasta1", "Fasta2", "score", "Peptide1", "Peptide2", "FDR",
-#                    "Run", "fdrGroup", "PSMID", "isTT", "isTD", "isDD",
-#                    "LinkPos1", "LinkPos2", "PrecoursorCharge", "Protein1",
-#                    "Protein2", "Crosslinker", "Decoy1", "Decoy2", "PepPos1", "PepPos2"]
-
-# parse arguments
-#args = parser.parse_args(sys.argv[1:])
-#%%
-import argparse
 import glob
 import os
 import re
@@ -28,7 +6,12 @@ import re
 import numpy as np
 import pandas as pd
 
-directory = r"C:\Users\Sven.Giese\Desktop\ECCP\kojak_sample_files"
+description = \
+"""
+kojak2xiFDR - a convenience script to generate a minimal input for using xiRT from xiFDR data.
+Use python xiFDR2xiRT.py --help to see more information.
+"""
+# adjust directory to kojak files (.kojak.txt results)
 directory = r""
 files = glob.glob(os.path.join(directory, "*.kojak.txt"))
 dfs = []
@@ -36,8 +19,8 @@ for file in files:
     print(file)
     df_temp = pd.read_csv(file, skiprows=1, sep="\t")
     df_temp["Run"] = os.path.basename(file)
-    df_temp = df_temp[(df_temp["Obs Mass"] != 0) &
-                      (df_temp["Peptide #2"] != "-")]
+    # remove linears
+    df_temp = df_temp[(df_temp["Obs Mass"] != 0) & (df_temp["Peptide #2"] != "-")]
     dfs.append(df_temp)
 df_kojak = pd.concat(dfs)
 df_kojak.rename(columns={"Charge": "PrecursorCharge",

@@ -12,6 +12,7 @@ snakemake
 .Python
 pipenv
 build/
+archive/
 sample_run/
 results/
 tests/results/
@@ -192,4 +193,5 @@ fabric.properties
 
 tests/fixtures/coral.py
 
-utils/xiRT2iML.py
+archive/xiRT2iML.py
+/archive/

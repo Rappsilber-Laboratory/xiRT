@@ -150,7 +150,7 @@ def save_fig(fig, path, outname):  # pragma: no cover
     Returns:
         None
     """
-    fig.savefig(os.path.join(path, outname + ".png"), dpi=600)
+    # fig.savefig(os.path.join(path, outname + ".png"), dpi=600)
     fig.savefig(os.path.join(path, outname + ".pdf"), dpi=600)
     fig.savefig(os.path.join(path, outname + ".svg"), dpi=600)
 
@@ -367,6 +367,7 @@ def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath,
                                xirt_params, outpath=xirt_params, outpath
     """
     # %%
+    # iterate over the cv folds
     for i in df_predictions["cv"].drop_duplicates():
         # filter data to CV iteration
         temp_cv_df = df_predictions[df_predictions["cv"] == i]
@@ -482,6 +483,10 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
     else:
         f, axes = plt.subplots(1, ntasks)
 
+    # make sure to have a list of axes here
+    if ntasks == 1:
+        axes = [axes]
+
     idx = 0
     if len(fracs) > 0:
         df_ec_melt_frac = df_ec_melt[df_ec_melt["variable"].str.contains("|".join(fracs))]
@@ -511,5 +516,5 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
             ax.set(ylabel="")
         ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
         sns.despine(ax=ax)
-    save_fig(f, outpath, "error_characteristics_")
+    save_fig(f, outpath, "error_characteristics")
     plt.clf()

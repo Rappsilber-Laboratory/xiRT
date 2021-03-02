@@ -622,3 +622,61 @@ def add_interactions(feature_df, degree=2, interactions_only=True):
 
     # create single data frame again
     return pd.concat(dfs_feats, axis=1)
+
+
+def add_rt_features(psms_df):
+    """
+    Use different approaches for feature computation.
+
+    For single dimension (rp), compute:
+    squared, absolute and product (only inital features of all features.
+
+    For two or more dimensions compute:
+        mean, max, sum, min, error
+
+    Parameters
+    ----------
+    psms_df : df
+        psms dataframe.
+    rt_regex : str, optional
+        Regex for the features to compute. The default is "feature_rp".
+
+    Returns
+    -------
+    feats_df : df
+        dataframe with features.
+    """
+    pep1_cols = psms_df.filter(regex="peptide1").columns
+    pep2_cols = psms_df.filter(regex="peptide2").columns
+    cl_cols = psms_df.filter(regex="error$").columns
+
+    cols = [pep1_cols, pep2_cols, cl_cols]
+    names = ["peptide1", "peptide2", "cl"]
+
+    # compute new features by
+    # averaging, summing, maxing, mining the errors for the respective fields
+    initial_cols = psms_df.columns
+    feats_df = psms_df.copy()
+    # compute mean, max, min, sum for errors over ALL dimensions for each prediction
+    # (cl, pep1, pep2)
+    for col, name in zip(cols, names):
+        if len(col) > 1:
+            # features for multi-dimensional ML
+            feats_df[f"{name}_mean"] = np.median(feats_df[col].abs(), axis=1)
+            feats_df[f"{name}_sum"] = np.sum(feats_df[col].abs(), axis=1)
+            feats_df[f"{name}_max"] = np.max(feats_df[col], axis=1)
+            feats_df[f"{name}_min"] = np.min(feats_df[col], axis=1)
+
+    # features for single dimension prediction
+    feats_df["initial_prod"] = np.log2(np.prod(feats_df[initial_cols].abs() + 0.1, axis=1))
+    feats_df["initial_sum"] = np.sum(feats_df[initial_cols].abs(), axis=1)
+    feats_df["initial_min"] = np.min(feats_df[initial_cols].abs(), axis=1)
+    feats_df["initial_max"] = np.max(feats_df[initial_cols].abs(), axis=1)
+
+    # absolute and squared values for all parameter combinations
+    for name in initial_cols:
+        # add the square and absolute features to the 2D, 3D dataframes
+        feats_df[f"{name}_square"] = feats_df[name] ** 2
+        feats_df[f"{name}_abs"] = feats_df[name].abs()
+    feats_df.columns = "feature_" + feats_df.columns
+    return feats_df

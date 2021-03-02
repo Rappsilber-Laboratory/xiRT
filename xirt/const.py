@@ -252,3 +252,49 @@ predictions:
   fractions: # simply write fractions: [] if no fraction prediction is desired
     - hsax
 """
+
+
+readme = f"""
+
+xiRT ReadMe:
+------------
+This folder contains the results from running xiRT v. {__version__}. The following
+descriptions summarize the most important output data and formats.
+
+Important files:
+----------------
+1. xirt_logger.log
+This file summarizes and logs the training procedure. It contains the parameters used to run xiRT
+but also short summary values from the training process.
+
+2. processed_psms.csv
+CSMs or PSMs from the input data but with the additional and temporary columns used by xiRT.
+
+3. error_features.csv
+Contains the predictions and errors (observed - predicted) for each PSM / CSM.
+
+4. error_features_interactions.csv
+Contains further features that are derived from the errors (e.g. products, sums, absolute values)
+
+5. figures for quality control
+- cv_epochs_loss.svg / cv_epochs_metrics.svg - plots the training performance over time.
+- cv_summary_strip_loss.svg / cv_summary_strip_metric.svg - plots summarizing the CV fold results
+- error_characteristics.svg - plots prediction errors between TT/TD/DD identifications
+- qc_cv_01/02/dd - x vs. y plots of predictions and observations for the tasks (pred fold)
+- qc_cv_-1 - x vs. y plots of predictions and observations for the data with >1% FDR
+
+Optional files:
+---------------
+6. epoch_history.csv
+Training performance over time (epochs).
+
+7. model_summary.csv
+Summarizes the model performance in more depth (metrics, training splits, input files, etc.)
+
+8. callbacks folder
+In-depth results from the model training process, e.g. trained weights and model architectures.
+Also contains the encoder and data used in python as pickle objects.
+
+Please visit the documentation to get more details on the output data:
+https://xirt.readthedocs.io/en/latest/results.html
+"""
