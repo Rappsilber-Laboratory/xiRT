@@ -74,6 +74,8 @@ def arg_parser():  # pragma: not covered
     parser.add_argument('--no-write', dest='write', action='store_false',
                         help="Flag for writing result prediction files. If false only summaries "
                              "are written (default: --write).")
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s {version}'.format(version=xv))
     parser.set_defaults(write=True)
     return parser
 
