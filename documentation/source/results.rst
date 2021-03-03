@@ -59,7 +59,8 @@ the last (epoch) model trained. To reuse already trained models for transfer-lea
 and predictions on other data sets, the neural network model ("xirt_model_XX.h5"), as well as the
 parameters/weights ("xirt_weights_XX.h5") are stored. In addition, training results per epoch
 are stored ("xirt_epochlog_XX.log"). "XX" refers to the cross-validation fold, e.g. 01, 02 and 03 for
-k=3; -1 refers to the state prior training. The epoch log contains losses and metrics for the training and validation data. For some
+k=3; -1 refers the predictions for the 'unvalidated' fold (e.g. all PSMs/CSMS with FDR > e.g. 1%. 
+The epoch log contains losses and metrics for the training and validation data. For some
 applications the used encoder (mapping of amino acids to integers) needs to be transferred.
 Therefore, the callbacks also include a trained label encoder from sklearn as pickled object
 ("encoder.p"). The last file additionally contains the formatted input data as pickled data. It can
