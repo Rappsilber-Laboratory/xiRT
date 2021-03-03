@@ -381,6 +381,6 @@ def test_add_rt_features_multi():
     assert df_features_rp["feature_sec-error-peptide2"][0] == [3]
 
     assert df_features_rp["feature_initial_prod"][0] == [np.log2(1.1 * 1.1 * 1.1 * 2.1 * 2.1 * 2.1
-                                                                 * 3.1 * 3.1 *3.1)]
+                                                                 * 3.1 * 3.1 * 3.1)]
     assert df_features_rp["feature_initial_min"][0] == [1]
     assert df_features_rp["feature_initial_max"][0] == [3]

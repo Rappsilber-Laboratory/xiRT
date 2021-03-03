@@ -36,10 +36,10 @@ def arg_parser():  # pragma: not covered
 
     You can generate example configs by running:
     >xirt -p xirt_params.yaml
-    
+
     and
     >xirt -s learning_params.yaml
-    
+
     Current Version: {}
     """.format(xv)
     parser = argparse.ArgumentParser(description=description)
@@ -402,7 +402,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
 
     # write readme file to results dir
     with open(os.path.join(outpath, "readme.txt"), "w") as of:
-            of.write(const.readme)
+        of.write(const.readme)
 
     # write a text file to indicate xirt is done.
     if write_dummy:
