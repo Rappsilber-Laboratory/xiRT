@@ -1,9 +1,9 @@
 Results
 =======
 
-This section covers the results that are generated after a successful xiRT run. In the command
-line call the output folder needs to be specified. Typically, the csv/xls files are the most
-important outputs for most applications. The created folder will contain the following results:
+This section covers the results that are generated from a successful xiRT run. In the command
+line interface, the output folder needs to be specified. Typically, csv/xls files are the outputs of interest
+for most applications. The created folder will contain the following results:
 
 1) log file
 2) callbacks
@@ -11,13 +11,13 @@ important outputs for most applications. The created folder will contain the fol
 4) tables (CSV/XLS)
 
 
-For which you find more details in the following paragraphs.
+For more details, please see the following paragraphs.
 
 Log File
 ********
 The log file contains useful information, including the xiRT version and parameters. Moreover
-various steps that are performed during the analysis with xiRT are documented. For example,
-the number of duplicated entries, the amino acid alphabet, maximum sequence length etc. The logs
+the various steps performed during the analysis with xiRT are documented (e.g. number of duplicated entries,
+amino acid alphabet, maximum sequence length etc.). The logs
 also contain short numeric summaries from the CV training of xiRT.
 
 .. code-block:: console
@@ -55,14 +55,15 @@ also contain short numeric summaries from the CV training of xiRT.
 Callbacks
 *********
 Callbacks are used throughout xiRT to select the best performing model which is not necessarily
-the last (epoch) model that was trained. To reuse the already trained models for transfer-learning
-and predictions on other data sets the neural network model ("xirt_model_XX.h5") as well as the
-parameters/weights ("xirt_weights_XX.h5") are stored. In addition training results per epoch
-are stored ("xirt_epochlog_XX.log"). XX refers to the cross-validation fold, e.g. 01, 02 and 03 for
-k=3. The epoch log contains losses and metrics for the training and validation data. For some
+the last (epoch) model trained. To reuse already trained models for transfer-learning
+and predictions on other data sets, the neural network model ("xirt_model_XX.h5"), as well as the
+parameters/weights ("xirt_weights_XX.h5") are stored. In addition, training results per epoch
+are stored ("xirt_epochlog_XX.log"). "XX" refers to the cross-validation fold, e.g. 01, 02 and 03 for
+k=3; -1 refers the predictions for the 'unvalidated' fold (e.g. all PSMs/CSMS with FDR > e.g. 1%. 
+The epoch log contains losses and metrics for the training and validation data. For some
 applications the used encoder (mapping of amino acids to integers) needs to be transferred.
 Therefore, the callbacks also include a trained label encoder from sklearn as pickled object
-("encoder.p"). The last file contains the formatted input data again as pickled data. It can
+("encoder.p"). The last file additionally contains the formatted input data as pickled data. It can
 be used programmatically for debugging, exploration and manual retention time prediction using
 an already existing model. The data can be parsed in python via:
 
@@ -77,16 +78,16 @@ an already existing model. The data can be parsed in python via:
 Visualizations
 **************
 xiRT will create a rich set of QC plots that should always be investigated. The plots are stored
-in svg/png/pdf format.
+in svg/pdf format.
 
 Epoch  Loss / Metrics
 '''''''''''''''''''''
 .. image:: ../imgs/qc_plots/cv_epochs_loss.png
 
-The epoch loss/metrics plot shows the training behavior over the epochs and is a good diagnostic tool to
+The epoch loss / metrics plot shows the training behavior over the epochs and is a good diagnostic tool to
 assess robustness across CV-folds, learning rate adjustment, overfit-detection and general learning
 behavior across tasks. In the example above, we see quick convergence and robust learning behavior
-after 10 epochs. In non-regression tasks loss and metrics are not necessarily the same.
+after 10 epochs. In non-regression tasks, loss and metrics are not necessarily the same.
 
 CV Summary
 '''''''''''
@@ -94,7 +95,7 @@ CV Summary
 
 The CV summary shows the point estimates of the loss/metric for the training, validation
 and prediction folds for all training tasks. Unvalidation refers to the data not passing the
-training FDR cutoff.
+training confidence (here: FDR) cutoff.
 
 CV Observations
 '''''''''''''''
@@ -106,13 +107,13 @@ key metrics that are not reported in the epoch log (r2, f1, accuracy, relaxed ac
 
 Tables
 ******
-The tables contain a lot of extra information (some of which is used for the plots above). Please
-find an example of each file on (GitHub)[].
+The tables contain a lot of extra information (some of which is used for the QC plots above). Please
+find an example of each file on (GitHub)[https://github.com/Rappsilber-Laboratory/xiRT/tree/master/sample_data/DSS_results_example].
 
-Processed PSMS
+Processed PSMs
 ''''''''''''''
-This table ("processed_psms.csv") contains the input data together with internally done
-processing steps. The additional columns are:
+This table ("processed_psms.csv") contains the input data together with internally performed
+processing steps. The additional columns, as exemplified on a test dataset, are:
 
 - swapped (indicator if peptide order was swapped)
 - Seq_Peptide1/Seq_Peptide2 (peptide sequences in modX format)
