@@ -108,7 +108,7 @@ key metrics that are not reported in the epoch log (r2, f1, accuracy, relaxed ac
 Tables
 ******
 The tables contain a lot of extra information (some of which is used for the QC plots above). Please
-find an example of each file on (GitHub)[].
+find an example of each file on (GitHub)[https://github.com/Rappsilber-Laboratory/xiRT/tree/master/sample_data/DSS_results_example].
 
 Processed PSMs
 ''''''''''''''
