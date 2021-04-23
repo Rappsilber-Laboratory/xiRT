@@ -411,6 +411,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
 
     elif sequence_type == "linear":
         matches_df["Peptide2"] = ""
+        matches_df["Fasta2"] = matches_df["Fasta1"]
         seq_in = ["Peptide1"]
 
     else:

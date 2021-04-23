@@ -284,13 +284,18 @@ class xiRTNET:
         if self.LSTM_p["bidirectional"]:
             # GRU implementations do not support activiation
             # activation = self.LSTM_p["activation"], disabled fo rnow
-            lstm = Bidirectional(f_rnn(self.LSTM_p["units"], activity_regularizer=reg_act,
-                                       kernel_regularizer=reg_kernel, return_sequences=return_seqs),
+            lstm = Bidirectional(f_rnn(self.LSTM_p["units"],
+                                       activation=self.LSTM_p["activation"],
+                                       activity_regularizer=reg_act,
+                                       kernel_regularizer=reg_kernel,
+                                       return_sequences=return_seqs),
                                  name=name + "Bi" + f_name)(prev_layer)
         else:
-            lstm = f_rnn(self.LSTM_p["units"], activation=self.LSTM_p["activation"],
-                         kernel_regularizer=reg_kernel, return_sequences=return_seqs,
-                         name=name + "Bi" + f_name)(prev_layer)
+            lstm = f_rnn(self.LSTM_p["units"],
+                         activation=self.LSTM_p["activation"],
+                         kernel_regularizer=reg_kernel,
+                         return_sequences=return_seqs,
+                         name=name + f_name)(prev_layer)
 
         # add batch normalization
         if self.LSTM_p["lstm_bn"]:
