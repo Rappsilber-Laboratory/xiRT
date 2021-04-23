@@ -3,24 +3,25 @@
 Parameters
 ==========
 
-xiRT needs to two set of parameter files that are supplied via YAML files. The *xiRT parameters*
+xiRT needs two sets of parameters that are supplied via two YAML files. The *xiRT parameters*
 contain the settings that define the network architecture and learning tasks. With different / new
-types of chromatography settings this is where the learning behavior is influenced. The *leanring
-parameters* are used to define the learning data (which FDR) and some higher-level learning
-behaviour. For instance, loading pretrained models and crossvalidation settings are controlled.
+types of chromatography or other separation settings, the learning behavior is influenced and hence
+needs adjustement. The *learning parameters* are used to define the learning data (e.g. filtered to
+a desired confidence limit) and some higher-level learning behaviour. For instance, settings for 
+loading pretrained models and cross-validation are controlled.
 
 
 xiRT-Parameters
 ***************
 The xiRT-Parameters can be divided into several categories that either reflect the individual
 layers of the network or some higher level parameters. Since the input file structure is very
-dynamic the xiRT configuration needs to be done with care. For example, the RT information
-in the input data is encoded in the *predictions* section. Here the column names of the RT
-data needs to be passed. Accordingly, the learning options in the *output* section must be
+dynamic, the xiRT configuration needs to be handled with care. For example, the RT information
+in the input data is encoded in the *predictions* section. Here, the column names of the RT
+data needs to be defined. Accordingly, the learning options in the *output* section must be
 adapted. Each prediction task needs the parameters x-activation, x-column, x-dimension,
-x-loss, x-metrics and x-weight, where x is the RT column.
+x-loss, x-metrics and x-weight, where "x" represents the seperation method of interest.
 
-Here is an example YAML file with comments (form xiRT v. 1.0.32)::
+Please see here for an example YAML file including comments (form xiRT v. 1.0.32)::
 
     LSTM:
       activation: tanh      # activiation function
@@ -93,7 +94,7 @@ Here is an example YAML file with comments (form xiRT v. 1.0.32)::
       scx-weight: 50
     siamese:        # parameters for the siamese part
       use: True         # use siamese
-      merge_type: add   # how to combined individual network params after the Siamese network
+      merge_type: add   # how to combine individual network params after the Siamese network
       single_predictions: True  # use also single peptide predictions
     callbacks:                  # callbacks to use
       check_point: True
@@ -107,20 +108,20 @@ Here is an example YAML file with comments (form xiRT v. 1.0.32)::
       reduce_lr_patience: 15
     predictions:
         # parameters that define how the input variables are treated
-        # continues means that linear (regressin) activation functions are used for the learning.
-        # if this should be done the above parameters must also be adapted (weight, loss, metric, etc)
+        # "continues" means that linear (regression) activation functions are used for the learning.
+        # if this should be done, the above parameters must also be adapted (weight, loss, metric, etc)
       continues:
         - rp
       fractions: # simply write fractions: [] if no fraction prediction is desired
-        # if fractions (discrete) numbers should be used for the learning than this needs to be
+        # if (discrete) fraction numbers should be used for the learning, this needs to be
         # indicated here
         # For fractions, either ordinal regression or classification can be used in the
         # fractions setting (regression is possible too).
         - scx
         - hsax
 
-Apart from the very important neural network architecture definitions the target variable encoding
-is also done in the YAML.
+Apart from the very important neural network architecture definitions, the target variable encoding
+is also defined in the YAML.
 
 Learning-Parameters
 *******************
@@ -141,7 +142,7 @@ Here is an example YAML file with comments (form xiRT v. 1.0.32)::
 
     # fdr: float, a FDR cutoff for peptide matches to be included in the training process
     # ncv: int, number of CV folds to perform to avoid training/prediction on the same data
-    # mode: str, must be one of train, crossvalidation, predict
+    # mode: str, must be one of: train, crossvalidation, predict
     # train and transfer share the same options that are necessary to run xiML, here is a brief rundown:
     # augment: bool, if data augmentation should be performed
     # sequence_type: str, must be linear, crosslink, pseudolinear. crosslink uses the siamese network
