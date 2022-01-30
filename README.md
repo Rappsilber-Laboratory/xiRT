@@ -175,7 +175,9 @@ a detailed example.
 - Ludwig Sinn
 
 ## Citation
-If you consider xiRT helpful for your work please cite our manuscript. *Currently, in preparation.*
+If you consider xiRT helpful for your work please cite our manuscript.
+
+Giese, S.H., Sinn, L.R., Wegner, F. et al. Retention time prediction using neural networks increases identifications in crosslinking mass spectrometry. Nat Commun 12, 3237 (2021). https://doi.org/10.1038/s41467-021-23441-0
 
 ## RappsilberLab
 The Rappsilber applies and develops crosslinking chemistry methods, workflows and software.
