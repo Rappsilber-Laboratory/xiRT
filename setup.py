@@ -28,7 +28,7 @@ KEYWORDS = ["xiRT", "Proteomics", "Crosslinking", "machine learning", "Retention
 RAPPSILBER_SOFTWARE = "https://www.rappsilberlab.org/software/"
 # What packages are required for this module to be executed?
 REQUIRED = ['numpy', 'pandas', 'tensorflow', 'seaborn', 'xlwt', 'graphviz', 'pydot', 'pyyaml',
-            'pyteomics', 'sklearn', 'tqdm', 'biopython', 'pydot', 'palettable', 'statannot',
+            'pyteomics', 'scikit-learn', 'tqdm', 'biopython', 'pydot', 'palettable', 'statannot',
             'tensorflow_addons']
 
 # What packages are optional?
