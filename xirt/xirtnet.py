@@ -416,7 +416,7 @@ class xiRTNET:
         # add r2 as metric for regression tasks, dimension=1
         for tsk in self.tasks:
             if self.output_p[f"{tsk}-dimension"] == 1:
-                metric[tsk] = 'mae'  # TODO try mse
+                metric[tsk] = 'mse'
 
         self.model.compile(loss=loss, optimizer=opt, metrics=metric, loss_weights=loss_weights)
 
