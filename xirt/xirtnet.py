@@ -16,7 +16,7 @@ from tensorflow.keras.layers import Embedding, GRU, BatchNormalization, \
     Concatenate
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.utils import plot_model
-from tensorflow.python.keras.layers import CuDNNGRU, CuDNNLSTM
+from tensorflow.python.keras.layers import GRU, LSTM
 from tqdm.keras import TqdmCallback
 
 
@@ -266,11 +266,11 @@ class xiRTNET:
             f_name = "LSTM"
 
         elif self.LSTM_p["type"] == "CuDNNGRU":  # pragma: no cover
-            f_rnn = CuDNNGRU  # pragma: no cover
+            f_rnn = GRU  # pragma: no cover
             f_name = "CuGRU"  # pragma: no cover
 
         elif self.LSTM_p["type"] == "CuDNNLSTM":  # pragma: no cover
-            f_rnn = CuDNNLSTM  # pragma: no cover
+            f_rnn = LSTM  # pragma: no cover
             f_name = "CuLSTM"  # pragma: no cover
         else:
             raise KeyError("Recurrent type option not found ({})".format(
