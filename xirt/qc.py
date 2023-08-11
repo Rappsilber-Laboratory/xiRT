@@ -14,6 +14,7 @@ from matplotlib import ticker
 from matplotlib.lines import Line2D
 from scipy.stats import pearsonr
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score, classification_report
+from sklearn.preprocessing import scale
 
 sns.set(context="notebook", style="white", palette="deep", font_scale=1)
 
@@ -208,8 +209,8 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath, show=False):  # pr
         df_temp = df.filter(regex="{}|epoch".format(rt_task)).melt(id_vars="epoch")
         df_temp["RT"] = rt_task
         # normalize to max 1
-        df_temp["variable_norm"] = df_temp.groupby('variable').transform(lambda x: (x / x.max()))[
-            "value"]
+        df_temp["variable_norm"] = df_temp[["variable", "value"]].groupby('variable')\
+            .transform(lambda x: (x / x.max()))["value"]
         dfs.append(df_temp)
 
     dfs = pd.concat(dfs)
