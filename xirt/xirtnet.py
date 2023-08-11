@@ -16,7 +16,7 @@ from tensorflow.keras.layers import Embedding, GRU, BatchNormalization, \
     Concatenate
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.utils import plot_model
-from tensorflow.python.keras.layers import GRU, LSTM
+from keras.layers import GRU, LSTM
 from tqdm.keras import TqdmCallback
 
 
