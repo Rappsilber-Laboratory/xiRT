@@ -603,7 +603,7 @@ def add_interactions(feature_df, degree=2, interactions_only=True):
     else:
         # create two dataframes for individual and cl predictions
         feature_df_peps = feature_df.filter(regex="peptide")
-        feature_df_cl = feature_df[set(feature_df.columns) - set(feature_df_peps.columns)]
+        feature_df_cl = feature_df[list(set(feature_df.columns) - set(feature_df_peps.columns))]
         df_tmp = [feature_df_peps, feature_df_cl]
 
     dfs_feats = []
@@ -617,7 +617,7 @@ def add_interactions(feature_df, degree=2, interactions_only=True):
 
         # reassign row and column names
         feature_df_peps.index = tmp_idx
-        feature_df_peps.columns = feng.get_feature_names(columns_peps)
+        feature_df_peps.columns = feng.get_feature_names_out(columns_peps)
         dfs_feats.append(feature_df_peps)
 
     # create single data frame again
