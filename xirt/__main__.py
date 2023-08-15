@@ -118,6 +118,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     outpath = os.path.abspath(out_dir)
     xirt_params["callbacks"]["callback_path"] = os.path.join(outpath, "callbacks")
 
+    matches_df.to_pickle('./tmp.pickle')
     # preprocess training data
     training_data = xr.preprocess(matches_df,
                                   sequence_type=learning_params["train"]["sequence_type"],
