@@ -140,6 +140,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             training_data.psms[cont_col] = training_data.psms[cont_col] / 60.0
 
     # init neural network structure
+    print(type(training_data.features1))
+    training_data.features1.to_pickle('./features.pickle')
     xirtnetwork = xirtnet.xiRTNET(xirt_params, input_dim=training_data.features1.shape[1])
 
     # get the columns where the RT information is stored
