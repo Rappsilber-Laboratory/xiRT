@@ -6,6 +6,8 @@ from pyteomics import parser
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing import sequence as ts
 
+from xirt import const
+
 
 def simplify_alphabet(sequence):
     """Replace ambiguous amino acids.
@@ -102,7 +104,7 @@ def to_unmodified_sequence(sequence):
     return (re.sub(r"[^[A-Z]", "", sequence))
 
 
-def reorder_sequences(matches_df):
+def reorder_sequences(matches_df, column_names=const.default_column_names):
     """Reorder peptide sequences by length.
 
     Defining the longer peptide as alpha peptide and the shorter petpide as
@@ -110,6 +112,7 @@ def reorder_sequences(matches_df):
 
     Args:
         matches_df: df, dataframe with peptide identifications.
+        column_names: Column names of input file.
 
     Returns:
         df, dataframe with the swapped cells and additional indicator column ('swapped')
@@ -131,9 +134,9 @@ def reorder_sequences(matches_df):
                          " is a number in the end of the name.")
 
     # order logic, last comparison checks lexigographically
-    is_longer = (matches_df["Peptide1"].apply(len) > matches_df["Peptide2"].apply(len)).values
-    is_shorter = (matches_df["Peptide1"].apply(len) < matches_df["Peptide2"].apply(len)).values
-    is_greater = (matches_df["Peptide1"] > matches_df["Peptide2"]).values
+    is_longer = (matches_df[column_names['peptide1_sequence']].apply(len) > matches_df[column_names['peptide2_sequence']].apply(len)).values
+    is_shorter = (matches_df[column_names['peptide1_sequence']].apply(len) < matches_df[column_names['peptide2_sequence']].apply(len)).values
+    is_greater = (matches_df[column_names['peptide1_sequence']] > matches_df[column_names['peptide2_sequence']]).values
 
     # create a copy of the dataframe
     swapping_df = matches_df.copy()
@@ -157,7 +160,7 @@ def reorder_sequences(matches_df):
     return swapping_df
 
 
-def modify_cl_residues(matches_df, seq_in=["Peptide1", "Peptide2"], reduce_cl=False):
+def modify_cl_residues(matches_df, seq_in, reduce_cl=False):
     """
     Change the cross-linked residues to modified residues.
 

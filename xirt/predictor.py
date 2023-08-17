@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
 
-from xirt import processing as xp
+from xirt import processing as xp, const
 from xirt import sequences as xs
 from xirt import xirtnet
 
@@ -369,7 +369,7 @@ def sigmoid_to_class(predictions, t=0.5):
 
 
 def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=True,
-               fraction_cols=[]):
+               fraction_cols=[], column_names=const.default_column_names):
     """Prepare peptide identifications to be used with xiRT.
 
     High-level wrapper performing multiple steps. In processing order this function:
@@ -386,6 +386,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         cl_residue: bool, if true handles cross-link sites as additional modifications.
         (default: True)
         fraction_cols: ar-like, list of columsn that encode frationation data. (default: [])
+        column_names: Column names of input file.
     Returns:
         model_data, processed feature dataframes and label encoder
     """
@@ -395,19 +396,19 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     matches_df.set_index("PSMID", drop=False, inplace=True)
 
     # sort to keep only highest scoring peptide from duplicated entries
-    matches_df = matches_df.sort_values(by="score", ascending=False)
+    matches_df = matches_df.sort_values(by=column_names['score'], ascending=False)
 
     logger.info("Reordering peptide sequences. (mode: {})".format(sequence_type))
 
     # generate columns to handle based on input data type
     if sequence_type in ["crosslink", "pseudolinear"]:
         # change peptide order
-        matches_df = xs.reorder_sequences(matches_df)
-        seq_in = ["Peptide1", "Peptide2"]
+        matches_df = xs.reorder_sequences(matches_df, column_names=column_names)
+        seq_in = [column_names['peptide1_sequence'], column_names['peptide2_sequence']]
 
     elif sequence_type == "linear":
-        matches_df["Peptide2"] = ""
-        seq_in = ["Peptide1"]
+        matches_df[column_names['peptide2_sequence']] = ""
+        seq_in = [column_names['peptide1_sequence']]
 
     else:
         msg = "sequence type not supported. Must be one of (crosslink, pseudolinear, linear)"
@@ -421,7 +422,9 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     matches_df = xp.prepare_seqs(matches_df, seq_cols=seq_in)
 
     # concat peptide sequences
-    matches_df["PepSeq1PepSeq2_str"] = matches_df["Peptide1"] + matches_df["Peptide2"]
+    matches_df["PepSeq1PepSeq2_str"] = \
+        matches_df[column_names['peptide1_sequence']] +\
+        matches_df[column_names['peptide2_sequence']]
 
     # mark all duplicates
     matches_df["Duplicate"] = matches_df.duplicated(["PepSeq1PepSeq2_str"], keep="first")

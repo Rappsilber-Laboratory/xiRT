@@ -87,7 +87,7 @@ class xiRTNET:
 
         self.tasks = np.concatenate([sorted(params["predictions"]["fractions"]),
                                      sorted(params["predictions"]["continues"])])
-        self.tasks = [i.lower() for i in self.tasks]
+        self.tasks = [i for i in self.tasks]
 
     def build_model(self, siamese=False):
         """

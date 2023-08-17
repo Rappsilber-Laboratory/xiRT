@@ -15,7 +15,7 @@ from xirt import sequences as xs
 logger = logging.getLogger(__name__)
 
 
-def prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"]):
+def prepare_seqs(psms_df, seq_cols):
     """Convert Peptide sequences to unified format.
 
     This conversion simplifies the alphabet of the amino acids, removes special characters,

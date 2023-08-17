@@ -1,6 +1,12 @@
 """Module for constants in the xirt package."""
 from xirt import __version__
 
+default_column_names = {
+    'peptide1_sequence': 'Peptide1',
+    'peptide2_sequence': 'Peptide2',
+    'score': 'score'
+}
+
 learning_params = f"""
 # Learning options generated with xiRT v. {__version__}
 

@@ -124,7 +124,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                   sequence_type=learning_params["train"]["sequence_type"],
                                   max_length=learning_params["preprocessing"]["max_length"],
                                   cl_residue=learning_params["preprocessing"]["cl_residue"],
-                                  fraction_cols=xirt_params["predictions"]["fractions"])
+                                  fraction_cols=xirt_params["predictions"]["fractions"],
+                                  column_names=xirt_params['column_names'])
 
     # set training index by FDR and duplicates
     training_data.set_fdr_mask(fdr_cutoff=learning_params["train"]["fdr"],
@@ -145,10 +146,10 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     xirtnetwork = xirtnet.xiRTNET(xirt_params, input_dim=training_data.features1.shape[1])
 
     # get the columns where the RT information is stored
-    frac_cols = sorted([xirtnetwork.output_p[tt.lower() + "-column"] for tt in
+    frac_cols = sorted([xirtnetwork.output_p[tt + "-column"] for tt in
                         xirt_params["predictions"]["fractions"]])
 
-    cont_cols = sorted([xirtnetwork.output_p[tt.lower() + "-column"] for tt in
+    cont_cols = sorted([xirtnetwork.output_p[tt + "-column"] for tt in
                         xirt_params["predictions"]["continues"]])
 
     # init data structures for results
