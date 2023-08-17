@@ -27,9 +27,23 @@ KEYWORDS = ["xiRT", "Proteomics", "Crosslinking", "machine learning", "Retention
             "Chromatography", "Peptides"]
 RAPPSILBER_SOFTWARE = "https://www.rappsilberlab.org/software/"
 # What packages are required for this module to be executed?
-REQUIRED = ['numpy', 'pandas', 'tensorflow', 'seaborn', 'xlwt', 'graphviz', 'pydot', 'pyyaml',
-            'pyteomics', 'scikit-learn', 'tqdm', 'biopython', 'pydot', 'palettable', 'statannot',
-            'tensorflow_addons']
+REQUIRED = [
+    'numpy==1.24.3',
+    'pandas==2.0.3',
+    'tensorflow==2.13.0',
+    'seaborn==0.12.2',
+    'xlwt==1.3.0',
+    'graphviz==0.20.1',
+    'pydot==1.4.2',
+    'pyyaml==6.0.1',
+    'pyteomics==4.6',
+    'scikit-learn==1.3.0',
+    'tqdm==4.66.0',
+    'biopython==1.81',
+    'pydot==1.4.2',
+    'palettable==3.3.3',
+    'statannot==0.2.3'
+]
 
 # What packages are optional?
 # 'fancy feature': ['django'],}
