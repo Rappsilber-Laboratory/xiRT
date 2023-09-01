@@ -78,33 +78,32 @@ def arg_parser():  # pragma: not covered
     return parser
 
 
-def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform_qc=True,
-                write=True, write_dummy=True):
+def xirt_runner(peptides_file, out_dir, xirt_params, learning_params, nrows=None, perform_qc=True,
+                write=True, write_dummy=True, api_df: pd.DataFrame = None):
     """
     Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
 
     Args:
         peptides_file: str, location of the input psm/csm file
         out_dir: str, folder to store the results to
-        xirt_loc: str, location of the yaml file for xirt
-        setup_loc: str, location of the setup yaml
+        xirt_params: object, yaml for xirt
+        learning_params: object, setup yaml
         single_pep_predictions:
         nrows: int, number of rows to sample (for quicker testing purposes only)
         perform_qc: bool, indicates if qc plots should be done.
         write: bool,  indicates result predictions should be stored
         write_dummy: bool if true dummy txt file is written after execution (for snakemake usag)
+        api_df: pandas.DataFrame, Dataframe from API call
 
     Returns:
         None
     """
     start_time = time.time()
-    xirt_params = yaml.load(open(xirt_loc), Loader=yaml.FullLoader)
-    learning_params = yaml.load(open(setup_loc), Loader=yaml.FullLoader)
-    matches_df = pd.read_csv(peptides_file, nrows=nrows)
-
-    logger.info("xi params: {}".format(xirt_loc))
-    logger.info("learning_params: {}".format(setup_loc))
-    logger.info("peptides: {}".format(peptides_file))
+    matches_df = None
+    if api_df is None:
+        matches_df = pd.read_csv(peptides_file, nrows=nrows)
+    else:
+        matches_df = api_df
 
     # convenience short cuts
     if learning_params["train"]["mode"] == "train":
@@ -118,7 +117,6 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     outpath = os.path.abspath(out_dir)
     xirt_params["callbacks"]["callback_path"] = os.path.join(outpath, "callbacks")
 
-    matches_df.to_pickle('./tmp.pickle')
     # preprocess training data
     training_data = xr.preprocess(matches_df,
                                   sequence_type=learning_params["train"]["sequence_type"],
@@ -372,11 +370,6 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                       xirtnetwork.tasks, xirt_params, outpath, max_fdr=0.01)
 
     logger.info("Writing output tables.")
-    # store setup in summary
-    model_summary_df["xirt_params_loc"] = xirt_loc
-    model_summary_df["xirt_params_base"] = os.path.basename(xirt_loc).split(".")[0]
-    model_summary_df["learning_params"] = setup_loc
-    model_summary_df["peptides"] = peptides_file
 
     df_history_all.to_csv(os.path.join(outpath, "epoch_history.csv"))
     model_summary_df.to_csv(os.path.join(outpath, "model_summary.csv"))
@@ -397,10 +390,6 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         training_data.prediction_df.to_csv(os.path.join(outpath, "error_features.csv"))
         features_exhaustive.to_csv(os.path.join(outpath, "error_features_interactions.csv"))
 
-    # write a text file to indicate xirt is done.
-    if write_dummy:
-        with open(xirt_loc.replace(".yaml", ".txt"), "w") as of:
-            of.write("done.")
     logger.info("Completed xiRT run.")
     logger.info("End Time: {}".format(datetime.now().strftime("%H:%M:%S")))
     end_time = time.time()
@@ -463,7 +452,14 @@ def main():  # pragma: no cover
     logger.info("Using xiRT version: {}".format(xv))
 
     # call function
-    xirt_runner(args.in_peptides, args.out_dir, args.xirt_params, args.learning_params,
+    xirt_params = yaml.load(open(args.xirt_params), Loader=yaml.FullLoader)
+    learning_params = yaml.load(open(args.learning_params), Loader=yaml.FullLoader)
+
+    logger.info("xi params: {}".format(args.xirt_params))
+    logger.info("learning_params: {}".format(args.learning_params))
+    logger.info("peptides: {}".format(args.in_peptides))
+
+    xirt_runner(args.in_peptides, args.out_dir, xirt_params, learning_params,
                 write=args.write)
 
 
