@@ -16,6 +16,7 @@ from xirt import __version__ as xv
 from xirt import features as xf
 from xirt import predictor as xr
 from xirt import xirtnet, qc, const
+from xirt.predictor import ModelData
 import matplotlib
 
 matplotlib.use('Agg')
@@ -79,7 +80,7 @@ def arg_parser():  # pragma: not covered
 
 
 def xirt_runner(peptides_file, out_dir, xirt_params, learning_params, nrows=None, perform_qc=True,
-                write=True, write_dummy="", api_df: pd.DataFrame = None):
+                write=True, write_dummy="", api_df: pd.DataFrame = None) -> ModelData:
     """
     Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
 
@@ -400,6 +401,8 @@ def xirt_runner(peptides_file, out_dir, xirt_params, learning_params, nrows=None
     end_time = time.time()
     logger.info("xiRT CV-training took: {:.2f} minutes".format((end_time - start_timecv) / 60.))
     logger.info("xiRT took: {:.2f} minutes".format((end_time - start_time) / 60.))
+
+    return training_data
 
 
 def main():  # pragma: no cover
