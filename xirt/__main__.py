@@ -79,7 +79,7 @@ def arg_parser():  # pragma: not covered
 
 
 def xirt_runner(peptides_file, out_dir, xirt_params, learning_params, nrows=None, perform_qc=True,
-                write=True, write_dummy=True, api_df: pd.DataFrame = None):
+                write=True, write_dummy="", api_df: pd.DataFrame = None):
     """
     Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
 
@@ -92,7 +92,7 @@ def xirt_runner(peptides_file, out_dir, xirt_params, learning_params, nrows=None
         nrows: int, number of rows to sample (for quicker testing purposes only)
         perform_qc: bool, indicates if qc plots should be done.
         write: bool,  indicates result predictions should be stored
-        write_dummy: bool if true dummy txt file is written after execution (for snakemake usag)
+        write_dummy: str, if true dummy txt file is written after execution (for snakemake usag)
         api_df: pandas.DataFrame, Dataframe from API call
 
     Returns:
@@ -390,6 +390,11 @@ def xirt_runner(peptides_file, out_dir, xirt_params, learning_params, nrows=None
         training_data.prediction_df.to_csv(os.path.join(outpath, "error_features.csv"))
         features_exhaustive.to_csv(os.path.join(outpath, "error_features_interactions.csv"))
 
+    # write a text file to indicate xirt is done.
+    if write_dummy != "":
+        with open(write_dummy.replace(".yaml", ".txt"), "w") as of:
+            of.write("done.")
+
     logger.info("Completed xiRT run.")
     logger.info("End Time: {}".format(datetime.now().strftime("%H:%M:%S")))
     end_time = time.time()
@@ -423,6 +428,7 @@ def main():  # pragma: no cover
         args = parser.parse_args(sys.argv[1:])
     except TypeError:
         parser.print_usage()
+        return
 
     # create dir if not there
     if not os.path.exists(args.out_dir):
