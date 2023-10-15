@@ -407,7 +407,7 @@ class xiRTNET:
         """
         # set optimizer
         if self.learning_p["optimizer"] == "adam":
-            opt = optimizers.Adam(lr=self.learning_p["learningrate"])
+            opt = optimizers.Adam(learning_rate=self.learning_p["learningrate"])
 
         elif self.learning_p["optimizer"].lower() == "sgd":
             opt = optimizers.SGD(learning_rate=self.learning_p["learningrate"],
