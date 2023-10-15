@@ -289,7 +289,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             yrefit = training_data.get_classes(training_data.train_idx, frac_cols=frac_cols,
                                                cont_cols=cont_cols)
             xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"],
-                                    alphabet=len(training_data.le.classes_)+1)
+                                    alphabet=len(training_data.le.classes_) + 1)
             xirtnetwork.compile()
 
             if learning_params["train"]["pretrained_weights"].lower() != "none":
@@ -317,7 +317,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     else:
         logger.info("Loading model weights.")
         xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"],
-                                alphabet=len(training_data.le.classes_)+1)
+                                alphabet=len(training_data.le.classes_) + 1)
         xirtnetwork.compile()
         xirtnetwork.model.load_weights(learning_params["train"]["pretrained_weights"])
         logger.info("Reassigning prediction index for prediction mode.")
@@ -362,17 +362,20 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     # only training procedure includes qc
     if perform_qc and (learning_params["train"]["mode"] != "predict"):
         logger.info("Generating qc plots.")
-        qc.plot_epoch_cv(callback_path=xirtnetwork.callback_p["callback_path"],
-                         tasks=xirtnetwork.tasks, xirt_params=xirt_params, outpath=outpath)
+        try:
+            qc.plot_epoch_cv(callback_path=xirtnetwork.callback_p["callback_path"],
+                             tasks=xirtnetwork.tasks, xirt_params=xirt_params, outpath=outpath)
 
-        qc.plot_summary_strip(model_summary_df, tasks=xirtnetwork.tasks, xirt_params=xirt_params,
-                              outpath=outpath)
+            qc.plot_summary_strip(model_summary_df, tasks=xirtnetwork.tasks, xirt_params=xirt_params,
+                                  outpath=outpath)
 
-        qc.plot_cv_predictions(training_data.prediction_df, training_data.psms,
-                               xirt_params=xirt_params, outpath=outpath)
+            qc.plot_cv_predictions(training_data.prediction_df, training_data.psms,
+                                   xirt_params=xirt_params, outpath=outpath)
 
-        qc.plot_error_characteristics(training_data.prediction_df, training_data.psms,
-                                      xirtnetwork.tasks, xirt_params, outpath, max_fdr=0.01)
+            qc.plot_error_characteristics(training_data.prediction_df, training_data.psms,
+                                          xirtnetwork.tasks, xirt_params, outpath, max_fdr=0.01)
+        except Exception as e:
+            logger.warning("QC plots failed. Error: {}".format(e))
 
     logger.info("Writing output tables.")
     # store setup in summary
@@ -421,7 +424,7 @@ def main():  # pragma: no cover
 
     # check if parameter for option writing is supplied
     if "-s" in sys.argv[1:]:
-        outfile = sys.argv[1:][sys.argv[1:].index("-s")+1]
+        outfile = sys.argv[1:][sys.argv[1:].index("-s") + 1]
         # write config files
         if outfile != "":
             print(f"Writing default config (learning) to file {outfile}.")
