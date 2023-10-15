@@ -27,12 +27,11 @@ KEYWORDS = ["xiRT", "Proteomics", "Crosslinking", "machine learning", "Retention
             "Chromatography", "Peptides"]
 RAPPSILBER_SOFTWARE = "https://www.rappsilberlab.org/software/"
 # What packages are required for this module to be executed?
-REQUIRED = ['numpy', 'pandas', 'tensorflow', 'seaborn', 'xlwt', 'pyyaml',
-            'pyteomics', 'scikit-learn', 'tqdm', 'biopython', 'palettable', 'statannot',
-            'tensorflow_addons']
+# REQUIRED = ['numpy', 'pandas', 'tensorflow', 'seaborn', 'xlwt', 'pyyaml',
+#             'pyteomics', 'scikit-learn', 'tqdm', 'biopython', 'palettable', 'statannot',
+#             'tensorflow_addons']
+REQUIRED = []
 
-# What packages are optional?
-# 'fancy feature': ['django'],}
 EXTRAS = {}
 
 # The rest you shouldn't have to touch too much :)
@@ -53,8 +52,7 @@ except FileNotFoundError:
 # Load the package's __version__.py module as a dictionary.
 about = {}
 project_slug = "xirt"
-# with open(os.path.join(here, project_slug, '__version__.py')) as f:
-#     exec(f.read(), about)
+
 
 
 class UploadCommand(Command):

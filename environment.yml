@@ -1,4 +1,4 @@
-name: xirt
+name: xirt_test
 channels:
   - conda-forge
   - bioconda
@@ -13,6 +13,7 @@ dependencies:
   - scikit-learn
   - pandas
   - anaconda::tensorflow
+  #- anaconda::tensorflow-gpu
   - tqdm
   - pyyaml
   - seaborn
@@ -43,3 +44,4 @@ dependencies:
     - sphinx_rtd_theme
     - recommonmark
     - pytest-xdist
+    - -e .

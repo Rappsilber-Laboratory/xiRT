@@ -313,7 +313,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                                         "xirt_weights_{}.h5".format(
                                                             str(best_model_idx + 1).zfill(2))))
             logger.info("Model Summary:")
-            logger.info(model_summary_df.groupby("Split").agg([np.mean, np.std]).to_string())
+            logger.info(model_summary_df.groupby("Split").agg([np.mean, np.std]).round(2).to_string())
     else:
         logger.info("Loading model weights.")
         xirtnetwork.build_model(siamese=xirt_params["siamese"]["use"],

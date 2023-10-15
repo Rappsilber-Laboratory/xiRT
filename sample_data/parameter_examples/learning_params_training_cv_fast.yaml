@@ -1,0 +1,92 @@
+
+# Learning options generated with xiRT v. 1.2.3+2.g84a5484
+
+# the preprocessing options define how the sequences are encoded / filtered. Usually, default values
+# are fine.
+# If transfer learning is intended, the label encoder and max_length parameter need to be adapted.
+
+preprocessing:
+    # label encoder, str or none. If str, use a previously trained label encoder to translate
+    # amino acids to specific integers. If you are using xiRT on a single data file set to None
+    # default None
+    le: None
+    
+    # max sequence length, integer. Filter all sequences longer than this number. Disable by setting
+    # it to -1
+    # default -1
+    max_length: -1
+    
+    # for crosslinks only, bool: encode crosslinked residues as different residues than their 
+    # unmodified counter parts
+    # e.g. a crosslinked K, will be encoded as clK in modX format.
+    # default True
+    cl_residue: True
+    
+    # filter, str. string filter that must be contained in the description for a CSM to be included
+    # default ""
+    filter: "_ECOLI"
+
+# these options are crucial for the setting up xiRT with the correct training mode. Stay strong! 
+# It's easier than it seems right now. 
+# Check the readthedocs documentation if you need more info / examples.
+train:
+  # float value, defines cutoff to filter the input CSMs, e.g. all CSMs with a lower fdr are 
+  # used for training
+  # default 0.01
+  fdr: 0.01
+  
+  # int, the number of crossvalidation folds to be done. 1=nocv, 3=minimal value, recommended
+  # alternatives with higher run time:5 or 10.
+  # default 1
+  ncv: 2
+  
+  # bool, if True the training data is used to fit a new neural network model after the 
+  # cross-validation step, this model is used for the prediction of RTs for all peptides > 
+  # the given FDR value.
+  # refit=False: use best CV predictor; b) refit=True: retrain on all CSMs < 0.01 FDR.
+  # default False
+  refit: False
+  
+  # str, important that defines the training mode (important!)
+  # "train", train on entire data set: use
+  # "crossvalidation", perform crossvalidation on the input data (train multiple classifiers)
+  # "predict", do NOT train on the supplied CSMs but simply predict with an already trained model
+  # default "train"
+  mode: "crossvalidation"
+  
+  # str, augment the input data by swapping sequences (peptide1, peptide2). Marginal gains in
+  # predicition were observed here.
+  # Can usually, be left as False. If you are dealing with very small data sets, this option 
+  # might also help.
+  # default False
+  augment: False
+  
+  # str, multiple sequence types are supported: "linear", "crosslink", "pseudolinear" (concatenate
+  # peptide1 and peptide2 sequences)
+  # default "crosslink"
+  sequence_type: "crosslink"
+  
+  # str (file location), this option can be set with any of the above described options.
+  # if a valid weight set is supplied, the network is initalized with the given weights
+  # default "None"
+  pretrained_weights: "None"
+  
+  # str (file location), similarly to the option above, a pretrained model can be supplied. 
+  # this is necessary when (extreme) transfer-learning applications are intended (e.g. different 
+  # number of fractions for e.g. SCX)
+  # this requires adjustments of the network architecture
+  # default: "None"
+  pretrained_model: "None"
+  
+  # float, defines the fraction of test data (e.g. a small fraction of the training folds that is
+  # used for validation
+  # default 0.10
+  test_frac: 0.10
+  
+  # float, used for downsampling the input data (e.g. to create learning curves). Can usually left as 1.
+  # default 1
+  sample_frac: 1
+  
+  # int, seed value for the sampling described above
+  # default 21
+  sample_state: 21
