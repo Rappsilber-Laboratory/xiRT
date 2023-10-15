@@ -10,8 +10,7 @@ def test_create_simple_features():
 
     ff_df = features.create_simple_features(df, seq_column="Sequence")
     exp_columns = sorted(
-        ["turnP", "turn", "helix", "sheet", "pi", "aromaticity", "estimated_charge",
-         "loglength"])
+        ["turnP", "turn", "helix", "sheet", "pi", "aromaticity", "estimated_charge", "loglength"])
 
     exp_shape = (2, len(exp_columns))
 

@@ -96,8 +96,7 @@ def test_model_data_shuffle():
 
 
 def test_iter_splits():
-    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv"),
-                          nrows=10)
+    psms_df = pd.read_csv(os.path.join(fixtures_loc, "DSS_xisearch_fdr_CSM50percent.csv"), nrows=10)
     training_data = xr.preprocess(psms_df, "crosslink", max_length=-1, cl_residue=False)
     training_data.set_fdr_mask(0.4)
 

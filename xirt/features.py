@@ -617,7 +617,7 @@ def add_interactions(feature_df, degree=2, interactions_only=True):
 
         # reassign row and column names
         feature_df_peps.index = tmp_idx
-        feature_df_peps.columns = feng.get_feature_names(columns_peps)
+        feature_df_peps.columns = feng.get_feature_names_out(columns_peps)
         dfs_feats.append(feature_df_peps)
 
     # create single data frame again

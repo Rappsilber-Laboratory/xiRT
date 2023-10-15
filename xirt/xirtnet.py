@@ -396,7 +396,7 @@ class xiRTNET:
 
     def compile(self):
         """
-        Wrappaer to compile xiRTNETwork.
+        Wrap and compile xiRTNETwork.
 
         Loss, Metrics, Weights are all retrieved from the parameter file together with the
         optimizer and the network is prepared (compiled) for training using the standard
@@ -427,7 +427,7 @@ class xiRTNET:
         # add r2 as metric for regression tasks, dimension=1
         for tsk in self.tasks:
             if self.output_p[f"{tsk}-dimension"] == 1:
-                metric[tsk] = [metric[tsk], tfa.metrics.RSquare(dtype=tf.float32, y_shape=(1,))]
+                metric[tsk] = [metric[tsk], tfa.metrics.RSquare(dtype=tf.float32)]
 
         self.model.compile(loss=loss, optimizer=opt, metrics=metric, loss_weights=loss_weights)
 

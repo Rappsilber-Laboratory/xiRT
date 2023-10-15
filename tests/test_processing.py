@@ -16,8 +16,8 @@ def test_prepare_seqs_standard():
                   ["H-", "E", "oxM", "L", "C", "R", "-OH"]]
     exp_seqar2 = [["H-", "E", "L", "phP", "R", "-OH"],
                   ["H-", "I", "bsthreehydK", "I", "N", "G", "-OH"]]
-    assert np.all(proc_df["Seqar_Peptide1"] == exp_seqar1)
-    assert np.all(proc_df["Seqar_Peptide2"] == exp_seqar2)
+    assert np.all(proc_df["Seqar_Peptide1"] == pd.Series(exp_seqar1))
+    assert np.all(proc_df["Seqar_Peptide2"] == pd.Series(exp_seqar2))
 
 
 def test_prepare_seqs_specialseq():

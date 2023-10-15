@@ -90,14 +90,14 @@ class ModelData:
 
     def iter_splits(self, n_splits, test_size):
         """
-        Return iterator indicies for training, testing, validation based on the training data.
+        Return iterator indices for training, testing, validation based on the training data.
 
         The returned indices belong to the training data, validation data and prediction data.
         The prediction fold is used in xiRT to predict RTs without using the observations during
         training.
 
         Args:
-            n_splits: int, number of crossvalidation splits
+            n_splits: int, number of cross-validation splits
             test_size: float, percentage of validation data to use
 
         Returns:
@@ -140,21 +140,21 @@ class ModelData:
             # get n_splits of the training
             kf = KFold(n_splits=n_splits, shuffle=False)
             kf.get_n_splits(self.features1.loc[self.train_idx])
-            cv_locs = np.array([i[1] for i in kf.split(self.features1.loc[self.train_idx])])
+            cv_locs = pd.Series([i[1] for i in kf.split(self.features1.loc[self.train_idx])])
 
             for i in cv_folds_ar:
                 # this will get all the slices where "t" indicates the training
-                # here the validation data should be dependant on the CV fold sizes
+                # here the validation data should be dependent on the CV fold sizes
                 train_msk = np.array(cv_pattern) == "t"
 
                 # combine 2 test folds to get a training fold
                 # get train folds -> get locations -> get index
-                train_init_idx = train_df_idx[np.concatenate(cv_locs[train_msk])]
+                train_init_idx = train_df_idx[np.concatenate(cv_locs[train_msk].values)]
                 train_idx, val_idx = np.split(train_init_idx,
                                               [int((1 - test_size) * len(train_init_idx))])
 
                 # take a testing fold
-                pre_idx = train_df_idx[cv_locs[~train_msk][0]]
+                pre_idx = train_df_idx[cv_locs[~train_msk].iloc[0]]
 
                 # change the pattern for next iteration
                 cv_pattern = cv_pattern[1:] + [cv_pattern[0]]

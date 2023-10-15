@@ -1,0 +1,45 @@
+name: xirt
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+  - anaconda
+
+dependencies:
+  - python
+  - pip
+  - ipython
+  - numpy
+  - scikit-learn
+  - pandas
+  - anaconda::tensorflow
+  - tqdm
+  - pyyaml
+  - seaborn
+  - pydot
+  - graphviz
+  - xlwt
+  - xlrd
+  - palettable
+  - statannot
+  - openpyxl
+  - python-flatbuffers
+  - Biopython
+  - pyteomics
+  - pip:
+    - tensorflow_addons
+    - twine
+    - pytest
+    - pytest-pep8
+    - pytest-sugar
+    - flake8 ==3.7.9
+    - pytest-flake8
+    - pytest-cov
+    - pytest-pydocstyle
+    - autopep8
+    - docformatter
+    - coverage-badge
+    - sphinx
+    - sphinx_rtd_theme
+    - recommonmark
+    - pytest-xdist
