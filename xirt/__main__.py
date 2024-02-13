@@ -384,7 +384,7 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
 
     if write:
         # store data
-        training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
+        training_data.psms.to_parquet(os.path.join(outpath, "processed_psms.parquet"))
         training_data_Xy = ((training_data.features1, training_data.features2),
                             training_data.get_classes(training_data.psms.index,
                                                       frac_cols=frac_cols, cont_cols=cont_cols))

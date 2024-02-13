@@ -286,7 +286,7 @@ class ModelData:
             predictions = [predictions]
 
         # store cv value, only needed once
-        self.prediction_df["cv"].loc[store_idx] = cv
+        self.prediction_df.loc[store_idx, "cv"] = cv
 
         for task_i, pred_ar in zip(xirtnetwork.tasks, predictions):
             # get activation type because linear, sigmoid, softmax all require different encoding/
