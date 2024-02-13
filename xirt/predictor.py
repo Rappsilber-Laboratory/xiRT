@@ -415,7 +415,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
             #matches_df = xs.reorder_sequences(matches_df, column_names=column_names)
             reorder_job = partial(xs.reorder_sequences, column_names=column_names)
             mp_results = pool.map(reorder_job, mp_df_slices)
-            matches_df = pd.concat(mp_results)
+            matches_df = pd.concat(mp_results).copy()
             seq_in = [column_names['peptide1_sequence'], column_names['peptide2_sequence']]
     elif sequence_type == "linear":
         matches_df[column_names['peptide2_sequence']] = ""
