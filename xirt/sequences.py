@@ -184,7 +184,7 @@ def modify_cl_residues(matches_df, seq_in, reduce_cl=False):
                 residue = "X"
             else:
                 try:
-                    residue = row["Seqar_" + seq_i][row["LinkPos" + str(seq_id + 1)]]
+                    residue = row["Seqar_" + seq_i][row["link_pos_p" + str(seq_id + 1)]]
                 except IndexError:
                     print(row)
                     print("List index out of range. Check peptide sequence for unwanted characters")
