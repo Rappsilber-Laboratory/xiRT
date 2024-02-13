@@ -10,6 +10,9 @@ from sklearn.metrics import accuracy_score
 import processing as xp, const
 import sequences as xs
 import xirtnet
+import multiprocessing as mp
+from math import ceil, floor
+from functools import partial
 
 logger = logging.getLogger('xirt').getChild(__name__)
 
@@ -402,14 +405,21 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
 
     # generate columns to handle based on input data type
     if sequence_type in ["crosslink", "pseudolinear"]:
-        # change peptide order
-        matches_df = xs.reorder_sequences(matches_df, column_names=column_names)
-        seq_in = [column_names['peptide1_sequence'], column_names['peptide2_sequence']]
-
+        mp_slice_size = ceil(len(matches_df) / mp.cpu_count())
+        mp_df_slices = [
+            matches_df[i * mp_slice_size:(i + 1) * mp_slice_size]
+            for i in range(mp.cpu_count()-1)
+        ]
+        with mp.Pool() as pool:
+            # change peptide order
+            #matches_df = xs.reorder_sequences(matches_df, column_names=column_names)
+            reorder_job = partial(xs.reorder_sequences, column_names=column_names)
+            mp_results = pool.map(reorder_job, mp_df_slices)
+            matches_df = pd.concat(mp_results)
+            seq_in = [column_names['peptide1_sequence'], column_names['peptide2_sequence']]
     elif sequence_type == "linear":
         matches_df[column_names['peptide2_sequence']] = ""
         seq_in = [column_names['peptide1_sequence']]
-
     else:
         msg = "sequence type not supported. Must be one of (crosslink, pseudolinear, linear)"
         logger.critical(msg)
