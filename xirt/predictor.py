@@ -11,7 +11,7 @@ import processing as xp, const
 import sequences as xs
 import xirtnet
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('xirt').getChild(__name__)
 
 
 class ModelData:
@@ -393,7 +393,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     logger.info("Preprocessing peptides.")
     logger.info("Input peptides: {}".format(len(matches_df)))
     # set index
-    matches_df.set_index("PSMID", drop=False, inplace=True)
+    #matches_df.set_index("PSMID", drop=False, inplace=True)
 
     # sort to keep only highest scoring peptide from duplicated entries
     matches_df = matches_df.sort_values(by=column_names['score'], ascending=False)

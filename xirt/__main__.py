@@ -20,7 +20,7 @@ from predictor import ModelData
 import matplotlib
 
 matplotlib.use('Agg')
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('xirt').getChild(__name__)
 
 
 def arg_parser():  # pragma: not covered
@@ -110,6 +110,8 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
             matches_df = pd.read_csv(peptides_file, nrows=nrows)
     else:
         matches_df = api_df
+
+    logger.info("Done reading input data.")
 
     # convenience short cuts
     if learning_params["train"]["mode"] == "train":

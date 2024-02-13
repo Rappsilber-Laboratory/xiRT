@@ -12,7 +12,7 @@ import logging
 import sequences as xs
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('xirt').getChild(__name__)
 
 
 def prepare_seqs(psms_df, seq_cols):
