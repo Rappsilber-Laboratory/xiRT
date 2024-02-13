@@ -37,7 +37,7 @@ REQUIRED = [
     'pydot==1.4.2',
     'pyyaml==6.0.1',
     'pyteomics==4.6',
-    'scikit-learn==1.3.0',
+    'scikit-learn==1.2.2',
     'tqdm==4.66.0',
     'biopython==1.81',
     'pydot==1.4.2',
@@ -47,7 +47,12 @@ REQUIRED = [
 
 # What packages are optional?
 # 'fancy feature': ['django'],}
-EXTRAS = {}
+EXTRAS = {
+    'develop': [
+        'pytest~=2.8.6',
+        'flake8~=2.5.2'
+    ]
+}
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------

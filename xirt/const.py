@@ -1,5 +1,5 @@
 """Module for constants in the xirt package."""
-from xirt import __version__
+from . import __version__
 
 default_column_names = {
     'peptide1_sequence': 'Peptide1',

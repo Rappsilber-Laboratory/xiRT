@@ -9,7 +9,7 @@ import pandas as pd
 from pyteomics import parser
 from tensorflow.keras import utils
 import logging
-from xirt import sequences as xs
+from . import sequences as xs
 
 
 logger = logging.getLogger(__name__)

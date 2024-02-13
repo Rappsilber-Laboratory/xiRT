@@ -10,7 +10,7 @@ from Bio.SeqUtils.ProtParamData import kd
 from pyteomics import parser
 from sklearn.preprocessing import PolynomialFeatures
 
-from xirt import sequences
+from . import sequences
 
 
 def create_simple_features(df, seq_column="Sequence"):

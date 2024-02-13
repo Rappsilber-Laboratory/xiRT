@@ -7,9 +7,9 @@ import pandas as pd
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
 
-from xirt import processing as xp, const
-from xirt import sequences as xs
-from xirt import xirtnet
+from . import processing as xp, const
+from . import sequences as xs
+from . import xirtnet
 
 logger = logging.getLogger(__name__)
 

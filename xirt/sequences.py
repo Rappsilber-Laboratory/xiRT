@@ -6,7 +6,7 @@ from pyteomics import parser
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing import sequence as ts
 
-from xirt import const
+from . import const
 
 
 def simplify_alphabet(sequence):

@@ -12,11 +12,11 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from xirt import __version__ as xv
-from xirt import features as xf
-from xirt import predictor as xr
-from xirt import xirtnet, qc, const
-from xirt.predictor import ModelData
+from . import __version__ as xv
+from . import features as xf
+from . import predictor as xr
+from . import xirtnet, qc, const
+from .predictor import ModelData
 import matplotlib
 
 matplotlib.use('Agg')
@@ -79,7 +79,7 @@ def arg_parser():  # pragma: not covered
     return parser
 
 
-def xirt_runner(peptides_file, out_dir, xirt_params, learning_params, nrows=None, perform_qc=True,
+def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows=None, perform_qc=True,
                 write=True, write_dummy="", api_df: pd.DataFrame = None) -> ModelData:
     """
     Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
@@ -102,7 +102,12 @@ def xirt_runner(peptides_file, out_dir, xirt_params, learning_params, nrows=None
     start_time = time.time()
     matches_df = None
     if api_df is None:
-        matches_df = pd.read_csv(peptides_file, nrows=nrows)
+        if peptides_file.endswith('.parquet'):
+            matches_df = pd.read_parquet(peptides_file)
+        elif peptides_file.endswith('.tab') or peptides_file.endswith('.tsv'):
+            matches_df = pd.read_csv(peptides_file, nrows=nrows, delimiter='\t')
+        else:
+            matches_df = pd.read_csv(peptides_file, nrows=nrows)
     else:
         matches_df = api_df
 
