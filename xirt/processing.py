@@ -10,9 +10,33 @@ from pyteomics import parser
 from tensorflow.keras import utils
 import logging
 import sequences as xs
+import multiprocessing as mp
+from functools import partial
+from math import ceil
 
 
 logger = logging.getLogger('xirt').getChild(__name__)
+
+
+def prepare_seqs_mp(psms_df, seq_cols):
+    n_worker = min(
+        [
+            ceil(len(psms_df)/10_000),
+            mp.cpu_count()
+        ]
+    )
+    slice_size = ceil(len(psms_df)/n_worker)
+    slices = [
+        psms_df[seq_cols].iloc[i*slice_size:(i+1)*slice_size]
+        for i in range(n_worker)
+    ]
+    prepare_job = partial(prepare_seqs, seq_cols=seq_cols)
+    with mp.Pool(n_worker) as pool:
+        results = pool.map(
+            prepare_job,
+            slices
+        )
+    return pd.concat(results)
 
 
 def prepare_seqs(psms_df, seq_cols):

@@ -302,8 +302,9 @@ class ModelData:
 
             if pred_type in ["linear", "relu"]:
                 # easiest, just ravel to 1d ar
-                self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = np.ravel(
-                    pred_ar)
+                self.prediction_df[
+                    task_i + "-prediction" + suf
+                ].loc[store_idx] = np.ravel(pred_ar)
 
             elif pred_type == "softmax":
                 # classification, take maximum probability as class value
@@ -429,7 +430,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     seq_proc = ["Seqar_" + i for i in seq_in]
 
     # perform the sequence based processing
-    matches_df = xp.prepare_seqs(matches_df, seq_cols=seq_in)
+    matches_df = xp.prepare_seqs_mp(matches_df, seq_cols=seq_in)
 
     # concat peptide sequences
     matches_df["PepSeq1PepSeq2_str"] = \
