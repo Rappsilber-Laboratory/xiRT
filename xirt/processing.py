@@ -30,13 +30,20 @@ def prepare_seqs_mp(psms_df, seq_cols):
         psms_df[seq_cols].iloc[i*slice_size:(i+1)*slice_size]
         for i in range(n_worker)
     ]
+
     prepare_job = partial(prepare_seqs, seq_cols=seq_cols)
+
     with mp.Pool(n_worker) as pool:
         results = pool.map(
             prepare_job,
             slices
         )
-    return pd.concat(results)
+
+    result = pd.concat(results)
+    for c in seq_cols:
+        psms_df[c] = result[c]
+
+    return psms_df
 
 
 def prepare_seqs(psms_df, seq_cols):
