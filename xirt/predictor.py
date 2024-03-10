@@ -61,13 +61,13 @@ class ModelData:
             str_mask = (self.psms["Fasta1"].str.contains(str_filter)) & (
                 self.psms["Fasta2"].str.contains(str_filter))
             fdr_mask = (self.psms["fdr"] <= fdr_cutoff) & (self.psms["isTT"]) & str_mask
-            logger.info("Removed {} peptides (str filter).".format(np.sum(~str_mask)))
+            logger.info(f"Removed {np.sum(~str_mask)} peptides (str filter).")
 
         self.psms["fdr_mask"] = fdr_mask
-        logger.info("Removed {} peptides (TD/DD).".format(np.sum(~self.psms["isTT"])))
-        logger.info("Removed {} peptides (FDR).".format(np.sum(~(self.psms["fdr"] <= fdr_cutoff))))
-        logger.info("Removed {} peptides (combined).".format(np.sum(~fdr_mask)))
-        logger.info("Setting FDR mask: {} valid entries".format(np.sum(fdr_mask)))
+        logger.info(f"Removed {np.sum(~self.psms['isTT'])} peptides (TD/DD).")
+        logger.info(f"Removed {np.sum(~(self.psms['fdr'] <= fdr_cutoff))} peptides (FDR).")
+        logger.info(f"Removed {np.sum(~fdr_mask)} peptides (combined).")
+        logger.info(f"Setting FDR mask: {np.sum(fdr_mask)} valid entries")
 
     def set_unique_shuffled_sampled_training_idx(self, sample_frac=1, random_state=42):
         """
@@ -83,7 +83,7 @@ class ModelData:
         Returns:
             None
         """
-        logger.info("Shuffling data (random_state: {})".format(random_state))
+        logger.info(f"Shuffling data (random_state: {random_state})")
         psms_train_idx = self.psms[
             (self.psms["fdr_mask"]) & (~self.psms["Duplicate"].astype(bool))].sample(
             frac=sample_frac, random_state=random_state).index
@@ -318,7 +318,7 @@ class ModelData:
                     sigmoid_to_class(pred_ar)
 
             else:
-                raise ValueError("{} not supported, only linear/softmax/sigmoid".format(pred_type))
+                raise ValueError(f"{pred_type} not supported, only linear/softmax/sigmoid")
 
 
 def compute_accuracy(predictions, expected, tasks, params):
@@ -395,14 +395,14 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         model_data, processed feature dataframes and label encoder
     """
     logger.info("Preprocessing peptides.")
-    logger.info("Input peptides: {}".format(len(matches_df)))
+    logger.info(f"Input peptides: {len(matches_df)}")
     # set index
     #matches_df.set_index("PSMID", drop=False, inplace=True)
 
     # sort to keep only highest scoring peptide from duplicated entries
     matches_df = matches_df.sort_values(by=column_names['score'], ascending=False)
 
-    logger.info("Reordering peptide sequences. (mode: {})".format(sequence_type))
+    logger.info(f"Reordering peptide sequences. (mode: {sequence_type})")
 
     # generate columns to handle based on input data type
     if sequence_type in ["crosslink", "pseudolinear"]:
@@ -439,8 +439,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
 
     # mark all duplicates
     matches_df["Duplicate"] = matches_df.duplicated(["PepSeq1PepSeq2_str"], keep="first")
-    logger.info("Duplicatad entries (by sequence only): {}/{}".format(matches_df["Duplicate"].sum(),
-                                                                      len(matches_df)))
+    logger.info(f"Duplicatad entries (by sequence only): {matches_df['Duplicate'].sum()}/{len(matches_df)}")
 
     if cl_residue:
         logger.info("Encode crosslinked residues.")
@@ -460,7 +459,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         valid_length = (len1 <= max_length) & (len2 <= max_length)
         matches_df = matches_df[valid_length]
 
-    logger.info("Applying length filter: {} peptides left".format(len(matches_df)))
+    logger.info(f"Applying length filter: {len(matches_df)} peptides left")
     features_rnn_seq1, features_rnn_seq2, le = \
         xp.featurize_sequences(matches_df, seq_cols=seq_proc, max_length=max_length)
 

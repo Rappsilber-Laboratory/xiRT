@@ -172,21 +172,21 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
     # perform crossvalidation
     # train on n-1 fold, use test_size from n-1 folds for validation and test/predict RT
     # on the remaining fold
-    logger.info("Starting crossvalidation (nfolds={})".format(n_splits))
+    logger.info(f"Starting crossvalidation (nfolds={n_splits})")
     start_timecv = time.time()
     for train_idx, val_idx, pred_idx in training_data.iter_splits(n_splits=n_splits,
                                                                   test_size=test_size):
         logger.info("---------------------------------------------------------")
-        logger.info("Starting crossvalidation iteration: {}".format(cv_counter))
-        logger.info("# Train peptides: {}".format(len(train_idx)))
-        logger.info("# Validation peptides: {}".format(len(val_idx)))
-        logger.info("# Prediction peptides: {}".format(len(pred_idx)))
-        logger.info("# Rescoring Candidates peptides: {}".format(len(training_data.predict_idx)))
+        logger.info(f"Starting crossvalidation iteration: {cv_counter}")
+        logger.info(f"# Train peptides: {len(train_idx)}")
+        logger.info(f"# Validation peptides: {len(val_idx)}")
+        logger.info(f"# Prediction peptides: {len(pred_idx)}")
+        logger.info(f"# Rescoring Candidates peptides: {len(training_data.predict_idx)}")
 
-        logger.info("Train indices: {}".format(train_idx[0:10]))
-        logger.info("Validation indices: {}".format(val_idx[0:10]))
-        logger.info("Prediction indices: {}".format(pred_idx[0:10]))
-        logger.info("Rescoring Candidates indices: {}".format(training_data.predict_idx[0:10]))
+        logger.info(f"Train indices: {train_idx[0:10]}")
+        logger.info(f"Validation indices: {val_idx[0:10]}")
+        logger.info(f"Prediction indices: {pred_idx[0:10]}")
+        logger.info(f"Rescoring Candidates indices: {training_data.predict_idx[0:10]}")
 
         # init the network model
         # either load from existing or create from config
@@ -309,11 +309,14 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
             # load the best performing model across cv from the validation split
             best_model_idx = np.argmin(
                 model_summary_df[model_summary_df["Split"] == "Validation"]["loss"].values)
-            logger.info("Best Model: {}".format(best_model_idx))
+            logger.info(f"Best Model: {best_model_idx}")
             logger.info("Loading weights.")
-            xirtnetwork.model.load_weights(os.path.join(xirtnetwork.callback_p["callback_path"],
-                                                        "xirt_weights_{}.h5".format(
-                                                            str(best_model_idx + 1).zfill(2))))
+            xirtnetwork.model.load_weights(
+                os.path.join(
+                    xirtnetwork.callback_p["callback_path"],
+                    f"xirt_weights_{str(best_model_idx + 1).zfill(2)}.h5"
+                )
+            )
             logger.info("Model Summary:")
             logger.info(model_summary_df.groupby("Split").agg([np.mean, np.std]).to_string())
     else:
@@ -404,10 +407,10 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
             of.write("done.")
 
     logger.info("Completed xiRT run.")
-    logger.info("End Time: {}".format(datetime.now().strftime("%H:%M:%S")))
+    logger.info(f"End Time: {datetime.now().strftime('%H:%M:%S')}")
     end_time = time.time()
-    logger.info("xiRT CV-training took: {:.2f} minutes".format((end_time - start_timecv) / 60.))
-    logger.info("xiRT took: {:.2f} minutes".format((end_time - start_time) / 60.))
+    logger.info(f"xiRT CV-training took: {(end_time - start_timecv) / 60.0:.2f} minutes")
+    logger.info(f"xiRT took: {(end_time - start_time) / 60.0:.2f} minutes")
 
     return training_data
 
@@ -459,21 +462,19 @@ def main():  # pragma: no cover
     logger.addHandler(sh)
 
     logger.info("command line call:")
-    logger.info(
-        "xirt -i {} -o {} -x {} -l {}".format(args.in_peptides, args.out_dir, args.xirt_params,
-                                              args.learning_params))
+    logger.info(f"xirt -i {args.in_peptides} -o {args.out_dir} -x {args.xirt_params} -l {args.learning_params}")
     logger.info("Init logging file.")
-    logger.info("Starting Time: {}".format(datetime.now().strftime("%H:%M:%S")))
+    logger.info(f"Starting Time: {datetime.now().strftime('%H:%M:%S')}")
     logger.info("Starting xiRT.")
-    logger.info("Using xiRT version: {}".format(xv))
+    logger.info(f"Using xiRT version: {xv}")
 
     # call function
     xirt_params = yaml.load(open(args.xirt_params), Loader=yaml.FullLoader)
     learning_params = yaml.load(open(args.learning_params), Loader=yaml.FullLoader)
 
-    logger.info("xi params: {}".format(args.xirt_params))
-    logger.info("learning_params: {}".format(args.learning_params))
-    logger.info("peptides: {}".format(args.in_peptides))
+    logger.info(f"xi params: {args.xirt_params}")
+    logger.info(f"learning_params: {args.learning_params}")
+    logger.info(f"peptides: {args.in_peptides}")
 
     xirt_runner(args.in_peptides, args.out_dir, xirt_params, learning_params,
                 write=args.write)

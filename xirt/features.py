@@ -306,7 +306,7 @@ def get_patches(seq, aa_set1=["D", "E"], aa_set2=None, counts_only=True):
         ac_combs += ["".join(reversed(i)) for i in list(itertools.product(aa_set1, aa_set2))]
         p1 = "|".join(aa_set1)
         p2 = "|".join(aa_set2)
-        pattern = re.compile("([{}]+[{}]+)|[{}]+[{}]+".format(p1, p2, p2, p1))
+        pattern = re.compile(f"([{p1}]+[{p2}]+)|[{p2}]+[{p1}]+")
 
     # just count the patterns (DD, DDD) and do not distinguish between
     # different patterns of the same type
@@ -568,16 +568,16 @@ def compute_prediction_errors(obs_df, preds_df, tasks, frac_cols=[], single_pred
             for task_i in tasks:
                 # we need to take take of the class mapping, because fractions are not equal to cls
                 if task_i in class_columns:
-                    preds_df["{}-error{}".format(task_i, suffix)] = \
+                    preds_df[f"{task_i}-error{suffix}"] = \
                         obs_df[task_i+"_0based"] - \
-                        preds_df["{}-prediction{}".format(task_i, suffix)]
+                        preds_df[f"{task_i}-prediction{suffix}"]
                 else:
                     # continously measured RT dont have a constraint
-                    preds_df["{}-error{}".format(task_i, suffix)] = \
-                        obs_df[task_i] - preds_df["{}-prediction{}".format(task_i, suffix)]
+                    preds_df[f"{task_i}-error{suffix}"] = \
+                        obs_df[task_i] - preds_df[f"{task_i}-prediction{suffix}"]
     else:
         for task_i in tasks:
-            preds_df["{}-error".format(task_i)] = obs_df[task_i] - preds_df[task_i+"-prediction"]
+            preds_df[f"{task_i}-error"] = obs_df[task_i] - preds_df[task_i+"-prediction"]
 
 
 def add_interactions(feature_df, degree=2, interactions_only=True):
