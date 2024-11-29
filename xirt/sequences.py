@@ -6,6 +6,7 @@ from pyteomics import parser
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing import sequence as ts
 import cython
+from xiutilities import pandas_utils
 
 from xirt import const
 
@@ -187,7 +188,8 @@ def modify_cl_residues(matches_df, seq_in, reduce_cl=False):
             print(f"List index out of range for {seq_id}. Check peptide sequence for unwanted characters")
             print(error_df)
 
-        matches_df["Seqar_" + seq_i] = matches_df.apply(
+        matches_df["Seqar_" + seq_i] = pandas_utils.async_apply(
+            matches_df,
             lambda r: convert_seqar(
                 r["Seqar_" + seq_i],
                 r["link_pos_p" + str(seq_id + 1)],
