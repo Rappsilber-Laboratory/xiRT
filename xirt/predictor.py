@@ -7,9 +7,9 @@ import pandas as pd
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
 
-import processing as xp, const
-import sequences as xs
-import xirtnet
+from xirt import processing as xp, const
+from xirt import sequences as xs
+from xirt import xirtnet
 import multiprocessing as mp
 from math import ceil, floor
 from functools import partial

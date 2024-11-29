@@ -12,11 +12,13 @@ import numpy as np
 import pandas as pd
 import yaml
 
-import _version as xv
-import features as xf
-import predictor as xr
-import xirtnet, qc, const
-from predictor import ModelData
+import xirt._version as xv
+import xirt.features as xf
+import xirt.predictor as xr
+from xirt import xirtnet
+from xirt import qc
+from xirt import const
+from xirt.predictor import ModelData
 import matplotlib
 
 matplotlib.use('Agg')

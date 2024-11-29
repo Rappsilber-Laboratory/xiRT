@@ -9,7 +9,7 @@ import pandas as pd
 from pyteomics import parser
 from tensorflow.keras import utils
 import logging
-import sequences as xs
+from xirt import sequences as xs
 import multiprocessing as mp
 from functools import partial
 from math import ceil
@@ -40,7 +40,7 @@ def prepare_seqs_mp(psms_df, seq_cols):
         )
 
     result = pd.concat(results)
-    for c in seq_cols:
+    for c in result.columns:
         psms_df[c] = result[c]
 
     return psms_df
