@@ -5,6 +5,7 @@ import numpy as np
 from pyteomics import parser
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing import sequence as ts
+import cython
 
 from xirt import const
 
@@ -168,7 +169,7 @@ def modify_cl_residues(matches_df, seq_in, reduce_cl=False):
 
     Args:
         matches_df: df, dataframe with peptide identifications. Required columns
-        seq_in: ar-like, list of columns wiht peptide entries
+        seq_in: ar-like, list of columns with peptide entries
         reduce_cl: bool, if true crosslinked residues are reduced to X, else the linked residue
         is kept (default: False). This is useful for transfer learning or promiscuous crosslinker
         such as SDA.
@@ -178,21 +179,34 @@ def modify_cl_residues(matches_df, seq_in, reduce_cl=False):
     # increase the alphabet by distinguishing between crosslinked K and non-crosslinked K
     # introduce a new prefix cl for each crosslinked residue
     for seq_id, seq_i in enumerate(seq_in):
-        for idx, row in matches_df.iterrows():
-            if reduce_cl:
-                # reasign special crosslinker residue
-                residue = "X"
-            else:
-                try:
-                    residue = row["Seqar_" + seq_i][row["link_pos_p" + str(seq_id + 1)]]
-                except IndexError:
-                    print(row)
-                    print("List index out of range. Check peptide sequence for unwanted characters")
-                    print(row["Seqar_" + seq_i])
-                    print(seq_id)
-                    print(row["link_pos_p" + str(seq_id + 1)])
+        error_df = matches_df[
+            matches_df["Seqar_" + seq_i].str.len() <= matches_df["link_pos_p" + str(seq_id + 1)]
+        ][["Seqar_" + seq_i, "link_pos_p" + str(seq_id + 1)]]
 
-            matches_df.at[idx, "Seqar_" + seq_i][row["link_pos_p" + str(seq_id + 1)]] = "cl" + residue
+        if len(error_df) > 0:
+            print(f"List index out of range for {seq_id}. Check peptide sequence for unwanted characters")
+            print(error_df)
+
+        matches_df["Seqar_" + seq_i] = matches_df.apply(
+            lambda r: convert_seqar(
+                r["Seqar_" + seq_i],
+                r["link_pos_p" + str(seq_id + 1)],
+                reduce_cl
+            ),
+            axis=1
+        )
+
+
+@cython.ccall
+def convert_seqar(seqar: list, linkpos: int, reduce_cl=False):
+    if linkpos < 0 or linkpos >= len(seqar):
+        return seqar
+    residue = seqar[linkpos]
+    if reduce_cl:
+        seqar[linkpos] = "X"
+    else:
+        seqar[linkpos] = "cl" + residue
+    return seqar
 
 
 def get_mods(sequences):
