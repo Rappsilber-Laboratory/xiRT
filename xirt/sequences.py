@@ -190,8 +190,7 @@ def modify_cl_residues(matches_df, seq_in, reduce_cl=False):
             print(f"List index out of range for {seq_id}. Check peptide sequence for unwanted characters")
             print(error_df)
 
-        matches_df["Seqar_" + seq_i] = pandas_utils.async_apply(
-            matches_df,
+        matches_df["Seqar_" + seq_i] = matches_df.apply(
             lambda r: convert_seqar(
                 r["Seqar_" + seq_i],
                 r["link_pos_p" + str(seq_id + 1)],
@@ -199,6 +198,15 @@ def modify_cl_residues(matches_df, seq_in, reduce_cl=False):
             ),
             axis=1
         )
+        #matches_df["Seqar_" + seq_i] = pandas_utils.async_apply(
+        #    matches_df,
+        #    lambda r: convert_seqar(
+        #        r["Seqar_" + seq_i],
+        #        r["link_pos_p" + str(seq_id + 1)],
+        #        reduce_cl
+        #    ),
+        #    axis=1
+        #)
 
 
 @cython.ccall
@@ -245,7 +253,7 @@ def get_alphabet(sequences):
     )
 
 
-def label_encoding(sequences, max_sequence_length, alphabet=[], le=None):
+def label_encoding(sequences, min_sequence_length, max_sequence_length, alphabet=[], le=None):
     """Label encode a list of peptide sequences.
 
     Parameters
@@ -254,6 +262,8 @@ def label_encoding(sequences, max_sequence_length, alphabet=[], le=None):
         list of amino acid characters (n/c-term/modifications.
     max_sequence_length : int
         maximal sequence length (for padding).
+    min_sequence_lenth: int
+        minimal sequence length (for padding).
     alphabet : list, optional
         list of the unique characters given in the sequences
     le : TYPE, optional
@@ -279,6 +289,12 @@ def label_encoding(sequences, max_sequence_length, alphabet=[], le=None):
         sequences.str.len().max(),
         max_sequence_length
     ])
+
+    max_arr_len = max([
+        max_arr_len,
+        min_sequence_length
+    ])
+
     # use an offset of +1 since shorter sequences will be padded with zeros
     # to achieve equal sequence lengths
     X_encoded = pandas_utils.async_apply(

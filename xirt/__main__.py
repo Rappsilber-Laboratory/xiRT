@@ -151,7 +151,11 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
     # init neural network structure
     print(type(training_data.features1))
     training_data.features1.to_pickle('./features.pickle')
-    xirtnetwork = xirtnet.xiRTNET(xirt_params, input_dim=training_data.features1.shape[1])
+    xirtnetwork = xirtnet.xiRTNET(
+        xirt_params,
+        input_dim=training_data.features1.shape[1],
+        embedding_dim=len(training_data.le.classes_)+1
+    )
 
     # get the columns where the RT information is stored
     frac_cols = sorted([xirtnetwork.output_p[tt + "-column"] for tt in

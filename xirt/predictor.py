@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
 
 from xirt import processing as xp, const
 from xirt import sequences as xs
@@ -33,7 +34,7 @@ class ModelData:
         self.psms = psms_df
         self.features1 = features1
         self.features2 = features2
-        self.le = le
+        self.le: LabelEncoder = le
         self.train_idx = []
         self.predict_idx = []
         self.cv_idx = []
