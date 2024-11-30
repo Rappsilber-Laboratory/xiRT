@@ -143,7 +143,7 @@ class ModelData:
             # get n_splits of the training
             kf = KFold(n_splits=n_splits, shuffle=False)
             kf.get_n_splits(self.features1.loc[self.train_idx])
-            cv_locs = np.array([i[1] for i in kf.split(self.features1.loc[self.train_idx])])
+            cv_locs = np.array([i[1] for i in kf.split(self.features1.loc[self.train_idx])], dtype=object)
 
             for i in cv_folds_ar:
                 # this will get all the slices where "t" indicates the training

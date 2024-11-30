@@ -150,7 +150,10 @@ def generate_padded_df(encoded_ar, index):
     Returns:
         dataframe, label encoded peptides as rows
     """
-    seqs_padded = pd.DataFrame(encoded_ar, index=index)
+    seqs_padded = pd.DataFrame(
+        np.array(encoded_ar.to_list()),
+        index=index
+    )
     seqs_padded.columns = ["rnn_{}".format(str(i).zfill(2)) for i in np.arange(len(encoded_ar[0]))]
     return seqs_padded
 
