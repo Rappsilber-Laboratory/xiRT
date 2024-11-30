@@ -124,10 +124,13 @@ def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], 
     logger.info("alphabet: {}".format(alphabet))
 
     # perform the label encoding + padding
+    logger.debug("labeling encoding")
     encoded_s1, le = xs.label_encoding(psms_df[seq_cols[0]], max_length, alphabet=alphabet)
+    logger.debug("generating padded DF")
     seq1_padded = generate_padded_df(encoded_s1, psms_df.index)
 
     if len(seq_cols) > 1:
+        logger.debug("repeat for peptide 2")
         encoded_s2, _ = xs.label_encoding(psms_df[seq_cols[1]], max_length, alphabet=alphabet,
                                           le=le)
         seq2_padded = generate_padded_df(encoded_s2, psms_df.index)

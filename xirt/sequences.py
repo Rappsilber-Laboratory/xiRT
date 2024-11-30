@@ -6,10 +6,12 @@ from pyteomics import parser
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing import sequence as ts
 import cython
+import logging
 from xiutilities import pandas_utils
 
 from xirt import const
 
+logger = logging.getLogger('xirt').getChild(__name__)
 
 def simplify_alphabet(sequence):
     """Replace ambiguous amino acids.
@@ -271,8 +273,19 @@ def label_encoding(sequences, max_sequence_length, alphabet=[], le=None):
         le = LabelEncoder()
         le.fit(alphabet)
 
+    logger.debug("Padding sequences")
+
+    max_arr_len = min([
+        sequences.str.len().max(),
+        max_sequence_length
+    ])
     # use an offset of +1 since shorter sequences will be padded with zeros
     # to achieve equal sequence lengths
-    X_encoded = sequences.apply(le.transform) + 1
-    X_encoded = ts.pad_sequences(X_encoded, maxlen=max_sequence_length)
+    X_encoded = pandas_utils.async_apply(
+            sequences,
+            lambda x: np.concatenate([
+                np.zeros(max_arr_len),  # Pad zeros
+                le.transform(x) + 1  # Add one to avoid zero padding conflict
+            ])[-max_arr_len:]  # Cut to length
+    )
     return X_encoded, le

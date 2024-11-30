@@ -466,6 +466,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     # add the two fraction encoding columns
     # psms_df[col + "_1hot"] and psms_df[col + "_ordinal"]
     if len(fraction_cols) > 0:
+        logger.info("Encoding fractions")
         xp.fraction_encoding(matches_df, rt_methods=fraction_cols)
 
     # keep all data together in a data class
