@@ -42,7 +42,9 @@ REQUIRED = [
     'biopython>=1.81',
     'pydot>=1.4.2',
     'palettable>=3.3.3',
-    'statannot==0.2.3'
+    'statannot==0.2.3',
+    'xiutilities',
+    'fastparquet',
 ]
 
 # What packages are optional?

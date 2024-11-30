@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
 
 from xirt import processing as xp, const
 from xirt import sequences as xs
@@ -33,7 +34,7 @@ class ModelData:
         self.psms = psms_df
         self.features1 = features1
         self.features2 = features2
-        self.le = le
+        self.le: LabelEncoder = le
         self.train_idx = []
         self.predict_idx = []
         self.cv_idx = []
@@ -143,7 +144,7 @@ class ModelData:
             # get n_splits of the training
             kf = KFold(n_splits=n_splits, shuffle=False)
             kf.get_n_splits(self.features1.loc[self.train_idx])
-            cv_locs = np.array([i[1] for i in kf.split(self.features1.loc[self.train_idx])])
+            cv_locs = np.array([i[1] for i in kf.split(self.features1.loc[self.train_idx])], dtype=object)
 
             for i in cv_folds_ar:
                 # this will get all the slices where "t" indicates the training
@@ -466,6 +467,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     # add the two fraction encoding columns
     # psms_df[col + "_1hot"] and psms_df[col + "_ordinal"]
     if len(fraction_cols) > 0:
+        logger.info("Encoding fractions")
         xp.fraction_encoding(matches_df, rt_methods=fraction_cols)
 
     # keep all data together in a data class
