@@ -299,7 +299,7 @@ class ModelData:
 
                 # softmax also gets probabilities
                 if pred_type == "softmax":
-                    self.prediction_df[f"{task_i}-prediction{suf}"] = -1000000
+                    self.prediction_df[f"{task_i}-probability{suf}"] = -1000000
 
             if pred_type in ["linear", "relu"]:
                 # easiest, just ravel to 1d ar
@@ -312,7 +312,7 @@ class ModelData:
                 # classification, take maximum probability as class value
                 self.prediction_df.loc[store_idx, f"{task_i}-prediction{suf}"] = \
                     np.argmax(pred_ar, axis=1)
-                self.prediction_df.loc[store_idx, f"{task_i}-prediction{suf}"] = \
+                self.prediction_df.loc[store_idx, f"{task_i}-probability{suf}"] = \
                     np.max(pred_ar, axis=1)
 
             elif pred_type == "sigmoid":
