@@ -361,6 +361,7 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
         df_history_all["epoch"] += 1
 
     # compute features for rescoring
+    logger.info("Compute features for rescoring")
     xf.compute_prediction_errors(training_data.psms, training_data.prediction_df,
                                  xirtnetwork.tasks, frac_cols,
                                  (xirtnetwork.siamese_p["single_predictions"]

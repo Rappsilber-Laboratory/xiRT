@@ -219,13 +219,13 @@ class ModelData:
         """
         # if only continous columns, only return these etc.
         if len(frac_cols) == 0:
-            return [self.psms[ccol].loc[idx].values for ccol in cont_cols]
+            return [self.psms.loc[idx, ccol].values for ccol in cont_cols]
 
         if len(cont_cols) == 0:
-            return [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
+            return [xirtnet.reshapey(self.psms.loc[idx, fcol].values) for fcol in frac_cols]
 
-        y_var = [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
-        y_var.extend([self.psms[ccol].loc[idx].values for ccol in cont_cols])
+        y_var = [xirtnet.reshapey(self.psms.loc[idx, fcol].values) for fcol in frac_cols]
+        y_var.extend([self.psms.loc[idx, ccol].values for ccol in cont_cols])
         return y_var
 
     def predict_and_store(self, xirtnetwork, xdata, store_idx, cv=0):
@@ -291,31 +291,32 @@ class ModelData:
 
         for task_i, pred_ar in zip(xirtnetwork.tasks, predictions):
             # get activation type because linear, sigmoid, softmax all require different encoding/
-            pred_type = xirtnetwork.output_p[task_i + "-activation"]
+            pred_type = xirtnetwork.output_p[f"{task_i}-activation"]
 
             # only init once
-            if task_i + "-prediction" + suf not in self.prediction_df.columns:
-                self.prediction_df[task_i + "-prediction" + suf] = -1000000
+            if f"{task_i}-prediction{suf}" not in self.prediction_df.columns:
+                self.prediction_df[f"{task_i}-prediction{suf}"] = -1000000
 
                 # softmax also gets probabilities
                 if pred_type == "softmax":
-                    self.prediction_df[task_i + "-probability" + suf] = -1000000
+                    self.prediction_df[f"{task_i}-prediction{suf}"] = -1000000
 
             if pred_type in ["linear", "relu"]:
                 # easiest, just ravel to 1d ar
-                self.prediction_df[
-                    task_i + "-prediction" + suf
-                ].loc[store_idx] = np.ravel(pred_ar)
+                self.prediction_df.loc[
+                    store_idx,
+                    f"{task_i}-prediction{suf}"
+                ] = np.ravel(pred_ar)
 
             elif pred_type == "softmax":
                 # classification, take maximum probability as class value
-                self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
+                self.prediction_df.loc[store_idx, f"{task_i}-prediction{suf}"] = \
                     np.argmax(pred_ar, axis=1)
-                self.prediction_df[task_i + "-probability" + suf].loc[store_idx] = \
+                self.prediction_df.loc[store_idx, f"{task_i}-prediction{suf}"] = \
                     np.max(pred_ar, axis=1)
 
             elif pred_type == "sigmoid":
-                self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
+                self.prediction_df.loc[store_idx, f"{task_i}-prediction{suf}"] = \
                     sigmoid_to_class(pred_ar)
 
             else:
