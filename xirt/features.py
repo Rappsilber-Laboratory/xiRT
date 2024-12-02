@@ -560,7 +560,7 @@ def compute_prediction_errors(obs_df, preds_df, tasks, frac_cols=[], single_pred
     Returns:
         None
     """
-    class_columns = [i.split("_")[0].lower() for i in frac_cols]
+    class_columns = [i.rsplit("_", 1)[0].lower() for i in frac_cols]
     # only generate single error feature; viable for crosslinks and linears
     if single_predictions:
         # generate 3x error features; only viable for crosslinks

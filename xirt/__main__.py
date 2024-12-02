@@ -280,7 +280,7 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
         # store manual accuray for ordinal data
         if has_ordinal:
             for count, task_i in enumerate(frac_cols):
-                taski_short = task_i.split("_")[0]
+                taski_short = task_i.rsplit("_", 1)[0]
                 if "ordinal" in xirtnetwork.output_p[taski_short + "-column"]:
                     # accuracies_all contains accuracies for train, validation, pred
                     # problem is that accuracies are computed after the loop and stored in a 1d-ar
@@ -404,7 +404,6 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
         with open(os.path.join(xirt_params["callbacks"]["callback_path"], "encoder.p"), 'wb') as po:
             pickle.dump(training_data.le, po, protocol=pickle.HIGHEST_PROTOCOL)
 
-        training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
         training_data.prediction_df.to_csv(os.path.join(outpath, "error_features.csv"))
         features_exhaustive.to_csv(os.path.join(outpath, "error_features_interactions.csv"))
 
