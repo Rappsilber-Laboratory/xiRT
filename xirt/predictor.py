@@ -86,8 +86,10 @@ class ModelData:
         """
         logger.info(f"Shuffling data (random_state: {random_state})")
         psms_train_idx = self.psms[
-            (self.psms["fdr_mask"]) & (~self.psms["Duplicate"].astype(bool))].sample(
-            frac=sample_frac, random_state=random_state).index
+            (self.psms["fdr_mask"]) & (~self.psms["Duplicate"].astype(bool))
+        ].sample(
+            frac=sample_frac, random_state=random_state
+        ).index
         self.train_idx = psms_train_idx
         self.predict_idx = self.psms.index.difference(psms_train_idx)
         self.shuffled = True
@@ -134,31 +136,47 @@ class ModelData:
             # split data into 100% - 2x test size, % test size, % test size
             # e.g. test-size= 10% --> 80%, 10%, 10%
             # prediction set is used for model assessment here
-            train_idx, val_idx, pre_idx = \
-                np.split(train_df_idx, [int((1 - test_size * 2) * len(train_df_idx)),
-                                        int((1 - test_size) * len(train_df_idx))])
+            train_idx, val_idx, pre_idx = np.split(
+                train_df_idx,
+                [
+                    int((1 - test_size * 2) * len(train_df_idx)),
+                    int((1 - test_size) * len(train_df_idx))
+                ])
             yield train_idx, val_idx, pre_idx
 
         else:
             logger.info("Running in crossvalidation-mode: cv will be done.")
             # get n_splits of the training
+            train_features1 = self.features1.loc[self.train_idx]
             kf = KFold(n_splits=n_splits, shuffle=False)
-            kf.get_n_splits(self.features1.loc[self.train_idx])
-            cv_locs = np.array([i[1] for i in kf.split(self.features1.loc[self.train_idx])], dtype=object)
+            kf.get_n_splits(train_features1)
+            cv_slice_idxs = np.array(
+                [
+                    i[1] for i in kf.split(train_features1)
+                ],
+                dtype=object
+            )
 
             for i in cv_folds_ar:
                 # this will get all the slices where "t" indicates the training
                 # here the validation data should be dependant on the CV fold sizes
                 train_msk = np.array(cv_pattern) == "t"
+                split_train = np.concatenate(cv_slice_idxs[train_msk])
 
                 # combine 2 test folds to get a training fold
                 # get train folds -> get locations -> get index
-                train_init_idx = train_df_idx[np.concatenate(cv_locs[train_msk])]
-                train_idx, val_idx = np.split(train_init_idx,
-                                              [int((1 - test_size) * len(train_init_idx))])
+                train_init_idx = train_df_idx[split_train.tolist()]
+                train_idx, val_idx = np.split(
+                    train_init_idx,
+    [
+                        int((1 - test_size) * len(train_init_idx))
+                    ]
+                )
 
                 # take a testing fold
-                pre_idx = train_df_idx[cv_locs[~train_msk][0]]
+                pre_idx = train_df_idx[
+                    list(cv_slice_idxs[~train_msk][0])
+                ]
 
                 # change the pattern for next iteration
                 cv_pattern = cv_pattern[1:] + [cv_pattern[0]]
