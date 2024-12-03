@@ -43,7 +43,7 @@ def arg_parser():  # pragma: not covered
     >xirt -p xirt_params.yaml
     and
     >xirt -s learning_params.yaml
-    Current Version: {get_versions().version}
+    Current Version: {get_versions()['version']}
     """
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-i", "--in_peptides",
@@ -472,7 +472,7 @@ def main():  # pragma: no cover
     logger.info("Init logging file.")
     logger.info(f"Starting Time: {datetime.now().strftime('%H:%M:%S')}")
     logger.info("Starting xiRT.")
-    logger.info(f"Using xiRT version: {get_versions().version}")
+    logger.info(f"Using xiRT version: {get_versions()['version']}")
 
     # call function
     xirt_params = yaml.load(open(args.xirt_params), Loader=yaml.FullLoader)
