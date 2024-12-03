@@ -472,7 +472,7 @@ def main():  # pragma: no cover
     logger.info("Init logging file.")
     logger.info(f"Starting Time: {datetime.now().strftime('%H:%M:%S')}")
     logger.info("Starting xiRT.")
-    logger.info(f"Using xiRT version: {xv}")
+    logger.info(f"Using xiRT version: {get_versions().version}")
 
     # call function
     xirt_params = yaml.load(open(args.xirt_params), Loader=yaml.FullLoader)
