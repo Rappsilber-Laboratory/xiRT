@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-import xirt._version as xv
+from xirt._version import get_versions
 import xirt.features as xf
 import xirt.predictor as xr
 from xirt import xirtnet
@@ -32,7 +32,7 @@ def arg_parser():  # pragma: not covered
     Returns:
         arguments, from parse_args
     """
-    description = """
+    description = f"""
     xiRT is a machine learning tool for the (multidimensional) RT prediction of linear and
     crosslinked peptides. Use --help to see the command line arguments.
 
@@ -43,8 +43,8 @@ def arg_parser():  # pragma: not covered
     >xirt -p xirt_params.yaml
     and
     >xirt -s learning_params.yaml
-    Current Version: {}
-    """.format(xv)
+    Current Version: {get_versions().version}
+    """
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-i", "--in_peptides",
                         help="Input peptide table to learn (and predict) the retention times.",
