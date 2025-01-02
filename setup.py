@@ -20,8 +20,8 @@ URL = 'https://rappsilber-laboratory.github.io/xiRT/'
 URL_DOKU = "https://xirt.readthedocs.io/en/latest/"
 URL_GITHUB = "https://github.com/Rappsilber-Laboratory/xiRT"
 URL_ISSUES = "https://github.com/Rappsilber-Laboratory/xiRT/issues"
-EMAIL = 'sven.giese@hpi.de'
-AUTHOR = 'Sven Giese'
+EMAIL = 'f.schimweg@win.tu-berlin.de'
+AUTHOR = 'Falk B. Schimweg'
 REQUIRES_PYTHON = '>=3.6.0'
 KEYWORDS = ["xiRT", "Proteomics", "Crosslinking", "machine learning", "Retention Time Prediction",
             "Chromatography", "Peptides"]
@@ -45,6 +45,7 @@ REQUIRED = [
     'statannot==0.2.3',
     'xiutilities',
     'fastparquet',
+    'cython',
 ]
 
 # What packages are optional?
