@@ -1,0 +1,22 @@
+FROM python:3.7-slim
+
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    libgnutls28-dev \
+    libcurl4-gnutls-dev \
+    python3-pycurl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /app
+WORKDIR /app
+
+COPY setup.py .
+COPY xirt/ xirt/
+COPY requirements.txt .
+
+RUN pip install -r requirements.txt
+RUN pip install .
+
+ENTRYPOINT ["python", "-m", "xirt"]
