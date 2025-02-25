@@ -12,12 +12,17 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from xirt import __version__ as xv
+from xirt._version import get_versions
+import xirt.features as xf
+import xirt.predictor as xr
+from xirt import xirtnet
+from xirt import qc
 from xirt import const
+from xirt.predictor import ModelData
 import matplotlib
 
 matplotlib.use('Agg')
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('xirt').getChild(__name__)
 
 
 def arg_parser():  # pragma: not covered
@@ -27,7 +32,7 @@ def arg_parser():  # pragma: not covered
     Returns:
         arguments, from parse_args
     """
-    description = """
+    description = f"""
     xiRT is a machine learning tool for the (multidimensional) RT prediction of linear and
     crosslinked peptides. Use --help to see the command line arguments.
 
@@ -39,9 +44,8 @@ def arg_parser():  # pragma: not covered
 
     and
     >xirt -s learning_params.yaml
-
-    Current Version: {}
-    """.format(xv)
+    Current Version: {get_versions()['version']}
+    """
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-i", "--in_peptides",
                         help="Input peptide table to learn (and predict) the retention times.",
@@ -75,26 +79,27 @@ def arg_parser():  # pragma: not covered
                         help="Flag for writing result prediction files. If false only summaries "
                              "are written (default: --write).")
     parser.add_argument('--version', action='version',
-                        version='%(prog)s {version}'.format(version=xv))
+                        version='%(prog)s {version}'.format(version=get_versions()['version']))
     parser.set_defaults(write=True)
     return parser
 
 
-def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform_qc=True,
-                write=True, write_dummy=True):
+def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows=None, perform_qc=True,
+                write=True, write_dummy="", api_df: pd.DataFrame = None) -> ModelData:
     """
     Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
 
     Args:
         peptides_file: str, location of the input psm/csm file
         out_dir: str, folder to store the results to
-        xirt_loc: str, location of the yaml file for xirt
-        setup_loc: str, location of the setup yaml
+        xirt_params: object, yaml for xirt
+        learning_params: object, setup yaml
         single_pep_predictions:
         nrows: int, number of rows to sample (for quicker testing purposes only)
         perform_qc: bool, indicates if qc plots should be done.
         write: bool,  indicates result predictions should be stored
-        write_dummy: bool if true dummy txt file is written after execution (for snakemake usag)
+        write_dummy: str, if true dummy txt file is written after execution (for snakemake usag)
+        api_df: pandas.DataFrame, Dataframe from API call
 
     Returns:
         None
@@ -104,13 +109,18 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     from xirt import xirtnet, qc
 
     start_time = time.time()
-    xirt_params = yaml.load(open(xirt_loc), Loader=yaml.FullLoader)
-    learning_params = yaml.load(open(setup_loc), Loader=yaml.FullLoader)
-    matches_df = pd.read_csv(peptides_file, nrows=nrows)
+    matches_df = None
+    if api_df is None:
+        if peptides_file.endswith('.parquet'):
+            matches_df = pd.read_parquet(peptides_file)
+        elif peptides_file.endswith('.tab') or peptides_file.endswith('.tsv'):
+            matches_df = pd.read_csv(peptides_file, nrows=nrows, delimiter='\t')
+        else:
+            matches_df = pd.read_csv(peptides_file, nrows=nrows)
+    else:
+        matches_df = api_df
 
-    logger.info("xi params: {}".format(xirt_loc))
-    logger.info("learning_params: {}".format(setup_loc))
-    logger.info("peptides: {}".format(peptides_file))
+    logger.info("Done reading input data.")
 
     # convenience short cuts
     if learning_params["train"]["mode"] == "train":
@@ -129,7 +139,8 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                   sequence_type=learning_params["train"]["sequence_type"],
                                   max_length=learning_params["preprocessing"]["max_length"],
                                   cl_residue=learning_params["preprocessing"]["cl_residue"],
-                                  fraction_cols=xirt_params["predictions"]["fractions"])
+                                  fraction_cols=xirt_params["predictions"]["fractions"],
+                                  column_names=xirt_params['column_names'])
 
     # set training index by FDR and duplicates
     training_data.set_fdr_mask(fdr_cutoff=learning_params["train"]["fdr"],
@@ -145,13 +156,19 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             training_data.psms[cont_col] = training_data.psms[cont_col] / 60.0
 
     # init neural network structure
-    xirtnetwork = xirtnet.xiRTNET(xirt_params, input_dim=training_data.features1.shape[1])
+    print(type(training_data.features1))
+    training_data.features1.to_pickle('./features.pickle')
+    xirtnetwork = xirtnet.xiRTNET(
+        xirt_params,
+        input_dim=training_data.features1.shape[1],
+        embedding_dim=len(training_data.le.classes_)+1
+    )
 
     # get the columns where the RT information is stored
-    frac_cols = sorted([xirtnetwork.output_p[tt.lower() + "-column"] for tt in
+    frac_cols = sorted([xirtnetwork.output_p[tt + "-column"] for tt in
                         xirt_params["predictions"]["fractions"]])
 
-    cont_cols = sorted([xirtnetwork.output_p[tt.lower() + "-column"] for tt in
+    cont_cols = sorted([xirtnetwork.output_p[tt + "-column"] for tt in
                         xirt_params["predictions"]["continues"]])
 
     # init data structures for results
@@ -168,21 +185,21 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
     # perform crossvalidation
     # train on n-1 fold, use test_size from n-1 folds for validation and test/predict RT
     # on the remaining fold
-    logger.info("Starting crossvalidation (nfolds={})".format(n_splits))
+    logger.info(f"Starting crossvalidation (nfolds={n_splits})")
     start_timecv = time.time()
     for train_idx, val_idx, pred_idx in training_data.iter_splits(n_splits=n_splits,
                                                                   test_size=test_size):
         logger.info("---------------------------------------------------------")
-        logger.info("Starting crossvalidation iteration: {}".format(cv_counter))
-        logger.info("# Train peptides: {}".format(len(train_idx)))
-        logger.info("# Validation peptides: {}".format(len(val_idx)))
-        logger.info("# Prediction peptides: {}".format(len(pred_idx)))
-        logger.info("# Rescoring Candidates peptides: {}".format(len(training_data.predict_idx)))
+        logger.info(f"Starting crossvalidation iteration: {cv_counter}")
+        logger.info(f"# Train peptides: {len(train_idx)}")
+        logger.info(f"# Validation peptides: {len(val_idx)}")
+        logger.info(f"# Prediction peptides: {len(pred_idx)}")
+        logger.info(f"# Rescoring Candidates peptides: {len(training_data.predict_idx)}")
 
-        logger.info("Train indices: {}".format(train_idx[0:10]))
-        logger.info("Validation indices: {}".format(val_idx[0:10]))
-        logger.info("Prediction indices: {}".format(pred_idx[0:10]))
-        logger.info("Rescoring Candidates indices: {}".format(training_data.predict_idx[0:10]))
+        logger.info(f"Train indices: {train_idx[0:10]}")
+        logger.info(f"Validation indices: {val_idx[0:10]}")
+        logger.info(f"Prediction indices: {pred_idx[0:10]}")
+        logger.info(f"Rescoring Candidates indices: {training_data.predict_idx[0:10]}")
 
         # init the network model
         # either load from existing or create from config
@@ -271,7 +288,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         # store manual accuray for ordinal data
         if has_ordinal:
             for count, task_i in enumerate(frac_cols):
-                taski_short = task_i.split("_")[0]
+                taski_short = task_i.rsplit("_", 1)[0]
                 if "ordinal" in xirtnetwork.output_p[taski_short + "-column"]:
                     # accuracies_all contains accuracies for train, validation, pred
                     # problem is that accuracies are computed after the loop and stored in a 1d-ar
@@ -307,11 +324,14 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
             # load the best performing model across cv from the validation split
             best_model_idx = np.argmin(
                 model_summary_df[model_summary_df["Split"] == "Validation"]["loss"].values)
-            logger.info("Best Model: {}".format(best_model_idx))
+            logger.info(f"Best Model: {best_model_idx}")
             logger.info("Loading weights.")
-            xirtnetwork.model.load_weights(os.path.join(xirtnetwork.callback_p["callback_path"],
-                                                        "xirt_weights_{}.h5".format(
-                                                            str(best_model_idx + 1).zfill(2))))
+            xirtnetwork.model.load_weights(
+                os.path.join(
+                    xirtnetwork.callback_p["callback_path"],
+                    f"xirt_weights_{str(best_model_idx + 1).zfill(2)}.h5"
+                )
+            )
             logger.info("Model Summary:")
             logger.info(model_summary_df.groupby("Split").agg([np.mean, np.std]).to_string())
     else:
@@ -351,6 +371,7 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         df_history_all["epoch"] += 1
 
     # compute features for rescoring
+    logger.info("Compute features for rescoring")
     xf.compute_prediction_errors(training_data.psms, training_data.prediction_df,
                                  xirtnetwork.tasks, frac_cols,
                                  (xirtnetwork.siamese_p["single_predictions"]
@@ -375,18 +396,13 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
                                       xirtnetwork.tasks, xirt_params, outpath, max_fdr=0.01)
 
     logger.info("Writing output tables.")
-    # store setup in summary
-    model_summary_df["xirt_params_loc"] = xirt_loc
-    model_summary_df["xirt_params_base"] = os.path.basename(xirt_loc).split(".")[0]
-    model_summary_df["learning_params"] = setup_loc
-    model_summary_df["peptides"] = peptides_file
 
     df_history_all.to_csv(os.path.join(outpath, "epoch_history.csv"))
     model_summary_df.round(2).to_csv(os.path.join(outpath, "model_summary.csv"))
 
     if write:
         # store data
-        training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
+        training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv.gz"))
         training_data_Xy = ((training_data.features1, training_data.features2),
                             training_data.get_classes(training_data.psms.index,
                                                       frac_cols=frac_cols, cont_cols=cont_cols))
@@ -396,7 +412,6 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         with open(os.path.join(xirt_params["callbacks"]["callback_path"], "encoder.p"), 'wb') as po:
             pickle.dump(training_data.le, po, protocol=pickle.HIGHEST_PROTOCOL)
 
-        training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv"))
         training_data.prediction_df.to_csv(os.path.join(outpath, "error_features.csv"))
         features_exhaustive.to_csv(os.path.join(outpath, "error_features_interactions.csv"))
 
@@ -405,14 +420,17 @@ def xirt_runner(peptides_file, out_dir, xirt_loc, setup_loc, nrows=None, perform
         of.write(const.readme)
 
     # write a text file to indicate xirt is done.
-    if write_dummy:
-        with open(xirt_loc.replace(".yaml", ".txt"), "w") as of:
+    if write_dummy != "":
+        with open(write_dummy.replace(".yaml", ".txt"), "w") as of:
             of.write("done.")
+
     logger.info("Completed xiRT run.")
-    logger.info("End Time: {}".format(datetime.now().strftime("%H:%M:%S")))
+    logger.info(f"End Time: {datetime.now().strftime('%H:%M:%S')}")
     end_time = time.time()
-    logger.info("xiRT CV-training took: {:.2f} minutes".format((end_time - start_timecv) / 60.))
-    logger.info("xiRT took: {:.2f} minutes".format((end_time - start_time) / 60.))
+    logger.info(f"xiRT CV-training took: {(end_time - start_timecv) / 60.0:.2f} minutes")
+    logger.info(f"xiRT took: {(end_time - start_time) / 60.0:.2f} minutes")
+
+    return training_data
 
 
 def main():  # pragma: no cover
@@ -441,6 +459,7 @@ def main():  # pragma: no cover
         args = parser.parse_args(sys.argv[1:])
     except TypeError:
         parser.print_usage()
+        return
 
     # create dir if not there
     if not os.path.exists(args.out_dir):
@@ -461,16 +480,21 @@ def main():  # pragma: no cover
     logger.addHandler(sh)
 
     logger.info("command line call:")
-    logger.info(
-        "xirt -i {} -o {} -x {} -l {}".format(args.in_peptides, args.out_dir, args.xirt_params,
-                                              args.learning_params))
+    logger.info(f"xirt -i {args.in_peptides} -o {args.out_dir} -x {args.xirt_params} -l {args.learning_params}")
     logger.info("Init logging file.")
-    logger.info("Starting Time: {}".format(datetime.now().strftime("%H:%M:%S")))
+    logger.info(f"Starting Time: {datetime.now().strftime('%H:%M:%S')}")
     logger.info("Starting xiRT.")
-    logger.info("Using xiRT version: {}".format(xv))
+    logger.info(f"Using xiRT version: {get_versions()['version']}")
 
     # call function
-    xirt_runner(args.in_peptides, args.out_dir, args.xirt_params, args.learning_params,
+    xirt_params = yaml.load(open(args.xirt_params), Loader=yaml.FullLoader)
+    learning_params = yaml.load(open(args.learning_params), Loader=yaml.FullLoader)
+
+    logger.info(f"xi params: {args.xirt_params}")
+    logger.info(f"learning_params: {args.learning_params}")
+    logger.info(f"peptides: {args.in_peptides}")
+
+    xirt_runner(args.in_peptides, args.out_dir, xirt_params, learning_params,
                 write=args.write)
 
 

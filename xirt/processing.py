@@ -7,15 +7,47 @@ unrelated processing functions.
 import numpy as np
 import pandas as pd
 from pyteomics import parser
+from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras import utils
 import logging
 from xirt import sequences as xs
+import multiprocessing as mp
+from functools import partial
+from math import ceil
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('xirt').getChild(__name__)
 
 
-def prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"]):
+def prepare_seqs_mp(psms_df, seq_cols):
+    n_worker = min(
+        [
+            ceil(len(psms_df)/10_000),
+            mp.cpu_count()
+        ]
+    )
+    slice_size = ceil(len(psms_df)/n_worker)
+    slices = [
+        psms_df[seq_cols].iloc[i*slice_size:(i+1)*slice_size]
+        for i in range(n_worker)
+    ]
+
+    prepare_job = partial(prepare_seqs, seq_cols=seq_cols)
+
+    with mp.Pool(n_worker) as pool:
+        results = pool.map(
+            prepare_job,
+            slices
+        )
+
+    result = pd.concat(results)
+    for c in result.columns:
+        psms_df[c] = result[c]
+
+    return psms_df
+
+
+def prepare_seqs(psms_df, seq_cols):
     """Convert Peptide sequences to unified format.
 
     This conversion simplifies the alphabet of the amino acids, removes special characters,
@@ -93,12 +125,32 @@ def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], 
     logger.info("alphabet: {}".format(alphabet))
 
     # perform the label encoding + padding
-    encoded_s1, le = xs.label_encoding(psms_df[seq_cols[0]], max_length, alphabet=alphabet)
+    logger.debug("labeling encoding")
+    min_length = psms_df[seq_cols[0]].str.len().max()
+    if len(seq_cols) > 1:
+        min_length = max([
+            min_length,
+            psms_df[seq_cols[1]].str.len().max()
+        ])
+    le = LabelEncoder()
+    le.fit(alphabet)
+    encoded_s1, _ = xs.label_encoding(
+        psms_df[seq_cols[0]],
+        min_length,
+        max_length,
+        alphabet=alphabet
+    )
+    logger.debug("generating padded DF")
     seq1_padded = generate_padded_df(encoded_s1, psms_df.index)
 
     if len(seq_cols) > 1:
-        encoded_s2, _ = xs.label_encoding(psms_df[seq_cols[1]], max_length, alphabet=alphabet,
-                                          le=le)
+        logger.debug("repeat for peptide 2")
+        encoded_s2, _ = xs.label_encoding(
+            psms_df[seq_cols[1]],
+            min_length,
+            max_length,
+            alphabet=alphabet,
+        )
         seq2_padded = generate_padded_df(encoded_s2, psms_df.index)
     else:
         seq2_padded = pd.DataFrame()
@@ -116,8 +168,11 @@ def generate_padded_df(encoded_ar, index):
     Returns:
         dataframe, label encoded peptides as rows
     """
-    seqs_padded = pd.DataFrame(encoded_ar, index=index)
-    seqs_padded.columns = ["rnn_{}".format(str(i).zfill(2)) for i in np.arange(len(encoded_ar[0]))]
+    seqs_padded = pd.DataFrame(
+        np.array(encoded_ar.to_list()),
+        index=index
+    )
+    seqs_padded.columns = [f"rnn_{str(i).zfill(2)}" for i in np.arange(len(encoded_ar[0]))]
     return seqs_padded
 
 

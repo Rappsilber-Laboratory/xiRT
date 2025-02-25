@@ -33,7 +33,12 @@ REQUIRED = ['numpy', 'pandas', 'tensorflow', 'seaborn', 'xlwt', 'graphviz', 'pyd
 
 # What packages are optional?
 # 'fancy feature': ['django'],}
-EXTRAS = {}
+EXTRAS = {
+    'develop': [
+        'pytest>=2.8.6',
+        'flake8>=2.5.2'
+    ]
+}
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------

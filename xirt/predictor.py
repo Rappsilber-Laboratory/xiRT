@@ -6,12 +6,16 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
 
-from xirt import processing as xp
+from xirt import processing as xp, const
 from xirt import sequences as xs
 from xirt import xirtnet
+import multiprocessing as mp
+from math import ceil, floor
+from functools import partial
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('xirt').getChild(__name__)
 
 
 class ModelData:
@@ -30,7 +34,7 @@ class ModelData:
         self.psms = psms_df
         self.features1 = features1
         self.features2 = features2
-        self.le = le
+        self.le: LabelEncoder = le
         self.train_idx = []
         self.predict_idx = []
         self.cv_idx = []
@@ -58,13 +62,13 @@ class ModelData:
             str_mask = (self.psms["Fasta1"].str.contains(str_filter)) & (
                 self.psms["Fasta2"].str.contains(str_filter))
             fdr_mask = (self.psms["fdr"] <= fdr_cutoff) & (self.psms["isTT"]) & str_mask
-            logger.info("Removed {} peptides (str filter).".format(np.sum(~str_mask)))
+            logger.info(f"Removed {np.sum(~str_mask)} peptides (str filter).")
 
         self.psms["fdr_mask"] = fdr_mask
-        logger.info("Removed {} peptides (TD/DD).".format(np.sum(~self.psms["isTT"])))
-        logger.info("Removed {} peptides (FDR).".format(np.sum(~(self.psms["fdr"] <= fdr_cutoff))))
-        logger.info("Removed {} peptides (combined).".format(np.sum(~fdr_mask)))
-        logger.info("Setting FDR mask: {} valid entries".format(np.sum(fdr_mask)))
+        logger.info(f"Removed {np.sum(~self.psms['isTT'])} peptides (TD/DD).")
+        logger.info(f"Removed {np.sum(~(self.psms['fdr'] <= fdr_cutoff))} peptides (FDR).")
+        logger.info(f"Removed {np.sum(~fdr_mask)} peptides (combined).")
+        logger.info(f"Setting FDR mask: {np.sum(fdr_mask)} valid entries")
 
     def set_unique_shuffled_sampled_training_idx(self, sample_frac=1, random_state=42):
         """
@@ -80,10 +84,12 @@ class ModelData:
         Returns:
             None
         """
-        logger.info("Shuffling data (random_state: {})".format(random_state))
+        logger.info(f"Shuffling data (random_state: {random_state})")
         psms_train_idx = self.psms[
-            (self.psms["fdr_mask"]) & (~self.psms["Duplicate"].astype(bool))].sample(
-            frac=sample_frac, random_state=random_state).index
+            (self.psms["fdr_mask"]) & (~self.psms["Duplicate"].astype(bool))
+        ].sample(
+            frac=sample_frac, random_state=random_state
+        ).index
         self.train_idx = psms_train_idx
         self.predict_idx = self.psms.index.difference(psms_train_idx)
         self.shuffled = True
@@ -130,31 +136,47 @@ class ModelData:
             # split data into 100% - 2x test size, % test size, % test size
             # e.g. test-size= 10% --> 80%, 10%, 10%
             # prediction set is used for model assessment here
-            train_idx, val_idx, pre_idx = \
-                np.split(train_df_idx, [int((1 - test_size * 2) * len(train_df_idx)),
-                                        int((1 - test_size) * len(train_df_idx))])
+            train_idx, val_idx, pre_idx = np.split(
+                train_df_idx,
+                [
+                    int((1 - test_size * 2) * len(train_df_idx)),
+                    int((1 - test_size) * len(train_df_idx))
+                ])
             yield train_idx, val_idx, pre_idx
 
         else:
             logger.info("Running in crossvalidation-mode: cv will be done.")
             # get n_splits of the training
+            train_features1 = self.features1.loc[self.train_idx]
             kf = KFold(n_splits=n_splits, shuffle=False)
-            kf.get_n_splits(self.features1.loc[self.train_idx])
-            cv_locs = np.array([i[1] for i in kf.split(self.features1.loc[self.train_idx])])
+            kf.get_n_splits(train_features1)
+            cv_slice_idxs = np.array(
+                [
+                    i[1] for i in kf.split(train_features1)
+                ],
+                dtype=object
+            )
 
             for i in cv_folds_ar:
                 # this will get all the slices where "t" indicates the training
                 # here the validation data should be dependant on the CV fold sizes
                 train_msk = np.array(cv_pattern) == "t"
+                split_train = np.concatenate(cv_slice_idxs[train_msk])
 
                 # combine 2 test folds to get a training fold
                 # get train folds -> get locations -> get index
-                train_init_idx = train_df_idx[np.concatenate(cv_locs[train_msk])]
-                train_idx, val_idx = np.split(train_init_idx,
-                                              [int((1 - test_size) * len(train_init_idx))])
+                train_init_idx = train_df_idx[split_train.tolist()]
+                train_idx, val_idx = np.split(
+                    train_init_idx,
+    [
+                        int((1 - test_size) * len(train_init_idx))
+                    ]
+                )
 
                 # take a testing fold
-                pre_idx = train_df_idx[cv_locs[~train_msk][0]]
+                pre_idx = train_df_idx[
+                    list(cv_slice_idxs[~train_msk][0])
+                ]
 
                 # change the pattern for next iteration
                 cv_pattern = cv_pattern[1:] + [cv_pattern[0]]
@@ -215,13 +237,13 @@ class ModelData:
         """
         # if only continous columns, only return these etc.
         if len(frac_cols) == 0:
-            return [self.psms[ccol].loc[idx].values for ccol in cont_cols]
+            return [self.psms.loc[idx, ccol].values for ccol in cont_cols]
 
         if len(cont_cols) == 0:
-            return [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
+            return [xirtnet.reshapey(self.psms.loc[idx, fcol].values) for fcol in frac_cols]
 
-        y_var = [xirtnet.reshapey(self.psms[fcol].loc[idx].values) for fcol in frac_cols]
-        y_var.extend([self.psms[ccol].loc[idx].values for ccol in cont_cols])
+        y_var = [xirtnet.reshapey(self.psms.loc[idx, fcol].values) for fcol in frac_cols]
+        y_var.extend([self.psms.loc[idx, ccol].values for ccol in cont_cols])
         return y_var
 
     def predict_and_store(self, xirtnetwork, xdata, store_idx, cv=0):
@@ -283,38 +305,40 @@ class ModelData:
             predictions = [predictions]
 
         # store cv value, only needed once
-        self.prediction_df["cv"].loc[store_idx] = cv
+        self.prediction_df.loc[store_idx, "cv"] = cv
 
         for task_i, pred_ar in zip(xirtnetwork.tasks, predictions):
             # get activation type because linear, sigmoid, softmax all require different encoding/
-            pred_type = xirtnetwork.output_p[task_i + "-activation"]
+            pred_type = xirtnetwork.output_p[f"{task_i}-activation"]
 
             # only init once
-            if task_i + "-prediction" + suf not in self.prediction_df.columns:
-                self.prediction_df[task_i + "-prediction" + suf] = -1000000
+            if f"{task_i}-prediction{suf}" not in self.prediction_df.columns:
+                self.prediction_df[f"{task_i}-prediction{suf}"] = -1000000
 
                 # softmax also gets probabilities
                 if pred_type == "softmax":
-                    self.prediction_df[task_i + "-probability" + suf] = -1000000
+                    self.prediction_df[f"{task_i}-probability{suf}"] = -1000000
 
             if pred_type in ["linear", "relu"]:
                 # easiest, just ravel to 1d ar
-                self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = np.ravel(
-                    pred_ar)
+                self.prediction_df.loc[
+                    store_idx,
+                    f"{task_i}-prediction{suf}"
+                ] = np.ravel(pred_ar)
 
             elif pred_type == "softmax":
                 # classification, take maximum probability as class value
-                self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
+                self.prediction_df.loc[store_idx, f"{task_i}-prediction{suf}"] = \
                     np.argmax(pred_ar, axis=1)
-                self.prediction_df[task_i + "-probability" + suf].loc[store_idx] = \
+                self.prediction_df.loc[store_idx, f"{task_i}-probability{suf}"] = \
                     np.max(pred_ar, axis=1)
 
             elif pred_type == "sigmoid":
-                self.prediction_df[task_i + "-prediction" + suf].loc[store_idx] = \
+                self.prediction_df.loc[store_idx, f"{task_i}-prediction{suf}"] = \
                     sigmoid_to_class(pred_ar)
 
             else:
-                raise ValueError("{} not supported, only linear/softmax/sigmoid".format(pred_type))
+                raise ValueError(f"{pred_type} not supported, only linear/softmax/sigmoid")
 
 
 def compute_accuracy(predictions, expected, tasks, params):
@@ -369,7 +393,7 @@ def sigmoid_to_class(predictions, t=0.5):
 
 
 def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=True,
-               fraction_cols=[]):
+               fraction_cols=[], column_names=const.default_column_names):
     """Prepare peptide identifications to be used with xiRT.
 
     High-level wrapper performing multiple steps. In processing order this function:
@@ -386,16 +410,17 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         cl_residue: bool, if true handles cross-link sites as additional modifications.
         (default: True)
         fraction_cols: ar-like, list of columsn that encode frationation data. (default: [])
+        column_names: Column names of input file.
     Returns:
         model_data, processed feature dataframes and label encoder
     """
     logger.info("Preprocessing peptides.")
-    logger.info("Input peptides: {}".format(len(matches_df)))
+    logger.info(f"Input peptides: {len(matches_df)}")
     # set index
-    matches_df.set_index("PSMID", drop=False, inplace=True)
+    #matches_df.set_index("PSMID", drop=False, inplace=True)
 
     # sort to keep only highest scoring peptide from duplicated entries
-    matches_df = matches_df.sort_values(by="score", ascending=False)
+    matches_df = matches_df.sort_values(by=column_names['score'], ascending=False)
 
     if len(matches_df["PSMID"].unique()) != matches_df.shape[0]:
         logger.warning("PSMID column was not unique! Redundant PSMIDs were removed")
@@ -405,15 +430,21 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
 
     # generate columns to handle based on input data type
     if sequence_type in ["crosslink", "pseudolinear"]:
-        # change peptide order
-        matches_df = xs.reorder_sequences(matches_df)
-        seq_in = ["Peptide1", "Peptide2"]
-
+        mp_slice_size = ceil(len(matches_df) / (mp.cpu_count()-1))
+        mp_df_slices = [
+            matches_df[i * mp_slice_size:(i + 1) * mp_slice_size]
+            for i in range(mp.cpu_count()-1)
+        ]
+        with mp.Pool() as pool:
+            # change peptide order
+            #matches_df = xs.reorder_sequences(matches_df, column_names=column_names)
+            reorder_job = partial(xs.reorder_sequences, column_names=column_names)
+            mp_results = pool.map(reorder_job, mp_df_slices)
+            matches_df = pd.concat(mp_results).copy()
+            seq_in = [column_names['peptide1_sequence'], column_names['peptide2_sequence']]
     elif sequence_type == "linear":
-        matches_df["Peptide2"] = ""
-        matches_df["Fasta2"] = matches_df["Fasta1"]
-        seq_in = ["Peptide1"]
-
+        matches_df[column_names['peptide2_sequence']] = ""
+        seq_in = [column_names['peptide1_sequence']]
     else:
         msg = "sequence type not supported. Must be one of (crosslink, pseudolinear, linear)"
         logger.critical(msg)
@@ -423,19 +454,20 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     seq_proc = ["Seqar_" + i for i in seq_in]
 
     # perform the sequence based processing
-    matches_df = xp.prepare_seqs(matches_df, seq_cols=seq_in)
+    matches_df = xp.prepare_seqs_mp(matches_df, seq_cols=seq_in)
 
     # concat peptide sequences
-    matches_df["PepSeq1PepSeq2_str"] = matches_df["Peptide1"] + matches_df["Peptide2"]
+    matches_df["PepSeq1PepSeq2_str"] = \
+        matches_df[column_names['peptide1_sequence']] +\
+        matches_df[column_names['peptide2_sequence']]
 
     # mark all duplicates
     matches_df["Duplicate"] = matches_df.duplicated(["PepSeq1PepSeq2_str"], keep="first")
-    logger.info("Duplicatad entries (by sequence only): {}/{}".format(matches_df["Duplicate"].sum(),
-                                                                      len(matches_df)))
+    logger.info(f"Duplicatad entries (by sequence only): {matches_df['Duplicate'].sum()}/{len(matches_df)}")
 
     if cl_residue:
         logger.info("Encode crosslinked residues.")
-        xs.modify_cl_residues(matches_df, seq_in=seq_in)
+        xs.modify_cl_residues(matches_df, column_names=column_names, seq_in=seq_in)
 
     # for pseudo linears, simply concat the input data and put a spacer between the two sequences
     if sequence_type == "pseudolinear":
@@ -451,13 +483,14 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         valid_length = (len1 <= max_length) & (len2 <= max_length)
         matches_df = matches_df[valid_length]
 
-    logger.info("Applying length filter: {} peptides left".format(len(matches_df)))
+    logger.info(f"Applying length filter: {len(matches_df)} peptides left")
     features_rnn_seq1, features_rnn_seq2, le = \
         xp.featurize_sequences(matches_df, seq_cols=seq_proc, max_length=max_length)
 
     # add the two fraction encoding columns
     # psms_df[col + "_1hot"] and psms_df[col + "_ordinal"]
     if len(fraction_cols) > 0:
+        logger.info("Encoding fractions")
         xp.fraction_encoding(matches_df, rt_methods=fraction_cols)
 
     # keep all data together in a data class
