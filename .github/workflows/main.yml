@@ -19,6 +19,16 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.9
+      - name: Update and install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc \
+            g++ \
+            make \
+            libgnutls28-dev \
+            libcurl4-gnutls-dev \
+            python3-pycurl
       - name: Install pipenv
         uses: dschep/install-pipenv-action@v1
       - name: Install dependencies
