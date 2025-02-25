@@ -9,7 +9,7 @@ backcall==0.2.0
 biopython==1.76
 cached-property==1.5.2
 cachetools==4.2.4
-certifi==2025.1.31
+certifi==2024.7.4
 charset-normalizer==3.4.1
 clang==5.0
 cloudpickle==2.2.1
