@@ -138,7 +138,7 @@ traitlets==5.9.0
 typeguard==2.7.0
 typing-extensions==3.7.4.3
 tzdata==2025.1
-urllib3==1.23
+urllib3==1.26.19
 versioneer==0.29
 wcwidth==0.2.13
 Werkzeug==2.2.3
