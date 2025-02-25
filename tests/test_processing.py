@@ -12,10 +12,14 @@ def test_prepare_seqs_standard():
 
     proc_df = xp.prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"])
 
-    exp_seqar1 = pd.Series([["H-", "P", "E", "P", "T", "I", "D", "E", "-OH"],
-                  ["H-", "E", "oxM", "L", "C", "R", "-OH"]])
-    exp_seqar2 = pd.Series([["H-", "E", "L", "phP", "R", "-OH"],
-                  ["H-", "I", "bsthreehydK", "I", "N", "G", "-OH"]])
+    exp_seqar1 = pd.Series([
+        ["H-", "P", "E", "P", "T", "I", "D", "E", "-OH"],
+        ["H-", "E", "oxM", "L", "C", "R", "-OH"]
+    ])
+    exp_seqar2 = pd.Series([
+        ["H-", "E", "L", "phP", "R", "-OH"],
+        ["H-", "I", "bsthreehydK", "I", "N", "G", "-OH"]
+    ])
     assert np.all(proc_df["Seqar_Peptide1"] == exp_seqar1)
     assert np.all(proc_df["Seqar_Peptide2"] == exp_seqar2)
 

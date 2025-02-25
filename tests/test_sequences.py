@@ -11,6 +11,7 @@ from xirt import sequences as xs
 
 fixtures_loc = os.path.join(os.path.dirname(__file__), 'fixtures')
 
+
 def test_simplify_alphabet():
     peptide = "ELVISUK"
     expected = "ELVISCK"
