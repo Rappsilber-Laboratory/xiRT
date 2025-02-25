@@ -4,19 +4,17 @@ import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import tensorflow_addons as tfa
 import yaml
 from tensorflow.keras import backend as K
 from tensorflow.keras import losses
 from tensorflow.keras import regularizers, optimizers
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger, TensorBoard, \
     ReduceLROnPlateau
-from tensorflow.keras.layers import Embedding, GRU, BatchNormalization, \
-    Input, concatenate, Dropout, Dense, LSTM, Bidirectional, Add, Maximum, Multiply, Average, \
+from tensorflow.keras.layers import Embedding, BatchNormalization, \
+    Input, concatenate, Dropout, Dense, LSTM, GRU, Bidirectional, Add, Maximum, Multiply, Average, \
     Concatenate
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.utils import plot_model
-from tensorflow.python.keras.layers import CuDNNGRU, CuDNNLSTM
 from tqdm.keras import TqdmCallback
 
 
@@ -64,7 +62,7 @@ class xiRTNET:
      functions go here
     """
 
-    def __init__(self, params, input_dim):
+    def __init__(self, params, input_dim, embedding_dim):
         """
         Construct the xiRTNET.
 
@@ -77,7 +75,7 @@ class xiRTNET:
         """
         self.model = None
         self.input_dim = input_dim
-
+        self.embedding_dim = embedding_dim
         self.LSTM_p = params["LSTM"]
         self.dense_p = params["dense"]
         self.embedding_p = params["embedding"]
@@ -86,9 +84,11 @@ class xiRTNET:
         self.siamese_p = params["siamese"]
         self.callback_p = params["callbacks"]
 
-        self.tasks = np.concatenate([sorted(params["predictions"]["fractions"]),
-                                     sorted(params["predictions"]["continues"])])
-        self.tasks = [i.lower() for i in self.tasks]
+        self.tasks = np.concatenate([
+            sorted(params["predictions"]["fractions"]),
+            sorted(params["predictions"]["continues"])
+        ])
+        self.tasks = [i for i in self.tasks]
 
     def build_model(self, siamese=False, alphabet=50):
         """
@@ -110,8 +110,8 @@ class xiRTNET:
             # for crosslinks
             base_network = Model(inlayer, net, name="siamese")
 
-            input_a = Input(shape=self.input_dim)
-            input_b = Input(shape=self.input_dim)
+            input_a = Input(shape=(self.input_dim,))
+            input_b = Input(shape=(self.input_dim,))
 
             # init the base network with shared parameters
             processed_a = base_network(input_a)
@@ -178,7 +178,10 @@ class xiRTNET:
             tuple, (input, network): the input data structure and the network structure from tf 2.0
         """
         # init the input layer
-        inlayer = Input(shape=self.input_dim, name="main_input")
+        inlayer = Input(
+            shape=self.input_dim,
+            name="main_input"
+        )
 
         # translate labels into continuous space
         net = Embedding(input_dim=alphabet_size,
@@ -189,10 +192,10 @@ class xiRTNET:
         # sequence layers (LSTM-type) + batch normalization if in config
         for i in np.arange(self.LSTM_p["nlayers"]):
             if self.LSTM_p["nlayers"] > 1:
-                net = self._add_recursive_layer(net, i, name="shared{}_".format(i))
+                net = self._add_recursive_layer(net, i, name=f"shared{i}_")
             else:
                 # return only sequence when there are more than 1 recurrent layers
-                net = self._add_recursive_layer(net, 1, name="shared{}_".format(i))
+                net = self._add_recursive_layer(net, 1, name=f"shared{i}_")
         return inlayer, net
 
     def _build_task_network(self, inlayer, input_meta, net):
@@ -271,15 +274,16 @@ class xiRTNET:
             f_name = "LSTM"
 
         elif self.LSTM_p["type"] == "CuDNNGRU":  # pragma: no cover
-            f_rnn = CuDNNGRU  # pragma: no cover
+            f_rnn = GRU  # pragma: no cover
             f_name = "CuGRU"  # pragma: no cover
 
         elif self.LSTM_p["type"] == "CuDNNLSTM":  # pragma: no cover
-            f_rnn = CuDNNLSTM  # pragma: no cover
+            f_rnn = LSTM  # pragma: no cover
             f_name = "CuLSTM"  # pragma: no cover
         else:
             raise KeyError("Recurrent type option not found ({})".format(
-                self.LSTM_p["activity_regularization"]))
+                self.LSTM_p["activity_regularization"])
+            )
 
         if self.LSTM_p["bidirectional"]:
             # GRU implementations do not support activiation
@@ -299,7 +303,7 @@ class xiRTNET:
 
         # add batch normalization
         if self.LSTM_p["lstm_bn"]:
-            lstm = BatchNormalization(name=name + "lstm_bn_" + str(n_layer))(lstm)
+            lstm = BatchNormalization(name=f"{name}lstm_bn_{n_layer}")(lstm)
         return lstm
 
     def _add_task_dense_layers(self, net, net_meta=None):
@@ -375,7 +379,7 @@ class xiRTNET:
             regularizer_tmp = regularizers.l1_l2(reg_value, reg_value)
 
         else:
-            raise KeyError("Regularizer not defined ({})".format(regularizer))
+            raise KeyError(f"Regularizer not defined ({regularizer})")
         return regularizer_tmp
 
     def export_model_visualization(self, fig_path):
@@ -392,7 +396,7 @@ class xiRTNET:
             plot_model(self.model, to_file=fig_path + "xiRT_model.pdf", show_shapes=True,
                        show_layer_names=True, dpi=300, expand_nested=True)
         except ValueError as err:
-            print("Encountered an ValueError, PDF is still written. ({})".format(err))
+            print(f"Encountered an ValueError, PDF is still written. ({err})")
 
     def compile(self):
         """
@@ -427,7 +431,7 @@ class xiRTNET:
         # add r2 as metric for regression tasks, dimension=1
         for tsk in self.tasks:
             if self.output_p[f"{tsk}-dimension"] == 1:
-                metric[tsk] = [metric[tsk], tfa.metrics.RSquare(dtype=tf.float32, y_shape=(1,))]
+                metric[tsk] = 'mse'
 
         self.model.compile(loss=loss, optimizer=opt, metrics=metric, loss_weights=loss_weights)
 
@@ -469,11 +473,11 @@ class xiRTNET:
 
         if self.callback_p["check_point"]:
             # save the best performing model
-            mc = ModelCheckpoint(os.path.join(prefix_path, 'xirt_model_{}.h5'.format(suffix)),
+            mc = ModelCheckpoint(os.path.join(prefix_path, f'xirt_model_{suffix}.h5'),
                                  monitor='val_loss', mode='min', verbose=0,
                                  save_best_only=True)
 
-            mc2 = ModelCheckpoint(os.path.join(prefix_path, 'xirt_weights_{}.h5'.format(suffix)),
+            mc2 = ModelCheckpoint(os.path.join(prefix_path, f'xirt_weights_{suffix}.h5'),
                                   monitor='val_loss', mode='min', verbose=0,
                                   save_best_only=True, save_weights_only=True)
             callbacks.append(mc)
@@ -482,7 +486,7 @@ class xiRTNET:
         if self.callback_p["log_csv"]:
             # log some stuff (what?)
             csv_logger = CSVLogger(
-                os.path.join(prefix_path, 'xirt_epochlog_{}.log'.format(suffix)))
+                os.path.join(prefix_path, f'xirt_epochlog_{suffix}.log'))
             callbacks.append(csv_logger)
 
         if self.callback_p["tensor_board"]:
@@ -511,9 +515,9 @@ class xiRTNET:
         """
         trainable_count = np.sum([K.count_params(w) for w in self.model.trainable_weights])
         non_trainable_count = np.sum([K.count_params(w) for w in self.model.non_trainable_weights])
-        print('Total params: {:,}'.format(trainable_count + non_trainable_count))
-        print('Trainable params: {:,}'.format(trainable_count))
-        print('Non-trainable params: {:,}'.format(non_trainable_count))
+        print(f'Total params: {trainable_count + non_trainable_count:,}')
+        print(f'Trainable params: {trainable_count:,}')
+        print(f'Non-trainable params: {non_trainable_count:,}')
 
     def load_weights(self, location):
         """

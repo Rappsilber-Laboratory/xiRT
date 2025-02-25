@@ -93,3 +93,10 @@ predictions:
   fractions: # simply write fractions: [] if no fraction prediction is desired
     - scx
     - hsax
+column_names:
+  peptide1_sequence: "Peptide1"
+  peptide2_sequence: "Peptide2"
+  link_pos_basename: "LinkPos"
+  peptide1_unmod_sequence: "Peptide1"
+  peptide2_unmod_sequence: "Peptide2"
+  score: "score"

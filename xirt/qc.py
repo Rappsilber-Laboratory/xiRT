@@ -10,6 +10,7 @@ import palettable
 import pandas as pd
 import seaborn as sns
 import statannot
+import matplotlib
 from matplotlib import ticker
 from matplotlib.lines import Line2D
 from scipy.stats import pearsonr
@@ -208,8 +209,8 @@ def plot_epoch_cv(callback_path, tasks, xirt_params, outpath, show=False):  # pr
         df_temp = df.filter(regex="{}|epoch".format(rt_task)).melt(id_vars="epoch")
         df_temp["RT"] = rt_task
         # normalize to max 1
-        df_temp["variable_norm"] = df_temp.groupby('variable').transform(lambda x: (x / x.max()))[
-            "value"]
+        df_temp["variable_norm"] = df_temp[["variable", "value"]].groupby('variable')\
+            .transform(lambda x: (x / x.max()))["value"]
         dfs.append(df_temp)
 
     dfs = pd.concat(dfs)
@@ -319,6 +320,8 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
         f, axes = plt.subplots(1, len(tasks), figsize=(5, 4))
         if len(tasks) == 1:
             axes = [axes]
+        if type(axes) is matplotlib.axes._axes.Axes:
+            axes = [axes]
 
         for ii, m, t in zip(range(len(tasks)), eval_method, tasks):
             if eval_method == "losses":
@@ -380,6 +383,8 @@ def plot_cv_predictions(df_predictions, input_psms, xirt_params, outpath,
 
         f, axes = plt.subplots(1, ntasks, figsize=(4 * ntasks, 4))
         if ntasks == 1:
+            axes = [axes]
+        if type(axes) is matplotlib.axes._axes.Axes:
             axes = [axes]
 
         idx = 0
@@ -482,6 +487,8 @@ def plot_error_characteristics(df_errors, input_psms, tasks, xirt_params, outpat
         f, axes = plt.subplots(1, 2, gridspec_kw={'width_ratios': [len(fracs), len(cont)]})
     else:
         f, axes = plt.subplots(1, ntasks)
+    if type(axes) is matplotlib.axes._axes.Axes:
+        axes = [axes]
 
     # make sure to have a list of axes here
     if ntasks == 1:

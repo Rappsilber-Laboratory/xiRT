@@ -13,7 +13,11 @@ def test_xirt_class():
     # simple test to check if the parameter files were parsed
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork = xirtnet.xiRTNET(
+        xiRTconfig,
+        input_dim=100,
+        embedding_dim=20
+    )
     assert xirtnetwork.model is None
     assert xirtnetwork.input_dim == 100
     assert xirtnetwork.LSTM_p == xiRTconfig["LSTM"]
@@ -27,7 +31,11 @@ def test_xirt_class():
 def test_xirt_compilation():
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork = xirtnet.xiRTNET(
+        xiRTconfig,
+        input_dim=100,
+        embedding_dim=50,
+    )
     xirtnetwork.build_model(siamese=True)
     xirtnetwork.compile()
     assert xirtnetwork.model._is_compiled is True
@@ -37,7 +45,11 @@ def test_xirt_compilation_sgd():
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     xiRTconfig["learning"]["optimizer"] = "sgd"
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork = xirtnet.xiRTNET(
+        xiRTconfig,
+        input_dim=100,
+        embedding_dim=20,
+    )
     xirtnetwork.build_model(siamese=True)
     xirtnetwork.compile()
     assert xirtnetwork.model.optimizer._name.lower() == "sgd"
@@ -47,7 +59,11 @@ def test_xirt_compilation_rmsprop():
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     xiRTconfig["learning"]["optimizer"] = "rmsprob"
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork = xirtnet.xiRTNET(
+        xiRTconfig,
+        input_dim=100,
+        embedding_dim=20
+    )
     xirtnetwork.build_model(siamese=True)
     xirtnetwork.compile()
     assert xirtnetwork.model.optimizer._name.lower() == "rmsprop"
@@ -57,7 +73,11 @@ def test_xirt_compilation_nadam():
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
     xiRTconfig["learning"]["optimizer"] = "nadam"
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork = xirtnet.xiRTNET(
+        xiRTconfig,
+        input_dim=100,
+        embedding_dim=20
+    )
     xirtnetwork.build_model(siamese=True)
     xirtnetwork.compile()
     assert xirtnetwork.model.optimizer._name.lower() == "nadam"
@@ -71,7 +91,11 @@ def test_xirt_compilation_siameseoptions():
     merge_options = ["add", "multiply", "average", "concatenate", "maximum"]
     for merge_opt in merge_options:
         xiRTconfig["siamese"]["merge_type"] = merge_opt
-        xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+        xirtnetwork = xirtnet.xiRTNET(
+            xiRTconfig,
+            input_dim=100,
+            embedding_dim=20
+        )
         xirtnetwork.build_model(siamese=True)
         xirtnetwork.compile()
         assert xirtnetwork.model._is_compiled
@@ -84,7 +108,11 @@ def test_xirt_compilation_lstm_options():
     rnn_options = ["LSTM", "GRU"]  # "CuDNNGRU", "CuDNNLSTM"
     for rnn_type in rnn_options:
         xiRTconfig["LSTM"]["type"] = rnn_type
-        xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+        xirtnetwork = xirtnet.xiRTNET(
+            xiRTconfig,
+            input_dim=100,
+            embedding_dim=20,
+        )
         xirtnetwork.build_model(siamese=True)
         xirtnetwork.compile()
         assert xirtnetwork.model._is_compiled
@@ -113,7 +141,11 @@ def test_get_callbacks(tmpdir):
     # test currently excludes tensorboard, all other callbacks sum up to 6 (2x ModelCheckpoint)
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork = xirtnet.xiRTNET(
+        xiRTconfig,
+        input_dim=100,
+        embedding_dim=20
+    )
     xirtnetwork.callback_p["callback_path"] = os.path.abspath(tmpdir.mkdir("tmp"))
     callbacks = xirtnetwork.get_callbacks("test")
     assert len(callbacks) == 6
@@ -145,7 +177,11 @@ def test_print_layers(capsys):
     # simple test that checks if key info is contained in the printed output
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=10)
+    xirtnetwork = xirtnet.xiRTNET(
+        xiRTconfig,
+        input_dim=10,
+        embedding_dim=20
+    )
     xirtnetwork.build_model(siamese=True)
     xirtnetwork.print_layers()
     captured = capsys.readouterr()
@@ -157,7 +193,11 @@ def test_print_parameters(capsys):
     # simple test that checks if key info is contained in the printed output
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=10)
+    xirtnetwork = xirtnet.xiRTNET(
+        xiRTconfig,
+        input_dim=10,
+        embedding_dim=20,
+    )
     xirtnetwork.build_model(siamese=True)
     xirtnetwork.get_param_overview()
     captured = capsys.readouterr()
@@ -178,7 +218,11 @@ def test_params_to_df(tmpdir):
 def test_adjust():
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
-    xirtnetwork = xirtnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork = xirtnet.xiRTNET(
+        xiRTconfig,
+        input_dim=100,
+        embedding_dim=20,
+    )
     xirtnetwork.build_model(siamese=True)
     # was 9 in config
     xirtnetwork.output_p["scx-dimension"] = 5
