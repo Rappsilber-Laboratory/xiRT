@@ -141,7 +141,7 @@ tzdata==2025.1
 urllib3==1.23
 versioneer==0.29
 wcwidth==0.2.13
-Werkzeug==2.2.3
+Werkzeug==3.0.6
 wrapt==1.12.1
 xiutilities>=1.2.5
 xlrd==2.0.1
