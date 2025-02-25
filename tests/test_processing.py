@@ -12,10 +12,10 @@ def test_prepare_seqs_standard():
 
     proc_df = xp.prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"])
 
-    exp_seqar1 = [["H-", "P", "E", "P", "T", "I", "D", "E", "-OH"],
-                  ["H-", "E", "oxM", "L", "C", "R", "-OH"]]
-    exp_seqar2 = [["H-", "E", "L", "phP", "R", "-OH"],
-                  ["H-", "I", "bsthreehydK", "I", "N", "G", "-OH"]]
+    exp_seqar1 = pd.Series([["H-", "P", "E", "P", "T", "I", "D", "E", "-OH"],
+                  ["H-", "E", "oxM", "L", "C", "R", "-OH"]])
+    exp_seqar2 = pd.Series([["H-", "E", "L", "phP", "R", "-OH"],
+                  ["H-", "I", "bsthreehydK", "I", "N", "G", "-OH"]])
     assert np.all(proc_df["Seqar_Peptide1"] == exp_seqar1)
     assert np.all(proc_df["Seqar_Peptide2"] == exp_seqar2)
 
@@ -26,8 +26,8 @@ def test_prepare_seqs_specialseq():
     psms_df["Peptide1"] = ["M.ELVR.R"]
     psms_df["Peptide2"] = ["M.ELVR.R"]
     proc_df = xp.prepare_seqs(psms_df, seq_cols=["Peptide1", "Peptide2"])
-    exp_seqar1 = [["H-", "E", "L", "V", "R", "-OH"]]
-    exp_seqar2 = [["H-", "E", "L", "V", "R", "-OH"]]
+    exp_seqar1 = pd.Series([["H-", "E", "L", "V", "R", "-OH"]])
+    exp_seqar2 = pd.Series([["H-", "E", "L", "V", "R", "-OH"]])
     assert np.all(proc_df["Seqar_Peptide1"].values[0] == exp_seqar1[0])
     assert np.all(proc_df["Seqar_Peptide2"].values[0] == exp_seqar2[0])
 
@@ -37,13 +37,13 @@ def test_generate_padded_df():
     # into an indexed dataframe
     encoded_ar = np.array([[0, 0, 1, 1, 5, 16],
                            [0, 0, 1, 5, 5, 16]])
-    index = np.arange(0, len(encoded_ar))
+    index = pd.Series(range(len(encoded_ar)))
 
     seq_padded_df = xp.generate_padded_df(encoded_ar, index)
 
     exp_index = [0, 1]
     exp_shape = (2, 6)
-    exp_columns = ["rnn_00", "rnn_01", "rnn_02", "rnn_03", "rnn_04", "rnn_05"]
+    exp_columns = pd.Series(["rnn_00", "rnn_01", "rnn_02", "rnn_03", "rnn_04", "rnn_05"])
 
     assert seq_padded_df.shape == exp_shape
     assert seq_padded_df.index.tolist() == exp_index
@@ -60,8 +60,14 @@ def test_featurize_sequences_crosslinks():
                                  ["H-", "oxM", "E", "E", "E", "-OH"]]
 
     all_aminoacids = np.array(['-OH', 'E', 'H-', 'P', 'oxM'])
-    exp_rnn_seq1 = xp.generate_padded_df([[0, 0, 3, 4, 2, 1], [0, 3, 5, 4, 2, 1]], index=[0, 1])
-    exp_rnn_seq2 = xp.generate_padded_df([[0, 3, 4, 2, 4, 1], [3, 5, 2, 2, 2, 1]], index=[0, 1])
+    exp_rnn_seq1 = xp.generate_padded_df(
+        [[0, 0, 3, 4, 2, 1], [0, 3, 5, 4, 2, 1]],
+        index=[0, 1]
+    )
+    exp_rnn_seq2 = xp.generate_padded_df(
+        [[0, 3, 4, 2, 4, 1], [3, 5, 2, 2, 2, 1]],
+        index=[0, 1]
+    )
 
     features_rnn_seq1, features_rnn_seq2, le =\
         xp.featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"],

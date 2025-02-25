@@ -420,7 +420,7 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
         of.write(const.readme)
 
     # write a text file to indicate xirt is done.
-    if write_dummy != "":
+    if isinstance(write_dummy, str) and write_dummy != "":
         with open(write_dummy.replace(".yaml", ".txt"), "w") as of:
             of.write("done.")
 

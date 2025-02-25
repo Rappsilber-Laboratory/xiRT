@@ -198,15 +198,6 @@ def modify_cl_residues(matches_df, seq_in, column_names=const.default_column_nam
             ),
             axis=1
         )
-        #matches_df["Seqar_" + seq_i] = pandas_utils.async_apply(
-        #    matches_df,
-        #    lambda r: convert_seqar(
-        #        r["Seqar_" + seq_i],
-        #        r["link_pos_p" + str(seq_id + 1)],
-        #        reduce_cl
-        #    ),
-        #    axis=1
-        #)
 
 
 @cython.ccall
@@ -217,7 +208,7 @@ def convert_seqar(seqar: list, linkpos: int, reduce_cl=False):
         return seqar
     residue = seqar[linkpos]
     if reduce_cl:
-        seqar[linkpos] = "X"
+        seqar[linkpos] = "clX"
     else:
         seqar[linkpos] = "cl" + residue
     return seqar

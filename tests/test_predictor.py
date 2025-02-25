@@ -174,7 +174,7 @@ def test_store_predictions():
 
     xiRTconfig = yaml.load(open(os.path.join(fixtures_loc, "xirt_params_3RT.yaml")),
                            Loader=yaml.FullLoader)
-    xirtnetwork = xnet.xiRTNET(xiRTconfig, input_dim=100)
+    xirtnetwork = xnet.xiRTNET(xiRTconfig, input_dim=100, embedding_dim=len(training_data.le.classes_)+1)
 
     store_idx = psms_df.iloc[0:3].index
     xirtnetwork.tasks = ["scx", "rp", "hsax"]
