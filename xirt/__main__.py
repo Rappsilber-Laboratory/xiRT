@@ -84,8 +84,15 @@ def arg_parser():  # pragma: not covered
     return parser
 
 
-def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows=None, perform_qc=True,
-                write=True, write_dummy="", api_df: pd.DataFrame = None) -> ModelData:
+def xirt_runner(peptides_file: str,
+                out_dir,
+                xirt_params,
+                learning_params,
+                nrows=None,
+                perform_qc=True,
+                write=True,
+                write_dummy="",
+                api_df: pd.DataFrame = None) -> ModelData:
     """
     Execute xiRT, train a model or generate predictions for RT across multiple RT domains.
 
@@ -104,9 +111,6 @@ def xirt_runner(peptides_file: str, out_dir, xirt_params, learning_params, nrows
     Returns:
         None
     """
-    from xirt import features as xf
-    from xirt import predictor as xr
-    from xirt import xirtnet, qc
 
     start_time = time.time()
     matches_df = None
@@ -476,11 +480,17 @@ def main():  # pragma: no cover
 
     sh = logging.StreamHandler(sys.stdout)
     sh.setLevel(logging.DEBUG)
-    sh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    sh.setFormatter(
+        logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    )
     logger.addHandler(sh)
 
     logger.info("command line call:")
-    logger.info(f"xirt -i {args.in_peptides} -o {args.out_dir} -x {args.xirt_params} -l {args.learning_params}")
+    logger.info(
+        f"xirt -i {args.in_peptides} "
+        f"-o {args.out_dir} -x {args.xirt_params} "
+        f"-l {args.learning_params}"
+    )
     logger.info("Init logging file.")
     logger.info(f"Starting Time: {datetime.now().strftime('%H:%M:%S')}")
     logger.info("Starting xiRT.")

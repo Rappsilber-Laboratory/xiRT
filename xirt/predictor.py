@@ -12,7 +12,7 @@ from xirt import processing as xp, const
 from xirt import sequences as xs
 from xirt import xirtnet
 import multiprocessing as mp
-from math import ceil, floor
+from math import ceil
 from functools import partial
 
 logger = logging.getLogger('xirt').getChild(__name__)
@@ -168,7 +168,7 @@ class ModelData:
                 train_init_idx = train_df_idx[split_train.tolist()]
                 train_idx, val_idx = np.split(
                     train_init_idx,
-    [
+                    [
                         int((1 - test_size) * len(train_init_idx))
                     ]
                 )
@@ -416,8 +416,6 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     """
     logger.info("Preprocessing peptides.")
     logger.info(f"Input peptides: {len(matches_df)}")
-    # set index
-    #matches_df.set_index("PSMID", drop=False, inplace=True)
 
     # sort to keep only highest scoring peptide from duplicated entries
     matches_df = matches_df.sort_values(by=column_names['score'], ascending=False)
@@ -437,7 +435,6 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         ]
         with mp.Pool() as pool:
             # change peptide order
-            #matches_df = xs.reorder_sequences(matches_df, column_names=column_names)
             reorder_job = partial(xs.reorder_sequences, column_names=column_names)
             mp_results = pool.map(reorder_job, mp_df_slices)
             matches_df = pd.concat(mp_results).copy()
@@ -463,7 +460,9 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
 
     # mark all duplicates
     matches_df["Duplicate"] = matches_df.duplicated(["PepSeq1PepSeq2_str"], keep="first")
-    logger.info(f"Duplicatad entries (by sequence only): {matches_df['Duplicate'].sum()}/{len(matches_df)}")
+    logger.info(
+        f"Duplicatad entries (by sequence only): {matches_df['Duplicate'].sum()}/{len(matches_df)}"
+    )
 
     if cl_residue:
         logger.info("Encode crosslinked residues.")

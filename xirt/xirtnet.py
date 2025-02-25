@@ -10,12 +10,11 @@ from tensorflow.keras import losses
 from tensorflow.keras import regularizers, optimizers
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger, TensorBoard, \
     ReduceLROnPlateau
-from tensorflow.keras.layers import Embedding, GRU, BatchNormalization, \
-    Input, concatenate, Dropout, Dense, LSTM, Bidirectional, Add, Maximum, Multiply, Average, \
+from tensorflow.keras.layers import Embedding, BatchNormalization, \
+    Input, concatenate, Dropout, Dense, LSTM, GRU, Bidirectional, Add, Maximum, Multiply, Average, \
     Concatenate
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.utils import plot_model
-from keras.layers import GRU, LSTM
 from tqdm.keras import TqdmCallback
 
 
@@ -289,7 +288,6 @@ class xiRTNET:
         if self.LSTM_p["bidirectional"]:
             # GRU implementations do not support activiation
             # activation = self.LSTM_p["activation"], disabled fo rnow
-#<<<<<<< HEAD
             lstm = Bidirectional(f_rnn(self.LSTM_p["units"],
                                        activation=self.LSTM_p["activation"],
                                        activity_regularizer=reg_act,
@@ -302,15 +300,6 @@ class xiRTNET:
                          kernel_regularizer=reg_kernel,
                          return_sequences=return_seqs,
                          name=name + f_name)(prev_layer)
-#=======
-#            lstm = Bidirectional(f_rnn(self.LSTM_p["units"], activity_regularizer=reg_act,
-#                                       kernel_regularizer=reg_kernel, return_sequences=return_seqs),
-#                                 name=f"{name}Bi{f_name}")(prev_layer)
-#        else:
-#            lstm = f_rnn(self.LSTM_p["units"], activation=self.LSTM_p["activation"],
-#                         kernel_regularizer=reg_kernel, return_sequences=return_seqs,
-#                         name=f"{name}Bi{f_name}")(prev_layer)
-#>>>>>>> fschimweg_dev
 
         # add batch normalization
         if self.LSTM_p["lstm_bn"]:

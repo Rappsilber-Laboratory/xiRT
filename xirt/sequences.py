@@ -4,7 +4,6 @@ from collections import Counter
 import numpy as np
 from pyteomics import parser
 from sklearn.preprocessing import LabelEncoder
-from tensorflow.keras.preprocessing import sequence as ts
 import cython
 import logging
 from xiutilities import pandas_utils
@@ -12,6 +11,7 @@ from xiutilities import pandas_utils
 from xirt import const
 
 logger = logging.getLogger('xirt').getChild(__name__)
+
 
 def simplify_alphabet(sequence):
     """Replace ambiguous amino acids.
@@ -138,9 +138,18 @@ def reorder_sequences(matches_df, column_names=const.default_column_names):
                          " is a number in the end of the name.")
 
     # order logic, last comparison checks lexigographically
-    is_longer = (matches_df[column_names['peptide1_sequence']].apply(len) > matches_df[column_names['peptide2_sequence']].apply(len)).values
-    is_shorter = (matches_df[column_names['peptide1_sequence']].apply(len) < matches_df[column_names['peptide2_sequence']].apply(len)).values
-    is_greater = (matches_df[column_names['peptide1_sequence']] > matches_df[column_names['peptide2_sequence']]).values
+    is_longer = (
+        matches_df[column_names['peptide1_sequence']].apply(len)
+        > matches_df[column_names['peptide2_sequence']].apply(len)
+    ).values
+    is_shorter = (
+        matches_df[column_names['peptide1_sequence']].apply(len)
+        < matches_df[column_names['peptide2_sequence']].apply(len)
+    ).values
+    is_greater = (
+        matches_df[column_names['peptide1_sequence']]
+        > matches_df[column_names['peptide2_sequence']]
+    ).values
 
     # create a copy of the dataframe
     swapping_df = matches_df.copy()
@@ -164,7 +173,10 @@ def reorder_sequences(matches_df, column_names=const.default_column_names):
     return swapping_df
 
 
-def modify_cl_residues(matches_df, seq_in, column_names=const.default_column_names, reduce_cl=False):
+def modify_cl_residues(matches_df,
+                       seq_in,
+                       column_names=const.default_column_names,
+                       reduce_cl=False):
     """
     Change the cross-linked residues to modified residues.
 
@@ -182,14 +194,6 @@ def modify_cl_residues(matches_df, seq_in, column_names=const.default_column_nam
     # increase the alphabet by distinguishing between crosslinked K and non-crosslinked K
     # introduce a new prefix cl for each crosslinked residue
     for seq_id, seq_i in enumerate(seq_in):
-        #error_df = matches_df[
-        #    matches_df["Seqar_" + seq_i].str.len() <= matches_df[column_names['link_pos_basename'] + str(seq_id + 1)]
-        #][["Seqar_" + seq_i, column_names['link_pos_basename'] + str(seq_id + 1)]]
-
-        #if len(error_df) > 0:
-        #    print(f"List index out of range for {seq_id}. Check peptide sequence for unwanted characters")
-        #    print(error_df)
-
         matches_df["Seqar_" + seq_i] = matches_df.apply(
             lambda r: convert_seqar(
                 r["Seqar_" + seq_i],
@@ -291,10 +295,10 @@ def label_encoding(sequences, min_sequence_length, max_sequence_length, alphabet
     # use an offset of +1 since shorter sequences will be padded with zeros
     # to achieve equal sequence lengths
     X_encoded = pandas_utils.async_apply(
-            sequences,
-            lambda x: np.concatenate([
-                np.zeros(max_arr_len),  # Pad zeros
-                le.transform(x) + 1  # Add one to avoid zero padding conflict
-            ])[-max_arr_len:]  # Cut to length
+        sequences,
+        lambda x: np.concatenate([
+            np.zeros(max_arr_len),  # Pad zeros
+            le.transform(x) + 1  # Add one to avoid zero padding conflict
+        ])[-max_arr_len:]  # Cut to length
     )
     return X_encoded, le

@@ -15,7 +15,6 @@ from matplotlib import ticker
 from matplotlib.lines import Line2D
 from scipy.stats import pearsonr
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score, classification_report
-from sklearn.preprocessing import scale
 
 sns.set(context="notebook", style="white", palette="deep", font_scale=1)
 
