@@ -28,7 +28,9 @@ jobs:
             make \
             libgnutls28-dev \
             libcurl4-gnutls-dev \
-            python3-pycurl
+            python3-pycurl \
+            libcurl4-openssl-dev \
+            libssl-dev
       - name: Install pipenv
         uses: dschep/install-pipenv-action@v1
       - name: Install dependencies
