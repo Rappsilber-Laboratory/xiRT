@@ -14,37 +14,10 @@ from xirt import sequences as xs
 import multiprocessing as mp
 from functools import partial
 from math import ceil
+import polars as pl
 
 
 logger = logging.getLogger('xirt').getChild(__name__)
-
-
-def prepare_seqs_mp(psms_df, seq_cols):
-    n_worker = min(
-        [
-            ceil(len(psms_df)/10_000),
-            mp.cpu_count()
-        ]
-    )
-    slice_size = ceil(len(psms_df)/n_worker)
-    slices = [
-        psms_df[seq_cols].iloc[i*slice_size:(i+1)*slice_size]
-        for i in range(n_worker)
-    ]
-
-    prepare_job = partial(prepare_seqs, seq_cols=seq_cols)
-
-    with mp.Pool(n_worker) as pool:
-        results = pool.map(
-            prepare_job,
-            slices
-        )
-
-    result = pd.concat(results)
-    for c in result.columns:
-        psms_df[c] = result[c]
-
-    return psms_df
 
 
 def prepare_seqs(psms_df, seq_cols):
@@ -76,21 +49,45 @@ def prepare_seqs(psms_df, seq_cols):
     logger.info("Preparing peptide sequences for columns: {}".format(",".join(seq_cols)))
 
     for seq_col in seq_cols:
-        # code if sequences are represented with N.SEQUENCE.C
-        if "." in psms_df.iloc[0][seq_col]:
-            psms_df["Seq_" + seq_col] = psms_df[seq_col].str.split(".").str[1]
-        else:
-            psms_df["Seq_" + seq_col] = psms_df[seq_col]
+        sequences_pl = pl.Series(psms_df[seq_col])
 
-        sequences = psms_df["Seq_" + seq_col]
-        sequences = sequences.apply(xs.simplify_alphabet)
-        sequences = sequences.apply(xs.remove_brackets_underscores)
-        sequences = sequences.apply(xs.replace_numbers)
-        sequences = sequences.apply(xs.remove_nterm_mod)
-        sequences = sequences.apply(xs.rewrite_modsequences)
-        sequences = sequences.apply(parser.parse, show_unmodified_termini=True)
-        psms_df["Seqar_" + seq_col] = sequences
+        num_map = {
+            "1": "one", "2": "two", "3": "three", "4": "four", "5": "five",
+            "6": "six", "7": "seven", "8": "eight", "9": "nine", "0": "zero"
+        }
+        sequences_pl = (
+            sequences_pl
+                .str.split('.').list.get(-1)
+                # xs.simplify_alphabet
+                .str.replace_all('U', 'C')
+                # xs.remove_brackets_underscores
+                .str.replace_all('[\(\)\[\]_\-]', '')
+                # xs.replace_numbers
+                .str.replace_many(list(num_map.keys()), list(num_map.values()))
+                # xs.remove_nterm_mod
+                .str.replace_all('^([a-z]+)([A-Z])', '${2}')
+                # xs.rewrite_modsequences
+                .str.replace_all("([A-Z])([^A-Z]+)", '${2}${1}')
+        )
+
+        n_worker = min(ceil(len(psms_df)/100_000), mp.cpu_count())
+        slice_size = ceil(len(sequences_pl) / n_worker)
+        slices = [
+            sequences_pl[i * slice_size:(i + 1) * slice_size]
+            for i in range(n_worker)
+        ]
+        with mp.Pool(n_worker) as pool:
+            sequences_pl = pl.concat(
+                pool.map(
+                    multiparse,
+                    slices
+                )
+            )
+        psms_df["Seqar_" + seq_col] = sequences_pl.to_pandas()
     return psms_df
+
+def multiparse(sequences):
+    return pl.Series([parser.parse(x) for x in sequences])
 
 
 def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], max_length=-1):

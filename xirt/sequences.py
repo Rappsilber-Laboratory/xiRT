@@ -1,12 +1,17 @@
 """Module to process peptide sequences."""
 import re
 from collections import Counter
+from functools import partial
+
 import numpy as np
 from pyteomics import parser
 from sklearn.preprocessing import LabelEncoder
 import cython
 import logging
-from xiutilities import pandas_utils
+import multiprocessing as mp
+from math import ceil
+import pandas as pd
+import polars as pl
 
 from xirt import const
 
@@ -108,7 +113,7 @@ def to_unmodified_sequence(sequence):
     return (re.sub(r"[^[A-Z]", "", sequence))
 
 
-def reorder_sequences(matches_df, column_names=const.default_column_names):
+def reorder_sequences(matches_df: pd.DataFrame, column_names=const.default_column_names):
     """Reorder peptide sequences by length.
 
     Defining the longer peptide as alpha peptide and the shorter petpide as
@@ -138,38 +143,41 @@ def reorder_sequences(matches_df, column_names=const.default_column_names):
                          " is a number in the end of the name.")
 
     # order logic, last comparison checks lexigographically
-    is_longer = (
-        matches_df[column_names['peptide1_sequence']].apply(len)
-        > matches_df[column_names['peptide2_sequence']].apply(len)
-    ).values
     is_shorter = (
-        matches_df[column_names['peptide1_sequence']].apply(len)
-        < matches_df[column_names['peptide2_sequence']].apply(len)
-    ).values
-    is_greater = (
-        matches_df[column_names['peptide1_sequence']]
-        > matches_df[column_names['peptide2_sequence']]
-    ).values
+        matches_df[column_names['peptide1_sequence']].str.len()
+        < matches_df[column_names['peptide2_sequence']].str.len()
+    )
+    is_equal = (
+            matches_df[column_names['peptide1_sequence']].str.len()
+            == matches_df[column_names['peptide2_sequence']].str.len()
+    )
+    is_lesser = (
+            matches_df[column_names['peptide1_sequence']]
+            < matches_df[column_names['peptide2_sequence']]
+    )
 
     # create a copy of the dataframe
     swapping_df = matches_df.copy()
-    swapped = np.ones(len(matches_df), dtype=bool)
 
     # z_idx for 0-based index
     # df_idx for pandas
-    for z_idx, df_idx in enumerate(matches_df.index):
-        if not is_shorter[z_idx] and is_greater[z_idx] or is_longer[z_idx]:
-            # for example: AC - AA, higher first, no swapping required
-            swapped[z_idx] = False
-        else:
-            # for example: AA > AC, other case, swap
-            swapped[z_idx] = True
+    swapping_df["swapped"] = is_shorter | (is_equal & is_lesser)
+    for col in set(pairs_noidx):
+        col1 = swapping_df[[f'{col}1']].copy()
+        col2 = swapping_df[[f'{col}2']].copy()
+        col1.loc[
+            swapping_df["swapped"], f'{col}1'
+        ] = swapping_df.loc[
+            swapping_df["swapped"], f'{col}2'
+        ]
+        col2.loc[
+            swapping_df["swapped"], f'{col}2'
+        ] = swapping_df.loc[
+            swapping_df["swapped"], f'{col}1'
+        ]
+        swapping_df[f'{col}1'] = col1[f'{col}1']
+        swapping_df[f'{col}2'] = col2[f'{col}2']
 
-        if swapped[z_idx]:
-            for col in pairs_noidx:
-                swapping_df.at[df_idx, col + str(2)] = matches_df.iloc[z_idx][col + str(1)]
-                swapping_df.at[df_idx, col + str(1)] = matches_df.iloc[z_idx][col + str(2)]
-    swapping_df["swapped"] = swapped
     return swapping_df
 
 
@@ -294,11 +302,29 @@ def label_encoding(sequences, min_sequence_length, max_sequence_length, alphabet
 
     # use an offset of +1 since shorter sequences will be padded with zeros
     # to achieve equal sequence lengths
-    X_encoded = pandas_utils.async_apply(
-        sequences,
-        lambda x: np.concatenate([
-            np.zeros(max_arr_len),  # Pad zeros
-            le.transform(x) + 1  # Add one to avoid zero padding conflict
-        ])[-max_arr_len:]  # Cut to length
-    )
+    n_worker = min(ceil(len(sequences) / 100_000), mp.cpu_count())
+    slice_size = ceil(len(sequences) / n_worker)
+    slices = [
+        sequences[i * slice_size:(i + 1) * slice_size]
+        for i in range(n_worker)
+    ]
+    with mp.Pool(n_worker) as pool:
+        transform_map = partial(transform_many, le.transform)
+        map_res = pool.map(
+            transform_map,
+            slices
+        )
+        sequences = np.hstack([
+            np.array(r, dtype=object)
+            for r in map_res
+        ])
+
+    X_encoded = pl.DataFrame({
+        'seqs': (sequences+1).tolist()
+    }).select(
+        seqs=pl.lit([0]*max_arr_len).list.concat(pl.col('seqs')).list.tail(max_arr_len)
+    )['seqs'].to_numpy()
     return X_encoded, le
+
+def transform_many(f, seqs):
+    return [f(s) for s in seqs]

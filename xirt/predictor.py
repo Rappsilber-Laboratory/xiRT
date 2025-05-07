@@ -428,17 +428,8 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
 
     # generate columns to handle based on input data type
     if sequence_type in ["crosslink", "pseudolinear"]:
-        mp_slice_size = ceil(len(matches_df) / (mp.cpu_count()-1))
-        mp_df_slices = [
-            matches_df[i * mp_slice_size:(i + 1) * mp_slice_size]
-            for i in range(mp.cpu_count()-1)
-        ]
-        with mp.Pool() as pool:
-            # change peptide order
-            reorder_job = partial(xs.reorder_sequences, column_names=column_names)
-            mp_results = pool.map(reorder_job, mp_df_slices)
-            matches_df = pd.concat(mp_results).copy()
-            seq_in = [column_names['peptide1_sequence'], column_names['peptide2_sequence']]
+        matches_df = xs.reorder_sequences(matches_df, column_names=column_names)
+        seq_in = [column_names['peptide1_sequence'], column_names['peptide2_sequence']]
     elif sequence_type == "linear":
         matches_df[column_names['peptide2_sequence']] = ""
         seq_in = [column_names['peptide1_sequence']]
@@ -451,7 +442,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     seq_proc = ["Seqar_" + i for i in seq_in]
 
     # perform the sequence based processing
-    matches_df = xp.prepare_seqs_mp(matches_df, seq_cols=seq_in)
+    matches_df = xp.prepare_seqs(matches_df, seq_cols=seq_in)
 
     # concat peptide sequences
     matches_df["PepSeq1PepSeq2_str"] = \

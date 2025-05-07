@@ -329,6 +329,8 @@ def plot_summary_strip(summary_df, tasks, xirt_params, outpath):  # pragma: no c
                 store_str = "loss"
             else:
                 store_str = "metric"
+            if m == "mean_squared_error":
+                m = "mse"
             # points
             axes[ii] = sns.stripplot(x="Split", y="{}_{}".format(t, m), data=summary_df,
                                      ax=axes[ii], color=colors[ii])
