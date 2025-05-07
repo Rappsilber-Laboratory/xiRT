@@ -76,6 +76,7 @@ pexpect==4.9.0
 pickleshare==0.7.5
 Pillow==9.5.0
 pluggy==1.2.0
+polars==1.29.0
 prompt-toolkit==1.0.18
 protobuf==3.19.6
 psutil==7.0.0
