@@ -10,6 +10,7 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 import yaml
 
 from xirt._version import get_versions
@@ -24,6 +25,16 @@ import matplotlib
 matplotlib.use('Agg')
 logger = logging.getLogger('xirt').getChild(__name__)
 
+# Detect total number of CPU cores
+num_cores = os.cpu_count()
+
+# Calculate half and quarter
+intra_op_threads = num_cores // 2
+inter_op_threads = num_cores // 4
+
+# Set threading config
+tf.config.threading.set_intra_op_parallelism_threads(intra_op_threads)
+tf.config.threading.set_inter_op_parallelism_threads(inter_op_threads)
 
 def arg_parser():  # pragma: not covered
     """
