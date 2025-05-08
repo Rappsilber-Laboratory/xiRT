@@ -83,7 +83,7 @@ def prepare_seqs(psms_df, seq_cols):
                     slices
                 )
             )
-        psms_df["Seqar_" + seq_col] = sequences_pl.to_pandas()
+        psms_df["Seqar_" + seq_col] = sequences_pl.to_list()
     return psms_df
 
 def multiparse(sequences):
@@ -119,7 +119,7 @@ def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], 
     else:
         alphabet = f(psms_df[seq_cols[0]].str.join(sep="").drop_duplicates())
 
-    logger.info("alphabet: {}".format(alphabet))
+    logger.info("alphabet:\n{}".format(alphabet))
 
     # perform the label encoding + padding
     logger.debug("labeling encoding")

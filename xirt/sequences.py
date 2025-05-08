@@ -216,6 +216,7 @@ def modify_cl_residues(matches_df,
 def convert_seqar(seqar: list, linkpos: int, reduce_cl=False):
     if not isinstance(linkpos, int):
         return seqar
+    linkpos = linkpos-1
     if linkpos < 0 or linkpos >= len(seqar):
         return seqar
     residue = seqar[linkpos]
