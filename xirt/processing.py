@@ -87,7 +87,7 @@ def prepare_seqs(psms_df, seq_cols):
     return psms_df
 
 def multiparse(sequences):
-    return pl.Series([parser.parse(x) for x in sequences])
+    return pl.Series([parser.parse(x, show_unmodified_termini=True) for x in sequences])
 
 
 def featurize_sequences(psms_df, seq_cols=["Seqar_Peptide1", "Seqar_Peptide2"], max_length=-1):
