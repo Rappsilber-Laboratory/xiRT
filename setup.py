@@ -8,7 +8,6 @@ import io
 import os
 import sys
 from shutil import rmtree
-import versioneer
 
 from setuptools import find_packages, setup, Command
 
@@ -105,8 +104,8 @@ class UploadCommand(Command):
 # Where the magic happens:
 setup(
     name=NAME,
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    #version=versioneer.get_version(),
+    #cmdclass=versioneer.get_cmdclass(),
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
