@@ -264,6 +264,7 @@ class ModelData:
             None
         """
         # store crosslink predictions
+        logger.info("Predicting CL peptides")
         predictions = xirtnetwork.model.predict(xdata)
         self.store_predictions(xirtnetwork, predictions, store_idx, cv=cv, suf="")
 
@@ -272,9 +273,11 @@ class ModelData:
         if (xirtnetwork.siamese_p["single_predictions"]) & (xirtnetwork.siamese_p["use"]):
             # create dummy input with all zeroes as second peptide
             dummy = np.zeros_like(xdata[0])
+            logger.info("Predicting peptide 1")
             pep1_predictions = xirtnetwork.model.predict((xdata[0], dummy))
             self.store_predictions(xirtnetwork, pep1_predictions, store_idx, cv=cv, suf="peptide1")
 
+            logger.info("Predicting peptide 2")
             pep2_predictions = xirtnetwork.model.predict((xdata[1], dummy))
             self.store_predictions(xirtnetwork, pep2_predictions, store_idx, cv=cv, suf="peptide2")
 
