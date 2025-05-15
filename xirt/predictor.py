@@ -1,5 +1,6 @@
 """Module to organize predictions from CLMS data."""
 import sys
+import os
 import logging
 
 import numpy as np
@@ -265,7 +266,11 @@ class ModelData:
         """
         # store crosslink predictions
         logger.info("Predicting CL peptides")
-        predictions = xirtnetwork.model.predict(xdata)
+        predictions = xirtnetwork.model.predict(
+            xdata,
+            verbose=1,
+            batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+        )
         self.store_predictions(xirtnetwork, predictions, store_idx, cv=cv, suf="")
 
         # if single predictions should be included in the df.Not meaningful for linear peptides.
@@ -274,11 +279,19 @@ class ModelData:
             # create dummy input with all zeroes as second peptide
             dummy = np.zeros_like(xdata[0])
             logger.info("Predicting peptide 1")
-            pep1_predictions = xirtnetwork.model.predict((xdata[0], dummy))
+            pep1_predictions = xirtnetwork.model.predict(
+                (xdata[0], dummy),
+                verbose=1,
+                batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+            )
             self.store_predictions(xirtnetwork, pep1_predictions, store_idx, cv=cv, suf="peptide1")
 
             logger.info("Predicting peptide 2")
-            pep2_predictions = xirtnetwork.model.predict((xdata[1], dummy))
+            pep2_predictions = xirtnetwork.model.predict(
+                (xdata[1], dummy),
+                verbose=1,
+                batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+            )
             self.store_predictions(xirtnetwork, pep2_predictions, store_idx, cv=cv, suf="peptide2")
 
     def store_predictions(self, xirtnetwork, predictions, store_idx, cv=0, suf=""):
