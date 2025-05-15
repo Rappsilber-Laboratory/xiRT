@@ -14,4 +14,6 @@ RUN ulimit -n 65536 && CYTHON_NTHREADS=8 pip install .
 
 RUN chmod -R a+rw /app
 
+ENV TF_CPP_MIN_LOG_LEVEL=1
+
 ENTRYPOINT ["python", "-m", "xirt"]

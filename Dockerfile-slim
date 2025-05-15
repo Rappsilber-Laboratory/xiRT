@@ -24,4 +24,6 @@ RUN pip install .
 
 RUN chmod -R a+rw /app
 
+ENV TF_CPP_MIN_LOG_LEVEL=1
+
 ENTRYPOINT ["python", "-m", "xirt"]
