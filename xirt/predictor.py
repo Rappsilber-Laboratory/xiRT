@@ -433,12 +433,17 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
     logger.info("Preprocessing peptides.")
     logger.info(f"Input peptides: {len(matches_df)}")
 
+    if "PSMID" not in matches_df.columns:
+        matches_df["PSMID"] = np.arange(len(matches_df))
+
     # sort to keep only highest scoring peptide from duplicated entries
     matches_df = matches_df.sort_values(by=column_names['score'], ascending=False)
 
     if len(matches_df["PSMID"].unique()) != matches_df.shape[0]:
         logger.warning("PSMID column was not unique! Redundant PSMIDs were removed")
         matches_df = matches_df.drop_duplicates("PSMID")
+
+    matches_df.set_index('PSMID', drop=False)
 
     logger.info("Reordering peptide sequences. (mode: {})".format(sequence_type))
 
