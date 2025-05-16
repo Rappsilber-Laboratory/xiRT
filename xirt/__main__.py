@@ -251,17 +251,50 @@ def xirt_runner(peptides_file: str,
         metric_columns = xirtnetwork.model.metrics_names
 
         # model evaluation training (t), validation (v), prediction (p)
-        model_summary.append(xirtnetwork.model.evaluate(xt_cv, yt_cv, batch_size=512))
-        model_summary.append(xirtnetwork.model.evaluate(xv_cv, yv_cv, batch_size=512))
-        model_summary.append(xirtnetwork.model.evaluate(xp_cv, yp_cv, batch_size=512))
+        model_summary.append(
+            xirtnetwork.model.evaluate(
+                xt_cv,
+                yt_cv,
+                verbose=1,
+                batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+            )
+        )
+        model_summary.append(
+            xirtnetwork.model.evaluate(
+                xv_cv,
+                yv_cv,
+                verbose=1,
+                batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+            )
+        )
+        model_summary.append(
+            xirtnetwork.model.evaluate(
+                xp_cv,
+                yp_cv,
+                verbose=1,
+                batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+            )
+        )
 
         # use the training for predicting unseen RTs
         training_data.predict_and_store(xirtnetwork, xp_cv, pred_idx, cv=cv_counter)
 
         if has_ordinal:
-            train_preds = xirtnetwork.model.predict(xt_cv)
-            val_preds = xirtnetwork.model.predict(xv_cv)
-            pred_preds = xirtnetwork.model.predict(xp_cv)
+            train_preds = xirtnetwork.model.predict(
+                xt_cv,
+                verbose=1,
+                batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+            )
+            val_preds = xirtnetwork.model.predict(
+                xv_cv,
+                verbose=1,
+                batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+            )
+            pred_preds = xirtnetwork.model.predict(
+                xp_cv,
+                verbose=1,
+                batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+            )
 
             accuracies_all.extend(xr.compute_accuracy(train_preds,
                                                       training_data.psms.loc[train_idx],
@@ -361,12 +394,26 @@ def xirt_runner(peptides_file: str,
         training_data.predict_idx,
         cv=-1
     )
-    eval_unvalidation = xirtnetwork.model.evaluate(xu, yu, batch_size=512)
+    logger.info('Evaluate model')
+    eval_unvalidation = xirtnetwork.model.evaluate(
+        xu,
+        yu,
+        verbose=1,
+        batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+    )
 
     if has_ordinal:
-        accs_tmp = xr.compute_accuracy(xirtnetwork.model.predict(xu),
-                                       training_data.psms.loc[training_data.predict_idx],
-                                       xirtnetwork.tasks, xirtnetwork.output_p)
+        logger.info('Calculate ordinal accuracy')
+        accs_tmp = xr.compute_accuracy(
+            xirtnetwork.model.predict(
+                xu,
+                verbose=1,
+                batch_size=int(os.getenv("TF_PREDICT_BATCH_SIZE", "1024"))
+            ),
+            training_data.psms.loc[training_data.predict_idx],
+            xirtnetwork.tasks,
+            xirtnetwork.output_p
+        )
         eval_unvalidation.extend(np.hstack([-1, "Unvalidation", accs_tmp]))
     else:
         eval_unvalidation.extend([-1, "Unvalidation"])
@@ -374,6 +421,7 @@ def xirt_runner(peptides_file: str,
     # prediction modes dont have any training information
     if learning_params["train"]["mode"] != "predict":
         # collect epoch training data
+        logger.info('Collect epoch training data')
         model_summary_df.loc[len(model_summary_df)] = eval_unvalidation
         df_history_all = pd.concat(histories)
         df_history_all = df_history_all.reset_index(drop=False).rename(columns={"index": "epoch"})
@@ -411,7 +459,7 @@ def xirt_runner(peptides_file: str,
 
     if write:
         # store data
-        training_data.psms.to_csv(os.path.join(outpath, "processed_psms.csv.gz"))
+        training_data.psms.to_parquet(os.path.join(outpath, "processed_psms.parquet"))
         training_data_Xy = ((training_data.features1, training_data.features2),
                             training_data.get_classes(training_data.psms.index,
                                                       frac_cols=frac_cols, cont_cols=cont_cols))
@@ -421,8 +469,8 @@ def xirt_runner(peptides_file: str,
         with open(os.path.join(xirt_params["callbacks"]["callback_path"], "encoder.p"), 'wb') as po:
             pickle.dump(training_data.le, po, protocol=pickle.HIGHEST_PROTOCOL)
 
-        training_data.prediction_df.to_csv(os.path.join(outpath, "error_features.csv"))
-        features_exhaustive.to_csv(os.path.join(outpath, "error_features_interactions.csv"))
+        training_data.prediction_df.to_parquet(os.path.join(outpath, "error_features.parquet"))
+        features_exhaustive.to_parquet(os.path.join(outpath, "error_features_interactions.parquet"))
 
     # write readme file to results dir
     with open(os.path.join(outpath, "readme.txt"), "w") as of:

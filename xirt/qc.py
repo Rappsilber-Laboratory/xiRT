@@ -102,8 +102,13 @@ def add_heatmap(y, yhat, task, ax, colormap, dims):  # pragma: no cover
         accuracy_score(y, yhat), relaxed_accuracy(y, yhat))
     logger.info("QC: {}".format(task))
     logger.info("Metrics: {}".format(metric_str))
-    ax = sns.heatmap(cm_scx, cmap=colormap, annot=True, annot_kws={"size": 12},
-                     fmt='.0f', cbar=True, mask=mask, ax=ax)
+    ax = sns.heatmap(
+        cm_scx,
+        cmap=colormap,
+        annot=len(cm_scx)<=10,
+        annot_kws={"size": 12},
+        fmt='.0f', cbar=True, mask=mask, ax=ax
+    )
     ax.axhline(y=dims[-1], color='k')
     ax.axvline(x=0, color='k')
     ax.set(ylim=(cm_scx.shape[0], 0), xlabel="Observed {}\n".format(task),
@@ -125,6 +130,15 @@ def add_scatter(y, yhat, task, ax, color):  # pragma: no cover
     Returns:
         axes, matplotlib axes object
     """
+    # don't plot more that 1000 samples in scatter
+    n_samples = min(len(y), 1000)
+    sample_index = np.random.choice(
+        np.arange(len(y)),
+        replace=False,
+        size=n_samples,
+    )
+    y=y[sample_index]
+    yhat=yhat[sample_index]
     # get min, max for plotting
     xmin, xmax = np.hstack([y, yhat]).min(), np.hstack([y, yhat]).max()
     xmin = xmin - 0.1 * xmin
