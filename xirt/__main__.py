@@ -355,7 +355,12 @@ def xirt_runner(peptides_file: str,
     xu = training_data.get_features(training_data.predict_idx)
     yu = training_data.get_classes(training_data.predict_idx, frac_cols=frac_cols,
                                    cont_cols=cont_cols)
-    training_data.predict_and_store(xirtnetwork, xu, training_data.predict_idx, cv=-1)
+    training_data.predict_and_store(
+        xirtnetwork,
+        xu,
+        training_data.predict_idx,
+        cv=-1
+    )
     eval_unvalidation = xirtnetwork.model.evaluate(xu, yu, batch_size=512)
 
     if has_ordinal:
