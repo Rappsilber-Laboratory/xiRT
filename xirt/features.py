@@ -678,5 +678,6 @@ def add_rt_features(psms_df):
         # add the square and absolute features to the 2D, 3D dataframes
         feats_df[f"{name}_square"] = feats_df[name] ** 2
         feats_df[f"{name}_abs"] = feats_df[name].abs()
+        feats_df[f"{name}_rel"] = feats_df[f"{name}_abs"]/feats_df[name].abs()
     feats_df.columns = "feature_" + feats_df.columns
     return feats_df
