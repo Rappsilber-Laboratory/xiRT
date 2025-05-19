@@ -140,10 +140,9 @@ def add_scatter(y, yhat, task, ax, color):  # pragma: no cover
     logger.info("QC: {}".format(task))
     logger.info("Metrics: {}".format(metric_str))
     if len(y)>10_000:
-        ax = sns.kdeplot(
+        ax = sns.histplot(
             x=y,
             y=yhat,
-            fill=True,
             ax=ax
         )
     else:
