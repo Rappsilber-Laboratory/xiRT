@@ -132,22 +132,22 @@ def add_scatter(y, yhat, task, ax, color):  # pragma: no cover
     """
     # don't plot more that 1000 samples in scatter
     n_samples = min(len(y), 1000)
-    sample_index = np.random.choice(
-        np.arange(len(y)),
-        replace=False,
-        size=n_samples,
-    )
-    y=y[sample_index]
-    yhat=yhat[sample_index]
     # get min, max for plotting
     xmin, xmax = np.hstack([y, yhat]).min(), np.hstack([y, yhat]).max()
     xmin = xmin - 0.1 * xmin
     xmax = xmax + 0.1 * xmax
     metric_str = """r2: {:.2f} """.format(custom_r2(y, yhat))
-    metric_str = """r2: {:.2f} """.format(custom_r2(y, yhat))
     logger.info("QC: {}".format(task))
     logger.info("Metrics: {}".format(metric_str))
-    ax.scatter(y, yhat, facecolor="none", edgecolor=color)
+    if len(y)>10_000:
+        ax = sns.kdeplot(
+            x=y,
+            y=yhat,
+            fill=True,
+            ax=ax
+        )
+    else:
+        ax.scatter(y, yhat, facecolor="none", edgecolor=color)
     ax.set(title=metric_str, xlabel="Observed {}".format(task.upper()),
            ylabel="Predicted {}".format(task), xlim=(xmin, xmax), ylim=(xmin, xmax))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
