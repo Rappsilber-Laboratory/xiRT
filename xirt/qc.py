@@ -143,7 +143,8 @@ def add_scatter(y, yhat, task, ax, color):  # pragma: no cover
         ax = sns.histplot(
             x=y,
             y=yhat,
-            ax=ax
+            ax=ax,
+            bins=(50, 50)
         )
     else:
         ax.scatter(y, yhat, facecolor="none", edgecolor=color)
