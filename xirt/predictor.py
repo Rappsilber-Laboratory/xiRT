@@ -443,7 +443,7 @@ def preprocess(matches_df, sequence_type="crosslink", max_length=-1, cl_residue=
         logger.warning("PSMID column was not unique! Redundant PSMIDs were removed")
         matches_df = matches_df.drop_duplicates("PSMID")
 
-    matches_df.set_index('PSMID', drop=False)
+    matches_df = matches_df.set_index('PSMID', drop=False)
 
     logger.info("Reordering peptide sequences. (mode: {})".format(sequence_type))
 
