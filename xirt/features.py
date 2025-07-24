@@ -646,8 +646,8 @@ def add_rt_features(psms_df):
     feats_df : df
         dataframe with features.
     """
-    pep1_cols = psms_df.filter(regex="peptide1").columns
-    pep2_cols = psms_df.filter(regex="peptide2").columns
+    pep1_cols = psms_df.filter(regex="error").filter(regex="peptide1").columns
+    pep2_cols = psms_df.filter(regex="error").filter(regex="peptide2").columns
     cl_cols = psms_df.filter(regex="error$").columns
 
     cols = [pep1_cols, pep2_cols, cl_cols]
@@ -655,8 +655,8 @@ def add_rt_features(psms_df):
 
     # compute new features by
     # averaging, summing, maxing, mining the errors for the respective fields
-    initial_cols = psms_df.columns
-    feats_df = psms_df.copy()
+    initial_cols = psms_df.filter(regex="error").columns
+    feats_df = psms_df.filter(regex="error").copy()
     # compute mean, max, min, sum for errors over ALL dimensions for each prediction
     # (cl, pep1, pep2)
     for col, name in zip(cols, names):
@@ -675,9 +675,11 @@ def add_rt_features(psms_df):
 
     # absolute and squared values for all parameter combinations
     for name in initial_cols:
+        pred_name = name.replace('error', 'prediction')
         # add the square and absolute features to the 2D, 3D dataframes
         feats_df[f"{name}_square"] = feats_df[name] ** 2
         feats_df[f"{name}_abs"] = feats_df[name].abs()
-        feats_df[f"{name}_rel"] = feats_df[f"{name}_abs"]/feats_df[name]
+        feats_df[f"{name}_rel"] = feats_df[f"{name}_abs"]/(psms_df[pred_name]-feats_df[name])
     feats_df.columns = "feature_" + feats_df.columns
+    feats_df['PSMID'] = psms_df['PSMID']
     return feats_df

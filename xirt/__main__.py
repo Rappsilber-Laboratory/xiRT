@@ -123,6 +123,9 @@ def xirt_runner(peptides_file: str,
             matches_df = pd.read_csv(peptides_file, nrows=nrows)
     else:
         matches_df = api_df
+    if "PSMID" not in matches_df.columns:
+        matches_df["PSMID"] = np.arange(len(matches_df))
+    matches_df.set_index('PSMID', drop=False)
 
     logger.info("Done reading input data.")
 
@@ -435,7 +438,7 @@ def xirt_runner(peptides_file: str,
                                   & xirtnetwork.siamese_p["use"]))
 
     # store results
-    features_exhaustive = xf.add_rt_features(training_data.prediction_df.filter(regex="error"))
+    features_exhaustive = xf.add_rt_features(training_data.prediction_df)
     # qc
     # only training procedure includes qc
     if perform_qc and (learning_params["train"]["mode"] != "predict"):
