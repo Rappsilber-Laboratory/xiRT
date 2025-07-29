@@ -561,6 +561,7 @@ def compute_prediction_errors(obs_df, preds_df, tasks, frac_cols=[], single_pred
         None
     """
     class_columns = [i.rsplit("_", 1)[0].lower() for i in frac_cols]
+    assert (obs_df.index == preds_df.index).all()
     # only generate single error feature; viable for crosslinks and linears
     if single_predictions:
         # generate 3x error features; only viable for crosslinks
@@ -681,5 +682,4 @@ def add_rt_features(psms_df):
         feats_df[f"{name}_abs"] = feats_df[name].abs()
         feats_df[f"{name}_rel"] = feats_df[f"{name}_abs"]/(psms_df[pred_name]-feats_df[name])
     feats_df.columns = "feature_" + feats_df.columns
-    feats_df['PSMID'] = psms_df['PSMID']
     return feats_df
