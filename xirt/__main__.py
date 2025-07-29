@@ -125,7 +125,7 @@ def xirt_runner(peptides_file: str,
         matches_df = api_df
     if "PSMID" not in matches_df.columns:
         matches_df["PSMID"] = np.arange(len(matches_df))
-    matches_df.set_index('PSMID', drop=False)
+    matches_df = matches_df.set_index('PSMID', drop=False)
 
     logger.info("Done reading input data.")
 
