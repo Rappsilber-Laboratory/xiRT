@@ -305,7 +305,7 @@ def label_encoding(sequences, min_sequence_length, max_sequence_length, alphabet
     n_worker = min(ceil(len(sequences) / 100_000), mp.cpu_count())
     slice_size = ceil(len(sequences) / n_worker)
     slices = [
-        sequences[i * slice_size:(i + 1) * slice_size]
+        sequences.iloc[i * slice_size:(i + 1) * slice_size]
         for i in range(n_worker)
     ]
     with mp.Pool(n_worker) as pool:
